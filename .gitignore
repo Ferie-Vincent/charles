@@ -1,2 +1,14 @@
 .DS_Store
-.worktrees/
+node_modules
+vendor
+.env
+dist
+coverage
+backend/bootstrap/cache/*.php
+backend/storage/*.key
+backend/storage/app/*
+backend/storage/framework/cache/*
+backend/storage/framework/sessions/*
+backend/storage/framework/views/*
+backend/storage/logs/*
+frontend/.vite
