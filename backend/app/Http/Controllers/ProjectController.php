@@ -12,6 +12,8 @@ class ProjectController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
+        $this->authorize('viewAny', Project::class);
+
         $projects = Project::query()
             ->where('company_id', $request->user()->company_id)
             ->latest()
@@ -24,6 +26,8 @@ class ProjectController extends Controller
 
     public function store(StoreProjectRequest $request): JsonResponse
     {
+        $this->authorize('create', Project::class);
+
         $project = Project::query()->create([
             ...$request->validated(),
             'company_id' => $request->user()->company_id,
@@ -36,7 +40,7 @@ class ProjectController extends Controller
 
     public function update(UpdateProjectRequest $request, Project $project): JsonResponse
     {
-        abort_unless($project->company_id === $request->user()->company_id, 404);
+        $this->authorize('update', $project);
 
         $project->update($request->validated());
 
