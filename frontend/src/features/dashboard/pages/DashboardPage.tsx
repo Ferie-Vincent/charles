@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { getDashboard, type DashboardData } from '../api/get-dashboard';
 import PageHeader from '../../../components/ui/PageHeader';
 import Card from '../../../components/ui/Card';
+import DashboardCharts from '../components/DashboardCharts';
 
 const STATUS_LABELS: Record<string, string> = {
   draft: 'Brouillon',
@@ -85,6 +86,8 @@ export default function DashboardPage() {
           <p className="kpi-value">{stats.draft_count}</p>
         </Card>
       </div>
+
+      <DashboardCharts stats={stats} activeProjects={active_projects} />
 
       <div className="detail-grid" style={{ marginTop: 0 }}>
 
