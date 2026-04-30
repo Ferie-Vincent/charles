@@ -1,3 +1,4 @@
+import axios from 'axios';
 import { api } from '../../../lib/api';
 
 export type LoginPayload = {
@@ -6,6 +7,7 @@ export type LoginPayload = {
 };
 
 export async function login(payload: LoginPayload) {
+  await axios.get('http://localhost:8000/sanctum/csrf-cookie', { withCredentials: true });
   const response = await api.post('/auth/login', payload);
   return response.data;
 }
