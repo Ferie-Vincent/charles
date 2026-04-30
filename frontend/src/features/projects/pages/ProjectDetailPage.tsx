@@ -69,7 +69,7 @@ export default function ProjectDetailPage() {
       <div className="detail-grid">
 
         {/* ── Informations générales ── */}
-        <div className="card">
+        <div className="card card--third">
           <h3 className="card-title">Informations générales</h3>
           <InfoRow label="Code" value={<code>{project.code}</code>} />
           <InfoRow
@@ -82,7 +82,7 @@ export default function ProjectDetailPage() {
         </div>
 
         {/* ── Budget ── */}
-        <div className="card">
+        <div className="card card--third">
           <h3 className="card-title">Budget</h3>
           <div className="kpi-solo">
             <p className="kpi-label">Budget prévisionnel</p>
@@ -94,7 +94,7 @@ export default function ProjectDetailPage() {
         </div>
 
         {/* ── Avancement ── */}
-        <div className="card">
+        <div className="card card--third">
           <h3 className="card-title">Avancement</h3>
           <div className="kpi-solo">
             <p className="kpi-label">Avancement réel</p>
@@ -106,13 +106,13 @@ export default function ProjectDetailPage() {
         </div>
 
         {/* ── Historique ── */}
-        <div className="card card--full">
+        <div className="card card--half">
           <h3 className="card-title">Historique des actions</h3>
           <ActivityTimeline activities={project.activities ?? []} />
         </div>
 
         {/* ── Équipe ── */}
-        <div className="card card--full">
+        <div className="card card--half">
           <h3 className="card-title">Équipe du chantier</h3>
           {!project.members || project.members.length === 0 ? (
             <p className="empty-state">Aucun membre assigné.</p>
