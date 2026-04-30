@@ -208,6 +208,10 @@ body {
   color: var(--text-main);
 }
 
+.kpi-value--sm {
+  font-size: 20px;
+}
+
 /* ─── Data table ─── */
 
 .data-table {
