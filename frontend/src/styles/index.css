@@ -484,6 +484,87 @@ code {
   color: var(--text-main);
 }
 
+/* ─── Activity Timeline ─── */
+
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.timeline-item {
+  display: flex;
+  gap: 16px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+  align-items: flex-start;
+}
+
+.timeline-item:last-child {
+  border-bottom: none;
+}
+
+.timeline-dot {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.timeline-dot--accent  { background: rgba(59,125,221,0.12); }
+.timeline-dot--success { background: rgba(26,188,156,0.12); }
+.timeline-dot--danger  { background: rgba(231,76,60,0.12);  }
+.timeline-dot--warning { background: rgba(243,156,18,0.12); }
+.timeline-dot--muted   { background: var(--bg-app); }
+
+.timeline-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.timeline-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.timeline-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  background: var(--bg-app);
+  padding: 2px 7px;
+  border-radius: 4px;
+}
+
+.timeline-date {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-left: auto;
+}
+
+.timeline-description {
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--text-main);
+  line-height: 1.5;
+}
+
+.timeline-author {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 4px;
+  display: block;
+}
+
 /* ─── Login Page ─── */
 
 .login-page {

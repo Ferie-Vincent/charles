@@ -1,3 +1,11 @@
+export type ProjectActivity = {
+  id: number;
+  type: string;
+  description: string;
+  created_at: string;
+  user: { id: number; name: string } | null;
+};
+
 export type ProjectMember = {
   id: number;
   user_id: number;
@@ -20,6 +28,7 @@ export type Project = {
   start_date: string | null;
   end_date: string | null;
   members?: ProjectMember[];
+  activities?: ProjectActivity[];
 };
 
 export type CreateProjectPayload = {

@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { getProject } from '../api/get-project';
 import type { Project } from '../types';
 import PageHeader from '../../../components/ui/PageHeader';
+import ActivityTimeline from '../components/ActivityTimeline';
 
 const STATUS_LABELS: Record<string, string> = {
   draft: 'Brouillon',
@@ -102,6 +103,12 @@ export default function ProjectDetailPage() {
           <InfoRow label="Avancement cible" value="— % (à venir)" />
           <InfoRow label="Jours suivis" value="— (à venir)" />
           <InfoRow label="Incidents ouverts" value="— (à venir)" />
+        </div>
+
+        {/* ── Historique ── */}
+        <div className="card card--full">
+          <h3 className="card-title">Historique des actions</h3>
+          <ActivityTimeline activities={project.activities ?? []} />
         </div>
 
         {/* ── Équipe ── */}

@@ -42,7 +42,7 @@ class ProjectController extends Controller
     {
         $this->authorize('view', $project);
 
-        $project->load(['members.user.role']);
+        $project->load(['members.user.role', 'activities.user']);
 
         return response()->json(['data' => $project]);
     }
