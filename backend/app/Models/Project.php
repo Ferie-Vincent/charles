@@ -45,4 +45,9 @@ class Project extends Model
     {
         return $this->hasMany(ProjectActivity::class);
     }
+
+    public function dailyLogs(): HasMany
+    {
+        return $this->hasMany(DailyLog::class);
+    }
 }

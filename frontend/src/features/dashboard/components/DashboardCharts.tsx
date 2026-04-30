@@ -1,5 +1,5 @@
 import {
-  PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer,
+  PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
 } from 'recharts';
 import type { DashboardStats } from '../api/get-dashboard';
@@ -64,7 +64,7 @@ export default function DashboardCharts({ stats, activeProjects }: Props) {
                 <Cell key={entry.name} fill={entry.color} />
               ))}
             </Pie>
-            <Tooltip formatter={(value: number) => [`${value} chantier(s)`, '']} />
+            <Tooltip formatter={(value) => [`${value} chantier(s)`, '']} />
           </PieChart>
         </ResponsiveContainer>
       </div>
@@ -95,7 +95,7 @@ export default function DashboardCharts({ stats, activeProjects }: Props) {
               tickLine={false}
             />
             <Tooltip
-              formatter={(value: number) => [formatM(value) + ' FCFA', 'Budget']}
+              formatter={(value) => [formatM(Number(value)) + ' FCFA', 'Budget']}
               cursor={{ fill: 'rgba(59,125,221,0.06)' }}
             />
             <Bar dataKey="budget" fill="#3b7ddd" radius={[0, 4, 4, 0]} barSize={14} />

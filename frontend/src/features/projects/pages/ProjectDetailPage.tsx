@@ -4,6 +4,10 @@ import { getProject } from '../api/get-project';
 import type { Project } from '../types';
 import PageHeader from '../../../components/ui/PageHeader';
 import ActivityTimeline from '../components/ActivityTimeline';
+import DailyLogForm from '../../daily-logs/components/DailyLogForm';
+import DailyLogHistory from '../../daily-logs/components/DailyLogHistory';
+import { getDailyLogs, type DailyLogMeta } from '../../daily-logs/api/get-daily-logs';
+import type { DailyLog } from '../../daily-logs/types';
 
 const STATUS_LABELS: Record<string, string> = {
   draft: 'Brouillon',
@@ -43,13 +47,30 @@ function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
 export default function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
   const [project, setProject] = useState<Project | null>(null);
+  const [logs, setLogs] = useState<DailyLog[]>([]);
+  const [logMeta, setLogMeta] = useState<DailyLogMeta | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  function fetchLogs(projectId: number) {
+    getDailyLogs(projectId).then(res => {
+      setLogs(res.data);
+      setLogMeta(res.meta);
+    });
+  }
+
   useEffect(() => {
     if (!id) return;
-    getProject(Number(id))
-      .then(setProject)
+    const numId = Number(id);
+    Promise.all([
+      getProject(numId),
+      getDailyLogs(numId),
+    ])
+      .then(([proj, logsRes]) => {
+        setProject(proj);
+        setLogs(logsRes.data);
+        setLogMeta(logsRes.meta);
+      })
       .catch(() => setError('Chantier introuvable.'))
       .finally(() => setLoading(false));
   }, [id]);
@@ -57,13 +78,15 @@ export default function ProjectDetailPage() {
   if (loading) return <div className="page-content"><p>Chargement…</p></div>;
   if (error || !project) return <div className="page-content"><p className="form-error">{error ?? 'Erreur.'}</p></div>;
 
+  const avancement = logMeta?.latest_progress ?? null;
+  const incidentCount = logMeta?.incident_count ?? null;
+  const jourssuivis = logMeta?.total_logs ?? null;
+
   return (
     <div>
       <PageHeader
         title={project.name}
-        action={
-          <Link to="/projects" className="btn-secondary">← Retour</Link>
-        }
+        action={<Link to="/projects" className="btn-secondary">← Retour</Link>}
       />
 
       <div className="detail-grid">
@@ -93,20 +116,58 @@ export default function ProjectDetailPage() {
           <InfoRow label="Écart budget" value="— (à venir)" />
         </div>
 
-        {/* ── Avancement ── */}
+        {/* ── Avancement — données réelles ── */}
         <div className="card card--third">
           <h3 className="card-title">Avancement</h3>
           <div className="kpi-solo">
             <p className="kpi-label">Avancement réel</p>
-            <p className="kpi-value kpi-value--lg">— %</p>
+            <p className="kpi-value kpi-value--lg">
+              {avancement !== null ? `${avancement}%` : '—'}
+            </p>
+            {avancement !== null && (
+              <div className="avancement-bar-wrap">
+                <div className="avancement-bar" style={{ width: `${avancement}%` }} />
+              </div>
+            )}
           </div>
-          <InfoRow label="Avancement cible" value="— % (à venir)" />
-          <InfoRow label="Jours suivis" value="— (à venir)" />
-          <InfoRow label="Incidents ouverts" value="— (à venir)" />
+          <InfoRow label="Avancement cible" value="— (à venir)" />
+          <InfoRow
+            label="Jours suivis"
+            value={jourssuivis !== null ? String(jourssuivis) : '—'}
+          />
+          <InfoRow
+            label="Incidents ouverts"
+            value={
+              incidentCount !== null ? (
+                <span className={incidentCount > 0 ? 'text-danger' : ''}>
+                  {incidentCount}
+                </span>
+              ) : '—'
+            }
+          />
         </div>
 
-        {/* ── Historique ── */}
+        {/* ── Journal du jour ── */}
+        <div className="card card--half card--accent">
+          <h3 className="card-title">Journal du jour</h3>
+          <p className="card-subtitle">{new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+          <DailyLogForm
+            projectId={project.id}
+            onSuccess={() => {
+              getProject(Number(id)).then(setProject);
+              fetchLogs(project.id);
+            }}
+          />
+        </div>
+
+        {/* ── Historique journal ── */}
         <div className="card card--half">
+          <h3 className="card-title">Historique journal</h3>
+          <DailyLogHistory logs={logs} meta={logMeta} />
+        </div>
+
+        {/* ── Activité chantier ── */}
+        <div className="card card--full">
           <h3 className="card-title">Historique des actions</h3>
           <ActivityTimeline activities={project.activities ?? []} />
         </div>

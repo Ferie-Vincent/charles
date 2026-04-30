@@ -5,13 +5,6 @@ import PageHeader from '../../../components/ui/PageHeader';
 import Card from '../../../components/ui/Card';
 import DashboardCharts from '../components/DashboardCharts';
 
-const STATUS_LABELS: Record<string, string> = {
-  draft: 'Brouillon',
-  active: 'Actif',
-  completed: 'Terminé',
-  archived: 'Archivé',
-};
-
 const ACTIVITY_META: Record<string, { label: string; css: string }> = {
   status_change:  { label: 'Statut',   css: 'badge-type-status' },
   member_added:   { label: 'Équipe',   css: 'badge-type-team'   },
