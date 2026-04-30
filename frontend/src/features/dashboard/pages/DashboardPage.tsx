@@ -38,7 +38,7 @@ type DelayInfo = { label: string; css: string };
 function getDelayInfo(endDate: string | null): DelayInfo {
   if (!endDate) return { label: '—', css: '' };
   const days = Math.ceil((new Date(endDate).getTime() - Date.now()) / 86_400_000);
-  if (days < 0)   return { label: `${Math.abs(days)} j dépassé`, css: 'badge badge-overdue' };
+  if (days < 0)   return { label: `${Math.abs(days)} j`,          css: 'badge badge-overdue' };
   if (days === 0) return { label: "Aujourd'hui",                  css: 'badge badge-urgent'  };
   if (days <= 30) return { label: `${days} j`,                   css: 'badge badge-urgent'  };
   if (days <= 90) return { label: `${days} j`,                   css: 'badge badge-soon'    };
