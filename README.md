@@ -13,7 +13,7 @@ Monorepo for the chantier multi-project management platform.
 - Composer 2+
 - Node.js 20+
 - npm 10+
-- PostgreSQL 15+
+- MySQL 8+ (via Homebrew or MAMP)
 
 ## Backend Setup
 
@@ -48,4 +48,22 @@ php artisan test
 ```bash
 cd frontend
 npm run test
+```
+
+## Foundation Verification
+
+### Backend
+
+```bash
+cd backend
+php artisan migrate:fresh --seed
+php artisan test
+```
+
+### Frontend
+
+```bash
+cd frontend
+npm run test
+npm run build
 ```
