@@ -31,8 +31,8 @@ export default function ProjectTable({ projects }: ProjectTableProps) {
       <tbody>
         {projects.map((p) => (
           <tr key={p.id}>
-            <td><code>{p.code}</code></td>
-            <td>{p.name}</td>
+            <td><Link to={`/projects/${p.id}`}><code>{p.code}</code></Link></td>
+            <td><Link to={`/projects/${p.id}`} className="row-link">{p.name}</Link></td>
             <td><span className={`badge badge-${p.status}`}>{STATUS_LABELS[p.status] ?? p.status}</span></td>
             <td>{p.location ?? '—'}</td>
             <td>{Number(p.budget_amount).toLocaleString('fr-FR')} FCFA</td>

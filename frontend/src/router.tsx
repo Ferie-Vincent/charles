@@ -5,6 +5,7 @@ import LoginPage from './features/auth/pages/LoginPage';
 import DashboardPage from './features/dashboard/pages/DashboardPage';
 import ProjectsPage from './features/projects/pages/ProjectsPage';
 import NewProjectPage from './features/projects/pages/NewProjectPage';
+import ProjectDetailPage from './features/projects/pages/ProjectDetailPage';
 
 function Shell({ children }: { children: ReactNode }) {
   return <AppShell>{children}</AppShell>;
@@ -15,5 +16,6 @@ export const router = createBrowserRouter([
   { path: '/', element: <Shell><DashboardPage /></Shell> },
   { path: '/projects', element: <Shell><ProjectsPage /></Shell> },
   { path: '/projects/new', element: <Shell><NewProjectPage /></Shell> },
+  { path: '/projects/:id', element: <Shell><ProjectDetailPage /></Shell> },
   { path: '*', element: <Navigate to="/" replace /> },
 ]);

@@ -38,6 +38,15 @@ class ProjectController extends Controller
         ], 201);
     }
 
+    public function show(Request $request, Project $project): JsonResponse
+    {
+        $this->authorize('view', $project);
+
+        $project->load(['members.user.role']);
+
+        return response()->json(['data' => $project]);
+    }
+
     public function update(UpdateProjectRequest $request, Project $project): JsonResponse
     {
         $this->authorize('update', $project);
