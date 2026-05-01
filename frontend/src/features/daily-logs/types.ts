@@ -10,6 +10,7 @@ export type DailyLog = {
   incident_type: IncidentType | null;
   equipment_status: EquipmentStatus | null;
   materials_received: MaterialItem[] | null;
+  notes: string | null;
   created_at: string;
 };
 
@@ -31,4 +32,5 @@ export type CreateDailyLogPayload = {
   incident_type?: IncidentType;
   equipment_status?: EquipmentStatus;
   materials_received?: MaterialItem[];
+  notes?: string;
 };

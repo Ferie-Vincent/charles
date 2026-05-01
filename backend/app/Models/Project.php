@@ -17,7 +17,10 @@ class Project extends Model
         'name',
         'status',
         'location',
+        'latitude',
+        'longitude',
         'budget_amount',
+        'target_progress',
         'start_date',
         'end_date',
     ];
@@ -25,9 +28,12 @@ class Project extends Model
     protected function casts(): array
     {
         return [
-            'budget_amount' => 'decimal:2',
-            'start_date' => 'date',
-            'end_date' => 'date',
+            'budget_amount'   => 'decimal:2',
+            'target_progress' => 'integer',
+            'start_date'      => 'date',
+            'end_date'        => 'date',
+            'latitude'        => 'float',
+            'longitude'       => 'float',
         ];
     }
 
@@ -49,5 +55,20 @@ class Project extends Model
     public function dailyLogs(): HasMany
     {
         return $this->hasMany(DailyLog::class);
+    }
+
+    public function incidents(): HasMany
+    {
+        return $this->hasMany(Incident::class);
+    }
+
+    public function budgetEntries(): HasMany
+    {
+        return $this->hasMany(BudgetEntry::class);
+    }
+
+    public function reports(): HasMany
+    {
+        return $this->hasMany(ProjectReport::class);
     }
 }

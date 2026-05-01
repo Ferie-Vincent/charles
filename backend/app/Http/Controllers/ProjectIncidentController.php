@@ -1,0 +1,99 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Incident;
+use App\Models\Project;
+use App\Services\WhatsAppAlertService;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+
+class ProjectIncidentController extends Controller
+{
+    public function index(Project $project): JsonResponse
+    {
+        $this->authorize('view', $project);
+
+        $incidents = $project->incidents()
+            ->with('reporter:id,name')
+            ->orderByDesc('occurred_at')
+            ->get();
+
+        return response()->json($incidents);
+    }
+
+    public function store(Request $request, Project $project): JsonResponse
+    {
+        $this->authorize('update', $project);
+
+        $data = $request->validate([
+            'type'              => 'required|string|max:100',
+            'severity'          => 'required|in:mineur,majeur,critique',
+            'description'       => 'required|string|max:2000',
+            'location'          => 'nullable|string|max:255',
+            'corrective_action' => 'nullable|string|max:2000',
+            'witnesses'         => 'nullable|string|max:500',
+            'occurred_at'       => 'required|date',
+        ]);
+
+        $incident = $project->incidents()->create([
+            ...$data,
+            'reported_by' => $request->user()->id,
+            'status'      => 'ouvert',
+        ]);
+
+        $incident->load('reporter:id,name');
+
+        // Send WhatsApp alert for critical incidents
+        if ($incident->severity === 'critique') {
+            $msg = "🚨 *INCIDENT CRITIQUE* — {$project->name}\n"
+                . "Type : {$incident->type}\n"
+                . "Lieu : " . ($incident->location ?? 'Non précisé') . "\n"
+                . "Déclaré par : {$incident->reporter->name}\n"
+                . "Date : " . now()->format('d/m/Y H:i');
+            app(WhatsAppAlertService::class)->send($msg);
+        }
+
+        return response()->json($incident, 201);
+    }
+
+    public function update(Request $request, Project $project, Incident $incident): JsonResponse
+    {
+        $this->authorize('update', $project);
+
+        $data = $request->validate([
+            'status'            => 'sometimes|in:ouvert,en_cours,resolu,ferme',
+            'corrective_action' => 'sometimes|nullable|string|max:2000',
+            'resolved_at'       => 'sometimes|nullable|date',
+        ]);
+
+        $incident->update($data);
+
+        return response()->json($incident->fresh('reporter'));
+    }
+
+    public function destroy(Project $project, Incident $incident): Response
+    {
+        $this->authorize('update', $project);
+        $incident->delete();
+        return response()->noContent();
+    }
+
+    public function pdf(Project $project, Incident $incident): Response
+    {
+        $this->authorize('view', $project);
+
+        $incident->load('reporter:id,name', 'project:id,name,code,location');
+
+        $pdf = Pdf::loadView('pdf.incident', [
+            'incident' => $incident,
+            'project'  => $project,
+        ])->setPaper('a4');
+
+        $filename = 'incident-' . $incident->id . '-' . now()->format('Ymd') . '.pdf';
+
+        return $pdf->download($filename);
+    }
+}

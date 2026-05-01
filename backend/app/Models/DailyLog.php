@@ -21,6 +21,7 @@ class DailyLog extends Model
         'incident_type',
         'equipment_status',
         'materials_received',
+        'notes',
     ];
 
     protected function casts(): array

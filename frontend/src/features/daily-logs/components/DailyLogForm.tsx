@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { createDailyLog } from '../api/create-daily-log';
-import type { CreateDailyLogPayload, EquipmentStatus, IncidentType, Weather } from '../types';
+import type { CreateDailyLogPayload, EquipmentStatus, IncidentType, MaterialItem, Weather } from '../types';
+import ProgressVisualPicker from './ProgressVisualPicker';
 
 const WEATHER_OPTIONS: { value: Weather; label: string; icon: string }[] = [
   { value: 'Soleil',    label: 'Soleil',     icon: '☀️' },
@@ -9,6 +10,18 @@ const WEATHER_OPTIONS: { value: Weather; label: string; icon: string }[] = [
   { value: 'Orage',    label: 'Orage',      icon: '⛈️' },
   { value: 'Vent fort', label: 'Vent fort', icon: '💨' },
   { value: 'Autre',    label: 'Autre',      icon: '🌡️' },
+];
+
+const MATERIAL_OPTIONS: { name: string; icon: string }[] = [
+  { name: 'Ciment',    icon: '🪨' },
+  { name: 'Fer',       icon: '🔩' },
+  { name: 'Sable',     icon: '🟡' },
+  { name: 'Gravier',   icon: '⬛' },
+  { name: 'Briques',   icon: '🧱' },
+  { name: 'Bois',      icon: '🪵' },
+  { name: 'Carrelage', icon: '🔲' },
+  { name: 'Peinture',  icon: '🪣' },
+  { name: 'Autre',     icon: '📦' },
 ];
 
 const INCIDENT_TYPES: IncidentType[] = ['Retard', 'Accident', 'Litige', 'Rupture stock', 'Panne', 'RAS', 'Autre'];
@@ -26,9 +39,23 @@ export default function DailyLogForm({ projectId, onSuccess }: Props) {
   const [workersCount, setWorkersCount] = useState(0);
   const [progressPercent, setProgressPercent] = useState(0);
   const [equipmentStatus, setEquipmentStatus] = useState<EquipmentStatus | ''>('');
+  const [materials, setMaterials] = useState<MaterialItem[]>([]);
+  const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [alreadyLogged, setAlreadyLogged] = useState(false);
+
+  function toggleMaterial(name: string) {
+    setMaterials(prev =>
+      prev.some(m => m.name === name)
+        ? prev.filter(m => m.name !== name)
+        : [...prev, { name, quantity: 1 }]
+    );
+  }
+
+  function updateQty(name: string, qty: number) {
+    setMaterials(prev => prev.map(m => m.name === name ? { ...m, quantity: qty } : m));
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -44,6 +71,8 @@ export default function DailyLogForm({ projectId, onSuccess }: Props) {
       has_incident: hasIncident,
       ...(hasIncident && incidentType ? { incident_type: incidentType as IncidentType } : {}),
       ...(equipmentStatus ? { equipment_status: equipmentStatus as EquipmentStatus } : {}),
+      ...(materials.length > 0 ? { materials_received: materials } : {}),
+      ...(notes.trim() ? { notes: notes.trim() } : {}),
     };
 
     try {
@@ -155,26 +184,75 @@ export default function DailyLogForm({ projectId, onSuccess }: Props) {
         </div>
       </div>
 
-      {/* #33 Avancement — slider */}
+      {/* #29 Avancement — phase visual picker */}
+      <ProgressVisualPicker value={progressPercent} onChange={setProgressPercent} />
+
+      {/* #30 Matériaux reçus */}
       <div className="form-group">
-        <label htmlFor="progress">
-          Avancement réel — <strong>{progressPercent}%</strong>
-        </label>
-        <input
-          id="progress"
-          type="range"
-          min="0"
-          max="100"
-          step="1"
-          value={progressPercent}
-          onChange={e => setProgressPercent(Number(e.target.value))}
-          className="progress-slider"
-        />
-        <div className="progress-slider-labels">
-          <span>0%</span>
-          <span>50%</span>
-          <span>100%</span>
+        <label>Matériaux reçus <span className="form-optional">(optionnel)</span></label>
+        <div className="material-grid">
+          {MATERIAL_OPTIONS.map(opt => {
+            const selected = materials.some(m => m.name === opt.name);
+            return (
+              <button
+                key={opt.name}
+                type="button"
+                className={`material-btn ${selected ? 'material-btn--active' : ''}`}
+                onClick={() => toggleMaterial(opt.name)}
+              >
+                <span>{opt.icon}</span>
+                <span>{opt.name}</span>
+              </button>
+            );
+          })}
         </div>
+
+        {materials.length > 0 && (
+          <div className="material-qty-list">
+            {materials.map(m => (
+              <div key={m.name} className="material-qty-row">
+                <span className="material-qty-name">
+                  {MATERIAL_OPTIONS.find(o => o.name === m.name)?.icon} {m.name}
+                </span>
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={m.quantity}
+                  onChange={e => updateQty(m.name, Number(e.target.value))}
+                  className="material-qty-input"
+                />
+                <span className="material-qty-unit">unités</span>
+                <button
+                  type="button"
+                  className="material-qty-remove"
+                  onClick={() => toggleMaterial(m.name)}
+                >✕</button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* ── Observations libres ── */}
+      <div className="form-group">
+        <label className="form-label">
+          Observations
+          <span className="form-optional">optionnel</span>
+        </label>
+        <textarea
+          className="form-textarea"
+          rows={3}
+          placeholder="Ex : pas d'eau sur site, retard de livraison béton, paiement journalier non versé…"
+          value={notes}
+          onChange={e => setNotes(e.target.value)}
+          maxLength={2000}
+        />
+        {notes.length > 0 && (
+          <span style={{ fontSize: 11, color: 'var(--text-muted)', display: 'block', marginTop: 4 }}>
+            {notes.length} / 2000 caractères
+          </span>
+        )}
       </div>
 
       {error && <p className="form-error">{error}</p>}

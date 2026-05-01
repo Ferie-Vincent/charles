@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#1e2433"/>
+  <!-- Hard hat shape -->
+  <path d="M256 120 C180 120 120 175 115 245 L100 245 L100 265 L412 265 L412 245 L397 245 C392 175 332 120 256 120Z" fill="#f97316"/>
+  <rect x="105" y="265" width="302" height="28" rx="14" fill="#f97316"/>
+  <rect x="200" y="240" width="112" height="8" rx="4" fill="#1e2433" opacity="0.4"/>
+  <!-- Brim line -->
+  <rect x="80" y="285" width="352" height="12" rx="6" fill="#ea6a0a"/>
+</svg>
