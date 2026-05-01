@@ -4,10 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\DqeVersion;
 use App\Models\Project;
-use GuzzleHttp\Client;
-use GuzzleHttp\Exception\ClientException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 
 class SituationTravauxController extends Controller
 {
@@ -29,7 +28,7 @@ class SituationTravauxController extends Controller
         }
 
         // Load DQE version — prefer the one requested, else latest validated
-        $dqeVersion = $data['dqe_version_id']
+        $dqeVersion = ($data['dqe_version_id'] ?? null)
             ? DqeVersion::with('lines')->find($data['dqe_version_id'])
             : $project->dqeVersions()->with('lines')->where('status', 'validated')->latest()->first();
 
@@ -48,22 +47,21 @@ class SituationTravauxController extends Controller
 
         $prompt = $this->buildPrompt($project, $dqeVersion, $avancement, $budgetTotal, $incidentCount, $totalLogs, $workersAvg, $lastLogDate, $data['periode']);
 
-        try {
-            $content = $groqKey
-                ? $this->callGroq($groqKey, $prompt)
-                : $this->callAnthropic($anthropicKey, $prompt);
+        $content = $groqKey
+            ? $this->callGroq($groqKey, $prompt)
+            : $this->callAnthropic($anthropicKey, $prompt);
 
-            return response()->json([
-                'situation'      => $content,
-                'dqe_version'    => $dqeVersion->name,
-                'dqe_version_id' => $dqeVersion->id,
-                'total_ht'       => $dqeVersion->total_ht,
-                'avancement'     => $avancement,
-            ]);
-        } catch (ClientException $e) {
-            $msg = json_decode($e->getResponse()->getBody()->getContents(), true)['error']['message'] ?? $e->getMessage();
-            return response()->json(['error' => $msg], 502);
+        if (isset($content['error'])) {
+            return response()->json(['error' => $content['error']], 502);
         }
+
+        return response()->json([
+            'situation'      => $content['text'],
+            'dqe_version'    => $dqeVersion->name,
+            'dqe_version_id' => $dqeVersion->id,
+            'total_ht'       => $dqeVersion->total_ht,
+            'avancement'     => $avancement,
+        ]);
     }
 
     public function versions(Project $project): JsonResponse
@@ -78,41 +76,41 @@ class SituationTravauxController extends Controller
         return response()->json($versions);
     }
 
-    private function callGroq(string $key, string $prompt): string
+    private function callGroq(string $key, string $prompt): array
     {
-        $client   = new Client(['timeout' => 45]);
-        $response = $client->post('https://api.groq.com/openai/v1/chat/completions', [
-            'headers' => [
-                'Authorization' => 'Bearer ' . $key,
-                'content-type'  => 'application/json',
-            ],
-            'json' => [
+        $response = Http::timeout(45)
+            ->withToken($key)
+            ->post('https://api.groq.com/openai/v1/chat/completions', [
                 'model'      => 'llama-3.1-8b-instant',
                 'max_tokens' => 2500,
                 'messages'   => [['role' => 'user', 'content' => $prompt]],
-            ],
-        ]);
-        $body = json_decode($response->getBody()->getContents(), true);
-        return $body['choices'][0]['message']['content'] ?? '';
+            ]);
+
+        if ($response->failed()) {
+            return ['error' => $response->json('error.message') ?? 'Groq API error'];
+        }
+
+        return ['text' => $response->json('choices.0.message.content') ?? ''];
     }
 
-    private function callAnthropic(string $key, string $prompt): string
+    private function callAnthropic(string $key, string $prompt): array
     {
-        $client   = new Client(['timeout' => 45]);
-        $response = $client->post('https://api.anthropic.com/v1/messages', [
-            'headers' => [
+        $response = Http::timeout(45)
+            ->withHeaders([
                 'x-api-key'         => $key,
                 'anthropic-version' => '2023-06-01',
-                'content-type'      => 'application/json',
-            ],
-            'json' => [
+            ])
+            ->post('https://api.anthropic.com/v1/messages', [
                 'model'      => 'claude-haiku-4-5-20251001',
                 'max_tokens' => 2500,
                 'messages'   => [['role' => 'user', 'content' => $prompt]],
-            ],
-        ]);
-        $body = json_decode($response->getBody()->getContents(), true);
-        return $body['content'][0]['text'] ?? '';
+            ]);
+
+        if ($response->failed()) {
+            return ['error' => $response->json('error.message') ?? 'Anthropic API error'];
+        }
+
+        return ['text' => $response->json('content.0.text') ?? ''];
     }
 
     private function buildPrompt(
