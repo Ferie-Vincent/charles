@@ -17,6 +17,8 @@ use App\Http\Controllers\PortfolioCostsController;
 use App\Http\Controllers\PortfolioEvaluationController;
 use App\Http\Controllers\PortfolioQhseController;
 use App\Http\Controllers\PortfolioReportingController;
+use App\Http\Controllers\PortfolioDqeController;
+use App\Http\Controllers\DqeVersionController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/health', function () {
@@ -42,6 +44,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/portfolio/evaluation', [PortfolioEvaluationController::class, 'index']);
     Route::get('/portfolio/qhse', [PortfolioQhseController::class, 'index']);
     Route::get('/portfolio/reports', [PortfolioReportingController::class, 'index']);
+    Route::get('/portfolio/dqe', [PortfolioDqeController::class, 'index']);
     Route::get('/projects', [ProjectController::class, 'index']);
     Route::post('/projects', [ProjectController::class, 'store']);
     Route::get('/projects/{project}', [ProjectController::class, 'show']);
@@ -67,4 +70,14 @@ Route::middleware('auth')->group(function () {
     Route::get('/projects/{project}/report/pdf', [ProjectReportController::class, 'pdf']);
     Route::get('/projects/{project}/reports', [ProjectReportController::class, 'index']);
     Route::get('/projects/{project}/reports/{report}/download', [ProjectReportController::class, 'download']);
+    // DQE
+    Route::get('/projects/{project}/dqe-versions', [DqeVersionController::class, 'index']);
+    Route::post('/projects/{project}/dqe-versions', [DqeVersionController::class, 'store']);
+    Route::get('/projects/{project}/dqe-versions/{dqeVersion}', [DqeVersionController::class, 'show']);
+    Route::put('/projects/{project}/dqe-versions/{dqeVersion}', [DqeVersionController::class, 'update']);
+    Route::delete('/projects/{project}/dqe-versions/{dqeVersion}', [DqeVersionController::class, 'destroy']);
+    Route::post('/projects/{project}/dqe-versions/{dqeVersion}/lines', [DqeVersionController::class, 'storeLine']);
+    Route::put('/projects/{project}/dqe-versions/{dqeVersion}/lines/{dqeLine}', [DqeVersionController::class, 'updateLine']);
+    Route::delete('/projects/{project}/dqe-versions/{dqeVersion}/lines/{dqeLine}', [DqeVersionController::class, 'destroyLine']);
+    Route::get('/projects/{project}/dqe-versions/{dqeVersion}/pdf', [DqeVersionController::class, 'pdf']);
 });

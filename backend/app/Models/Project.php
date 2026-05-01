@@ -71,4 +71,9 @@ class Project extends Model
     {
         return $this->hasMany(ProjectReport::class);
     }
+
+    public function dqeVersions(): HasMany
+    {
+        return $this->hasMany(DqeVersion::class);
+    }
 }

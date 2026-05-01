@@ -13,6 +13,8 @@ import EvaluationPage from './features/evaluation/pages/EvaluationPage';
 import QhsePage from './features/qhse/pages/QhsePage';
 import CostsPage from './features/costs/pages/CostsPage';
 import ReportingPage from './features/reporting/pages/ReportingPage';
+import DqePage from './features/dqe/pages/DqePage';
+import DqeEditorPage from './features/dqe/pages/DqeEditorPage';
 
 function Shell({ children }: { children: ReactNode }) {
   return <AppShell>{children}</AppShell>;
@@ -31,5 +33,7 @@ export const router = createBrowserRouter([
   { path: '/qse', element: <Shell><QhsePage /></Shell> },
   { path: '/costs', element: <Shell><CostsPage /></Shell> },
   { path: '/reporting', element: <Shell><ReportingPage /></Shell> },
+  { path: '/dqe', element: <Shell><DqePage /></Shell> },
+  { path: '/projects/:id/dqe/:versionId', element: <Shell><DqeEditorPage /></Shell> },
   { path: '*', element: <Navigate to="/" replace /> },
 ]);

@@ -17,6 +17,7 @@ import MaterialReceiptsPanel from '../components/MaterialReceiptsPanel';
 import PhaseGanttWidget from '../components/PhaseGanttWidget';
 import MeetingReportModal from '../components/MeetingReportModal';
 import WhatsAppTestButton from '../components/WhatsAppTestButton';
+import DqePanel from '../../dqe/components/DqePanel';
 
 const STATUS_LABELS: Record<string, string> = {
   draft: 'Brouillon', active: 'Actif', completed: 'Terminé', archived: 'Archivé',
@@ -344,6 +345,11 @@ export default function ProjectDetailPage() {
           </div>
         </div>
         <BudgetPanel projectId={project.id} />
+      </div>
+
+      {/* ── DQE ── */}
+      <div style={{ marginBottom: 16 }}>
+        <DqePanel projectId={project.id} />
       </div>
 
       {/* ── Incidents ── */}
