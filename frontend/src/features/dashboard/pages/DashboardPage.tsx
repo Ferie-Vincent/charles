@@ -10,6 +10,7 @@ import DashboardCharts from '../components/DashboardCharts';
 import MapView from '../components/MapView';
 import TimelineView from '../components/TimelineView';
 import AlertsPanel from '../components/AlertsPanel';
+import AiAnalysisWidget from '../components/AiAnalysisWidget';
 
 type RoleGroup = 'direction' | 'terrain' | 'gestion' | 'lecture';
 
@@ -203,6 +204,7 @@ export default function DashboardPage() {
 
       {roleGroup === 'direction' && (
         <>
+          <AiAnalysisWidget />
           <div className="db-top-row">
             <SynthesePortefeuille stats={stats} />
             <AlertsPanel alerts={alerts ?? []} />
