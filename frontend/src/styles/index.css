@@ -3807,6 +3807,25 @@ code {
 .mr-markdown { font-size: 12px; line-height: 1.6; color: var(--text-body); white-space: pre-wrap; font-family: 'Courier New', monospace; margin: 0; }
 .mr-spinner { display: inline-block; width: 12px; height: 12px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite; margin-right: 6px; vertical-align: middle; }
 
+/* ── Situation Travaux Modal extensions ──────────────────── */
+.st-modal { max-width: 720px; }
+.st-form-grid { display: grid; grid-template-columns: 1fr 2fr 1fr; gap: 12px; margin-bottom: 14px; }
+.st-info-banner {
+  display: flex; align-items: flex-start; gap: 10px;
+  background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px;
+  padding: 10px 14px; font-size: 12px; color: #1e40af; margin-bottom: 14px;
+}
+.st-info-banner svg { flex-shrink: 0; margin-top: 1px; }
+.st-result-meta { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+.st-meta-tag {
+  font-size: 11px; font-weight: 600;
+  background: #f1f5f9; color: #475569;
+  padding: 3px 10px; border-radius: 20px;
+  border: 1px solid #e2e8f0;
+}
+.st-output { max-height: 55vh; }
+@media (max-width: 600px) { .st-form-grid { grid-template-columns: 1fr; } }
+
 /* ── Evaluation Page (#execution) ─────────────────────────── */
 .ev-kpi-bar {
   display: grid;

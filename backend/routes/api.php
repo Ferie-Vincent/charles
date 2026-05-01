@@ -19,6 +19,7 @@ use App\Http\Controllers\PortfolioQhseController;
 use App\Http\Controllers\PortfolioReportingController;
 use App\Http\Controllers\PortfolioDqeController;
 use App\Http\Controllers\DqeVersionController;
+use App\Http\Controllers\SituationTravauxController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/health', function () {
@@ -55,6 +56,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/projects/{project}/safety-score', [SafetyScoreController::class, 'show']);
     Route::get('/projects/{project}/material-receipts', [MaterialReceiptController::class, 'index']);
     Route::post('/projects/{project}/meeting-report', [MeetingReportController::class, 'generate']);
+    Route::get('/projects/{project}/situation-travaux/versions', [SituationTravauxController::class, 'versions']);
+    Route::post('/projects/{project}/situation-travaux', [SituationTravauxController::class, 'generate']);
     Route::post('/projects/{project}/whatsapp/test', [WhatsAppTestController::class, 'test']);
     Route::get('/projects/{project}/photos', [ProjectPhotoController::class, 'index']);
     Route::post('/projects/{project}/photos', [ProjectPhotoController::class, 'store']);
