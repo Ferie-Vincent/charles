@@ -1,0 +1,198 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\DqeVersion;
+use App\Models\Project;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\ClientException;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+
+class SituationTravauxController extends Controller
+{
+    public function generate(Request $request, Project $project): JsonResponse
+    {
+        $this->authorize('view', $project);
+
+        $data = $request->validate([
+            'periode'        => ['required', 'string', 'regex:/^\d{4}-\d{2}$/'],
+            'dqe_version_id' => ['nullable', 'integer', 'exists:dqe_versions,id'],
+            'avancement'     => ['nullable', 'numeric', 'min:0', 'max:100'],
+        ]);
+
+        $groqKey      = config('services.groq.key');
+        $anthropicKey = config('services.anthropic.key');
+
+        if (! $groqKey && ! $anthropicKey) {
+            return response()->json(['error' => 'Aucune clé IA configurée (GROQ_API_KEY ou ANTHROPIC_API_KEY).'], 503);
+        }
+
+        // Load DQE version — prefer the one requested, else latest validated
+        $dqeVersion = $data['dqe_version_id']
+            ? DqeVersion::with('lines')->find($data['dqe_version_id'])
+            : $project->dqeVersions()->with('lines')->where('status', 'validated')->latest()->first();
+
+        if (! $dqeVersion) {
+            return response()->json(['error' => 'Aucun DQE validé trouvé pour ce chantier.'], 422);
+        }
+
+        // Gather project context
+        $avancement      = $data['avancement'] ?? $project->progress_percent ?? 0;
+        $budgetTotal     = $project->budgetEntries()->sum('amount');
+        $incidentCount   = $project->incidents()->where('status', 'ouvert')->count();
+        $totalLogs       = $project->dailyLogs()->count();
+        $workersAvg      = round($project->dailyLogs()->avg('workers_count') ?? 0);
+        $lastLog         = $project->dailyLogs()->latest('log_date')->first();
+        $lastLogDate     = $lastLog ? $lastLog->log_date : 'N/A';
+
+        $prompt = $this->buildPrompt($project, $dqeVersion, $avancement, $budgetTotal, $incidentCount, $totalLogs, $workersAvg, $lastLogDate, $data['periode']);
+
+        try {
+            $content = $groqKey
+                ? $this->callGroq($groqKey, $prompt)
+                : $this->callAnthropic($anthropicKey, $prompt);
+
+            return response()->json([
+                'situation'      => $content,
+                'dqe_version'    => $dqeVersion->name,
+                'dqe_version_id' => $dqeVersion->id,
+                'total_ht'       => $dqeVersion->total_ht,
+                'avancement'     => $avancement,
+            ]);
+        } catch (ClientException $e) {
+            $msg = json_decode($e->getResponse()->getBody()->getContents(), true)['error']['message'] ?? $e->getMessage();
+            return response()->json(['error' => $msg], 502);
+        }
+    }
+
+    public function versions(Project $project): JsonResponse
+    {
+        $this->authorize('view', $project);
+
+        $versions = $project->dqeVersions()
+            ->select('id', 'version_number', 'name', 'status', 'total_ht')
+            ->orderByDesc('version_number')
+            ->get();
+
+        return response()->json($versions);
+    }
+
+    private function callGroq(string $key, string $prompt): string
+    {
+        $client   = new Client(['timeout' => 45]);
+        $response = $client->post('https://api.groq.com/openai/v1/chat/completions', [
+            'headers' => [
+                'Authorization' => 'Bearer ' . $key,
+                'content-type'  => 'application/json',
+            ],
+            'json' => [
+                'model'      => 'llama-3.1-8b-instant',
+                'max_tokens' => 2500,
+                'messages'   => [['role' => 'user', 'content' => $prompt]],
+            ],
+        ]);
+        $body = json_decode($response->getBody()->getContents(), true);
+        return $body['choices'][0]['message']['content'] ?? '';
+    }
+
+    private function callAnthropic(string $key, string $prompt): string
+    {
+        $client   = new Client(['timeout' => 45]);
+        $response = $client->post('https://api.anthropic.com/v1/messages', [
+            'headers' => [
+                'x-api-key'         => $key,
+                'anthropic-version' => '2023-06-01',
+                'content-type'      => 'application/json',
+            ],
+            'json' => [
+                'model'      => 'claude-haiku-4-5-20251001',
+                'max_tokens' => 2500,
+                'messages'   => [['role' => 'user', 'content' => $prompt]],
+            ],
+        ]);
+        $body = json_decode($response->getBody()->getContents(), true);
+        return $body['content'][0]['text'] ?? '';
+    }
+
+    private function buildPrompt(
+        Project    $project,
+        DqeVersion $dqe,
+        float      $avancement,
+        float      $budgetTotal,
+        int        $incidentCount,
+        int        $totalLogs,
+        int        $workersAvg,
+        string     $lastLogDate,
+        string     $periode,
+    ): string {
+        [$year, $month] = explode('-', $periode);
+        $moisFr = [
+            '01' => 'janvier', '02' => 'février', '03' => 'mars', '04' => 'avril',
+            '05' => 'mai', '06' => 'juin', '07' => 'juillet', '08' => 'août',
+            '09' => 'septembre', '10' => 'octobre', '11' => 'novembre', '12' => 'décembre',
+        ][$month] ?? $month;
+
+        $montantHT   = number_format($dqe->total_ht, 0, ',', ' ');
+        $montantDu   = number_format($dqe->total_ht * $avancement / 100, 0, ',', ' ');
+        $budgetFmt   = $budgetTotal > 0 ? number_format($budgetTotal, 0, ',', ' ') . ' FCFA' : 'non renseigné';
+
+        // Build lots summary (group lines by lot)
+        $lots = $dqe->lines->groupBy('lot');
+        $lotsText = '';
+        foreach ($lots as $lotName => $lines) {
+            $lotTotal = $lines->sum('montant_ht');
+            $lotPct   = $dqe->total_ht > 0 ? round($lotTotal / $dqe->total_ht * 100, 1) : 0;
+            $lotFmt   = number_format($lotTotal, 0, ',', ' ');
+            $lotsText .= "- {$lotName} : {$lotFmt} FCFA ({$lotPct}% du marché, {$lines->count()} ouvrages)\n";
+        }
+
+        $startDate = $project->start_date
+            ? (new \DateTime($project->start_date))->format('d/m/Y')
+            : 'non défini';
+        $endDate = $project->end_date
+            ? (new \DateTime($project->end_date))->format('d/m/Y')
+            : 'non défini';
+
+        return <<<PROMPT
+Tu es un expert en gestion de projets BTP en Côte d'Ivoire. Rédige une **Situation de Travaux N°{$month}/{$year}** professionnelle et complète en français, en Markdown.
+
+## Informations du chantier
+
+**Chantier :** {$project->name} ({$project->code})
+**Maître d'ouvrage :** Entreprise Charles
+**Période :** {$moisFr} {$year}
+**Date de début :** {$startDate}
+**Date de fin prévue :** {$endDate}
+**Dernier pointage terrain :** {$lastLogDate}
+
+## Marché (DQE — {$dqe->name})
+
+**Montant du marché HT :** {$montantHT} FCFA
+**Nombre de lots :** {$lots->count()}
+**Répartition par lot :**
+{$lotsText}
+
+## Avancement & activité
+
+**Avancement global :** {$avancement}%
+**Montant dû à ce stade :** {$montantDu} FCFA
+**Engagements budgétaires :** {$budgetFmt}
+**Jours de pointage journal :** {$totalLogs} jours
+**Effectif moyen :** {$workersAvg} ouvriers/jour
+**Incidents ouverts :** {$incidentCount}
+
+## Ce que tu dois produire
+
+Rédige une situation de travaux officielle avec :
+1. **En-tête** — références du chantier, période, DQE de référence
+2. **Avancement par lot** — pour chaque lot, estime le pourcentage réalisé en cohérence avec l'avancement global de {$avancement}% (répartis de façon réaliste selon la nature des travaux BTP)
+3. **Tableau de décompte** — colonnes : Lot | Montant marché (FCFA) | % réalisé | Montant réalisé (FCFA)
+4. **Récapitulatif financier** — montant HT réalisé, TVA 18%, montant TTC, déduction éventuelle, **NET À PAYER**
+5. **Observations terrain** — commentaire sur l'avancement, les risques, les points d'attention (basé sur {$incidentCount} incident(s) ouvert(s))
+6. **Certifications** — bloc signature : Conducteur de travaux | Chef de chantier | Maître d'œuvre
+
+Style : formel, chiffré, professionnel. Utilise des tableaux Markdown. Ne pas inventer de données non fournies.
+PROMPT;
+    }
+}

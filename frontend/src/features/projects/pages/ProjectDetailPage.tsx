@@ -16,6 +16,7 @@ import SafetyScoreWidget from '../components/SafetyScoreWidget';
 import MaterialReceiptsPanel from '../components/MaterialReceiptsPanel';
 import PhaseGanttWidget from '../components/PhaseGanttWidget';
 import MeetingReportModal from '../components/MeetingReportModal';
+import SituationTravauxModal from '../components/SituationTravauxModal';
 import WhatsAppTestButton from '../components/WhatsAppTestButton';
 import DqePanel from '../../dqe/components/DqePanel';
 
@@ -68,6 +69,7 @@ export default function ProjectDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showMeetingModal, setShowMeetingModal] = useState(false);
+  const [showSituationModal, setShowSituationModal] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -182,6 +184,16 @@ export default function ProjectDetailPage() {
                 </svg>
                 CR Réunion IA
               </button>
+              <button
+                className="proj-hero__report-btn"
+                onClick={() => setShowSituationModal(true)}
+                style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', color: '#fff' }}
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="13" height="13">
+                  <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+                </svg>
+                Situation Travaux IA
+              </button>
             </div>
           </div>
         </div>
@@ -189,6 +201,9 @@ export default function ProjectDetailPage() {
 
       {showMeetingModal && (
         <MeetingReportModal projectId={project.id} onClose={() => setShowMeetingModal(false)} />
+      )}
+      {showSituationModal && (
+        <SituationTravauxModal projectId={project.id} onClose={() => setShowSituationModal(false)} />
       )}
 
       {/* ── KPI strip ── */}
