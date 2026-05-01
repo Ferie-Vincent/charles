@@ -9,6 +9,10 @@ import ProjectDetailPage from './features/projects/pages/ProjectDetailPage';
 import JournalPage from './features/projects/pages/JournalPage';
 import MapPage from './features/map/pages/MapPage';
 import TimelinePage from './features/timeline/pages/TimelinePage';
+import EvaluationPage from './features/evaluation/pages/EvaluationPage';
+import QhsePage from './features/qhse/pages/QhsePage';
+import CostsPage from './features/costs/pages/CostsPage';
+import ReportingPage from './features/reporting/pages/ReportingPage';
 
 function Shell({ children }: { children: ReactNode }) {
   return <AppShell>{children}</AppShell>;
@@ -23,5 +27,9 @@ export const router = createBrowserRouter([
   { path: '/projects/:id/journal', element: <Shell><JournalPage /></Shell> },
   { path: '/map', element: <Shell><MapPage /></Shell> },
   { path: '/timeline', element: <Shell><TimelinePage /></Shell> },
+  { path: '/execution', element: <Shell><EvaluationPage /></Shell> },
+  { path: '/qse', element: <Shell><QhsePage /></Shell> },
+  { path: '/costs', element: <Shell><CostsPage /></Shell> },
+  { path: '/reporting', element: <Shell><ReportingPage /></Shell> },
   { path: '*', element: <Navigate to="/" replace /> },
 ]);

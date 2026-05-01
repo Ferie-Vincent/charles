@@ -13,6 +13,10 @@ use App\Http\Controllers\MaterialReceiptController;
 use App\Http\Controllers\MeetingReportController;
 use App\Http\Controllers\WhatsAppTestController;
 use App\Http\Controllers\SafetyScoreController;
+use App\Http\Controllers\PortfolioCostsController;
+use App\Http\Controllers\PortfolioEvaluationController;
+use App\Http\Controllers\PortfolioQhseController;
+use App\Http\Controllers\PortfolioReportingController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/health', function () {
@@ -34,6 +38,10 @@ Route::prefix('auth')->group(function () {
 
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index']);
+    Route::get('/portfolio/costs', [PortfolioCostsController::class, 'index']);
+    Route::get('/portfolio/evaluation', [PortfolioEvaluationController::class, 'index']);
+    Route::get('/portfolio/qhse', [PortfolioQhseController::class, 'index']);
+    Route::get('/portfolio/reports', [PortfolioReportingController::class, 'index']);
     Route::get('/projects', [ProjectController::class, 'index']);
     Route::post('/projects', [ProjectController::class, 'store']);
     Route::get('/projects/{project}', [ProjectController::class, 'show']);
