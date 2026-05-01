@@ -24,9 +24,12 @@ export type Project = {
   name: string;
   status: string;
   location: string | null;
+  latitude: number | null;
+  longitude: number | null;
   budget_amount: string;
   start_date: string | null;
   end_date: string | null;
+  target_progress: number | null;
   members?: ProjectMember[];
   activities?: ProjectActivity[];
 };

@@ -35,4 +35,19 @@ return [
         ],
     ],
 
+    'anthropic' => [
+        'key' => env('ANTHROPIC_API_KEY'),
+    ],
+
+    'groq' => [
+        'key' => env('GROQ_API_KEY'),
+    ],
+
+    'twilio' => [
+        'sid'   => env('TWILIO_ACCOUNT_SID'),
+        'token' => env('TWILIO_AUTH_TOKEN'),
+        'from'  => env('TWILIO_WHATSAPP_FROM', 'whatsapp:+14155238886'),
+        'to'    => env('WHATSAPP_ALERT_TO'),
+    ],
+
 ];
