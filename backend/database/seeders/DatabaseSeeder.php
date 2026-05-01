@@ -14,6 +14,7 @@ class DatabaseSeeder extends Seeder
             ProjectSeeder::class,
             ProjectMemberSeeder::class,
             ProjectActivitySeeder::class,
+            DqeSeeder::class,
         ]);
     }
 }
