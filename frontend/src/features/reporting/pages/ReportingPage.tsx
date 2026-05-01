@@ -2,10 +2,10 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   getPortfolioReports,
-  reportDownloadUrl,
   type PortfolioReport,
   type PortfolioReportStats,
 } from '../api/get-portfolio-reports';
+import { downloadReport } from '../../../lib/download-report';
 import PageHeader from '../../../components/ui/PageHeader';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -246,14 +246,12 @@ export default function ReportingPage() {
                     {formatCreatedAt(r.created_at)}
                   </td>
                   <td className="rp-td rp-td--center">
-                    <a
-                      href={reportDownloadUrl(r.project_id, r.id)}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                    <button
                       className="rp-download-btn"
+                      onClick={() => downloadReport(r.project_id, r.id, r.filename)}
                     >
                       ↓ PDF
-                    </a>
+                    </button>
                   </td>
                 </tr>
               ))}

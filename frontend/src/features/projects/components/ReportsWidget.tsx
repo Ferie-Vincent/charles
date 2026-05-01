@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { getReports, reportDownloadUrl, type ProjectReportMeta } from '../api/get-reports';
+import { getReports, type ProjectReportMeta } from '../api/get-reports';
+import { downloadReport } from '../../../lib/download-report';
 
 function fmtSize(bytes: number): string {
   if (bytes >= 1_000_000) return (bytes / 1_000_000).toFixed(1) + ' Mo';
@@ -54,12 +55,10 @@ export default function ReportsWidget({ projectId }: Props) {
                     {fmtSize(r.size_bytes)}
                   </span>
                 </div>
-                <a
-                  href={reportDownloadUrl(projectId, r.id)}
-                  target="_blank"
-                  rel="noreferrer"
+                <button
                   className="rw-dl-btn"
                   title="Télécharger"
+                  onClick={() => downloadReport(projectId, r.id, r.filename)}
                 >
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="13" height="13">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
@@ -67,7 +66,7 @@ export default function ReportsWidget({ projectId }: Props) {
                     <line x1="12" y1="15" x2="12" y2="3"/>
                   </svg>
                   PDF
-                </a>
+                </button>
               </div>
             );
           })}
