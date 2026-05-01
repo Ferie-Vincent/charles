@@ -20,6 +20,7 @@ use App\Http\Controllers\PortfolioReportingController;
 use App\Http\Controllers\PortfolioDqeController;
 use App\Http\Controllers\DqeVersionController;
 use App\Http\Controllers\SituationTravauxController;
+use App\Http\Controllers\PortfolioAnalysisController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/health', function () {
@@ -46,6 +47,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/portfolio/qhse', [PortfolioQhseController::class, 'index']);
     Route::get('/portfolio/reports', [PortfolioReportingController::class, 'index']);
     Route::get('/portfolio/dqe', [PortfolioDqeController::class, 'index']);
+    Route::post('/portfolio/ai-analysis', [PortfolioAnalysisController::class, 'generate']);
     Route::get('/projects', [ProjectController::class, 'index']);
     Route::post('/projects', [ProjectController::class, 'store']);
     Route::get('/projects/{project}', [ProjectController::class, 'show']);
