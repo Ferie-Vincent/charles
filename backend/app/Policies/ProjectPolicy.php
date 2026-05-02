@@ -14,7 +14,15 @@ class ProjectPolicy
 
     public function view(User $user, Project $project): bool
     {
-        return $user->company_id === $project->company_id;
+        if ($user->company_id !== $project->company_id) {
+            return false;
+        }
+
+        if (in_array($user->role->name, ['chef-chantier', 'conducteur-travaux'])) {
+            return $project->members()->where('user_id', $user->id)->exists();
+        }
+
+        return true;
     }
 
     public function create(User $user): bool

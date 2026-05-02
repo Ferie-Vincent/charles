@@ -14,14 +14,14 @@ class ProjectController extends Controller
     {
         $this->authorize('viewAny', Project::class);
 
-        $projects = Project::query()
-            ->where('company_id', $request->user()->company_id)
-            ->latest()
-            ->get();
+        $user  = $request->user();
+        $query = Project::query()->where('company_id', $user->company_id);
 
-        return response()->json([
-            'data' => $projects,
-        ]);
+        if (in_array($user->role->name, ['chef-chantier', 'conducteur-travaux'])) {
+            $query->whereHas('members', fn ($q) => $q->where('user_id', $user->id));
+        }
+
+        return response()->json(['data' => $query->latest()->get()]);
     }
 
     public function store(StoreProjectRequest $request): JsonResponse
