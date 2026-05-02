@@ -8,6 +8,7 @@ import {
 } from '../api/purchase-orders';
 import { getSuppliers, type GlobalSupplier } from '../../suppliers/api/suppliers';
 import { useAuth } from '../../auth/stores/auth-store';
+import PageHeader from '../../../components/ui/PageHeader';
 
 const fmt = (n: number) =>
   n >= 1_000_000 ? `${(n / 1_000_000).toFixed(1)} M FCFA` :
@@ -125,61 +126,94 @@ export default function AchatsPage() {
   const approvedThisMonth = orders.filter(o => o.status === 'approuve' && o.created_at.startsWith(thisMonth));
 
   return (
-    <div className="achats-page">
-
-      <div className="supp-header">
-        <div>
-          <p className="supp-header__label">MOYENS GÉNÉRAUX</p>
-          <h1 className="supp-header__title">Bons de Commande</h1>
-          <p className="supp-header__sub">Initier · Soumettre · Approuver · Réceptionner</p>
-        </div>
-        <button className="btn btn--primary" onClick={() => { setModal(true); setForm({ items: [{ ...EMPTY_ITEM }] }); }}>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="14" height="14"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          Nouveau BDC
-        </button>
-      </div>
+    <div>
+      <PageHeader
+        title="Bons de Commande"
+        subtitle="Initier · Soumettre · Approuver · Réceptionner"
+        action={
+          <button className="btn-primary" onClick={() => { setModal(true); setForm({ items: [{ ...EMPTY_ITEM }] }); }}>
+            + Nouveau BDC
+          </button>
+        }
+      />
 
       {isApprover && pendingOrders.length > 0 && (
-        <div className="acct-pending-banner">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <div className="acct-pending-banner" style={{ marginBottom: 16 }}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
           <strong>{pendingOrders.length} BDC en attente</strong>
           <span>— {fmt(pendingOrders.reduce((s, o) => s + o.total_amount, 0))} à valider</span>
         </div>
       )}
 
-      <div className="supp-kpi-row">
-        <div className="supp-kpi">
-          <span className="supp-kpi__val">{orders.filter(o => o.status === 'soumis').length}</span>
-          <span className="supp-kpi__lbl">En attente d'approbation</span>
+      <div className="proj-kpi-row">
+        <div className="proj-kpi">
+          <div className="proj-kpi__icon proj-kpi__icon--orange">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+            </svg>
+          </div>
+          <div className="proj-kpi__body">
+            <div className="proj-kpi__value">{orders.filter(o => o.status === 'soumis').length}</div>
+            <div className="proj-kpi__label">En attente d'approbation</div>
+          </div>
         </div>
-        <div className="supp-kpi">
-          <span className="supp-kpi__val">{orders.filter(o => o.status === 'approuve').length}</span>
-          <span className="supp-kpi__lbl">Approuvés (en cours)</span>
+
+        <div className="proj-kpi">
+          <div className="proj-kpi__icon proj-kpi__icon--green">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+          </div>
+          <div className="proj-kpi__body">
+            <div className="proj-kpi__value">{orders.filter(o => o.status === 'approuve').length}</div>
+            <div className="proj-kpi__label">Approuvés (en cours)</div>
+          </div>
         </div>
-        <div className="supp-kpi">
-          <span className="supp-kpi__val">{orders.filter(o => o.status === 'recu').length}</span>
-          <span className="supp-kpi__lbl">Réceptionnés</span>
+
+        <div className="proj-kpi">
+          <div className="proj-kpi__icon proj-kpi__icon--teal">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+            </svg>
+          </div>
+          <div className="proj-kpi__body">
+            <div className="proj-kpi__value">{orders.filter(o => o.status === 'recu').length}</div>
+            <div className="proj-kpi__label">Réceptionnés</div>
+          </div>
         </div>
-        <div className="supp-kpi">
-          <span className="supp-kpi__val">{fmt(approvedThisMonth.reduce((s, o) => s + o.total_amount, 0))}</span>
-          <span className="supp-kpi__lbl">Approuvé ce mois</span>
+
+        <div className="proj-kpi">
+          <div className="proj-kpi__icon proj-kpi__icon--blue">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+            </svg>
+          </div>
+          <div className="proj-kpi__body">
+            <div className="proj-kpi__value" style={{ fontSize: 15 }}>{fmt(approvedThisMonth.reduce((s, o) => s + o.total_amount, 0))}</div>
+            <div className="proj-kpi__label">Approuvé ce mois</div>
+          </div>
         </div>
       </div>
 
-      <div className="supp-cat-filters" style={{ paddingTop: 4 }}>
-        {(['', 'soumis', 'approuve', 'rejete', 'recu'] as const).map(s => {
-          const count = s ? orders.filter(o => o.status === s).length : orders.length;
-          return (
-            <button key={s} className={`dqe-filter-btn ${statusFilter === s ? 'dqe-filter-btn--active' : ''}`} onClick={() => setStatusFilter(s)}>
-              {s ? BDC_STATUS_LABEL[s] : 'Tous'} <span className="dqe-filter-count">{count}</span>
-            </button>
-          );
-        })}
-      </div>
+      <div style={{ background: 'var(--bg-panel)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
+        {/* Filter tabs */}
+        <div style={{ display: 'flex', gap: 6, padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>
+          {(['', 'soumis', 'approuve', 'rejete', 'recu'] as const).map(s => {
+            const count = s ? orders.filter(o => o.status === s).length : orders.length;
+            const active = statusFilter === s;
+            return (
+              <button key={s} className={`bud-tab${active ? ' bud-tab--active' : ''}`} onClick={() => setStatusFilter(s)}>
+                {s ? BDC_STATUS_LABEL[s] : 'Tous'}
+                <span style={{ marginLeft: 5, fontSize: 10, fontWeight: 700, background: active ? 'rgba(255,255,255,0.2)' : 'var(--border)', color: active ? 'inherit' : 'var(--text-muted)', borderRadius: 4, padding: '1px 5px' }}>{count}</span>
+              </button>
+            );
+          })}
+        </div>
 
-      {loading ? <p style={{ padding: 24, color: 'var(--text-muted)' }}>Chargement…</p> : (
-        <div className="acct-table-wrap">
-          <table className="acct-table">
+        {loading ? (
+          <p style={{ padding: '2rem', color: 'var(--text-muted)', textAlign: 'center' }}>Chargement…</p>
+        ) : (
+          <table className="data-table">
             <thead>
               <tr>
                 <th>Référence</th>
@@ -194,7 +228,7 @@ export default function AchatsPage() {
               </tr>
             </thead>
             <tbody>
-              {filtered.length === 0 && <tr><td colSpan={9} className="acct-empty">Aucun bon de commande</td></tr>}
+              {filtered.length === 0 && <tr><td colSpan={9} style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>Aucun bon de commande</td></tr>}
               {filtered.map(order => {
                 const sc = BDC_STATUS_COLOR[order.status] ?? '#94a3b8';
                 return (
@@ -203,18 +237,16 @@ export default function AchatsPage() {
                       <button className="bdc-ref-btn" onClick={() => setDetail(order)}>{order.reference}</button>
                     </td>
                     <td>{order.supplier?.name ?? '—'}</td>
-                    <td>{order.project ? <span className="acct-feed__link">{order.project.code}</span> : '—'}</td>
+                    <td>{order.project ? <span style={{ color: 'var(--accent)', fontWeight: 500 }}>{order.project.code}</span> : '—'}</td>
                     <td style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>{order.items.length} ligne{order.items.length > 1 ? 's' : ''}</td>
                     <td style={{ textAlign: 'right', fontWeight: 700 }}>{fmt(order.total_amount)}</td>
-                    <td style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>{order.expected_delivery ? fmtDate(order.expected_delivery) : '—'}</td>
+                    <td style={{ color: 'var(--text-muted)', fontSize: '0.82rem', whiteSpace: 'nowrap' }}>{order.expected_delivery ? fmtDate(order.expected_delivery) : '—'}</td>
                     <td>
                       <span className="acct-status-badge" style={{ background: `${sc}15`, color: sc, borderColor: `${sc}40` }}>
                         {BDC_STATUS_LABEL[order.status]}
                       </span>
                       {order.status === 'recu' && (order.delivery_note_path || order.delivery_photos?.length) && (
-                        <p style={{ margin: '3px 0 0', fontSize: '0.74rem', color: '#10b981', fontWeight: 600 }}>
-                          📎 Pièces jointes
-                        </p>
+                        <p style={{ margin: '3px 0 0', fontSize: '0.74rem', color: '#10b981', fontWeight: 600 }}>📎 Pièces jointes</p>
                       )}
                       {order.status === 'rejete' && order.rejection_reason && (
                         <p className="acct-rejection-reason">{order.rejection_reason}</p>
@@ -229,24 +261,24 @@ export default function AchatsPage() {
                         {isApprover && order.status === 'soumis' && (
                           <>
                             <button className="btn btn--sm acct-btn--approve" onClick={() => handleApprove(order.id)}>
-                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="11" height="11"><polyline points="20 6 9 17 4 12"/></svg>
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" width="11" height="11"><polyline points="20 6 9 17 4 12"/></svg>
                               Approuver
                             </button>
                             <button className="btn btn--sm acct-btn--reject" onClick={() => setRejectModal({ id: order.id, reason: '' })}>
-                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="11" height="11"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" width="11" height="11"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                               Rejeter
                             </button>
                           </>
                         )}
                         {order.status === 'approuve' && (
                           <button className="btn btn--sm btn--secondary" onClick={() => openReceive(order)}>
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="11" height="11"><polyline points="20 6 9 17 4 12"/></svg>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="11" height="11"><polyline points="20 6 9 17 4 12"/></svg>
                             Réceptionner
                           </button>
                         )}
                         {['soumis', 'brouillon', 'rejete'].includes(order.status) && (
                           <button className="btn-icon btn-icon--delete" onClick={() => handleDelete(order.id)}>
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="13" height="13"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="13" height="13"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
                           </button>
                         )}
                       </div>
@@ -256,8 +288,8 @@ export default function AchatsPage() {
               })}
             </tbody>
           </table>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* ── Receive + delivery docs modal ── */}
       {receiveModal && (
