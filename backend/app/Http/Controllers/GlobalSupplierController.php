@@ -2,34 +2,32 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Project;
 use App\Models\Supplier;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
-class SupplierController extends Controller
+class GlobalSupplierController extends Controller
 {
-    public function index(Project $project): JsonResponse
-    {
-        $this->authorize('view', $project);
+    private const CATEGORIES = ['travaux', 'fournitures', 'services', 'sous-traitance', 'location'];
 
-        $suppliers = $project->suppliers()
+    public function index(Request $request): JsonResponse
+    {
+        $suppliers = Supplier::where('company_id', $request->user()->company_id)
             ->withCount('invoices')
             ->withSum('invoices', 'amount_ht')
+            ->with('project:id,name,code')
             ->orderBy('name')
             ->get();
 
         return response()->json($suppliers);
     }
 
-    public function store(Request $request, Project $project): JsonResponse
+    public function store(Request $request): JsonResponse
     {
-        $this->authorize('update', $project);
-
         $data = $request->validate([
             'name'            => 'required|string|max:255',
-            'category'        => 'required|in:travaux,fournitures,services,sous-traitance,location',
+            'category'        => 'required|in:' . implode(',', self::CATEGORIES),
             'contact_name'    => 'nullable|string|max:255',
             'phone'           => 'nullable|string|max:30',
             'email'           => 'nullable|email|max:255',
@@ -37,7 +35,7 @@ class SupplierController extends Controller
             'notes'           => 'nullable|string|max:1000',
         ]);
 
-        $supplier = $project->suppliers()->create([
+        $supplier = Supplier::create([
             ...$data,
             'company_id' => $request->user()->company_id,
             'created_by' => $request->user()->id,
@@ -46,14 +44,24 @@ class SupplierController extends Controller
         return response()->json($supplier, 201);
     }
 
-    public function update(Request $request, Project $project, Supplier $supplier): JsonResponse
+    public function show(Request $request, Supplier $supplier): JsonResponse
     {
-        $this->authorize('update', $project);
-        abort_if($supplier->project_id !== $project->id, 404);
+        abort_if($supplier->company_id !== $request->user()->company_id, 404);
+
+        $supplier->loadCount('invoices')
+                 ->loadSum('invoices', 'amount_ht')
+                 ->load('project:id,name,code', 'invoices.project:id,name,code');
+
+        return response()->json($supplier);
+    }
+
+    public function update(Request $request, Supplier $supplier): JsonResponse
+    {
+        abort_if($supplier->company_id !== $request->user()->company_id, 403);
 
         $data = $request->validate([
-            'name'            => 'required|string|max:255',
-            'category'        => 'required|in:travaux,fournitures,services,sous-traitance,location',
+            'name'            => 'sometimes|required|string|max:255',
+            'category'        => 'sometimes|required|in:' . implode(',', self::CATEGORIES),
             'contact_name'    => 'nullable|string|max:255',
             'phone'           => 'nullable|string|max:30',
             'email'           => 'nullable|email|max:255',
@@ -66,10 +74,11 @@ class SupplierController extends Controller
         return response()->json($supplier);
     }
 
-    public function destroy(Project $project, Supplier $supplier): Response
+    public function destroy(Request $request, Supplier $supplier): Response
     {
-        $this->authorize('update', $project);
-        abort_if($supplier->project_id !== $project->id, 404);
+        abort_if($supplier->company_id !== $request->user()->company_id, 403);
+        abort_if($supplier->invoices()->exists(), 422);
+
         $supplier->delete();
         return response()->noContent();
     }

@@ -20,6 +20,7 @@ import UsersPage from './features/users/pages/UsersPage';
 import PermissionsPage from './features/permissions/pages/PermissionsPage';
 import ProjectAccountingPage from './features/accounting/pages/ProjectAccountingPage';
 import AccountingDashboardPage from './features/accounting/pages/AccountingDashboardPage';
+import SuppliersPage from './features/suppliers/pages/SuppliersPage';
 
 function Shell({ children }: { children: ReactNode }) {
   return <AppShell>{children}</AppShell>;
@@ -48,6 +49,7 @@ export const router = createBrowserRouter([
   { path: '/execution',                element: <Guarded path="/execution"><EvaluationPage /></Guarded> },
   { path: '/costs',                    element: <Guarded path="/costs"><CostsPage /></Guarded> },
   { path: '/accounting',              element: <Guarded path="/accounting"><AccountingDashboardPage /></Guarded> },
+  { path: '/suppliers',               element: <Guarded path="/suppliers"><SuppliersPage /></Guarded> },
   { path: '/qse',                      element: <Guarded path="/qse"><QhsePage /></Guarded> },
   { path: '/reporting',                element: <Guarded path="/reporting"><ReportingPage /></Guarded> },
   { path: '/users',                    element: <Guarded path="/users"><UsersPage /></Guarded> },

@@ -28,6 +28,7 @@ use App\Http\Controllers\SituationTravauxController;
 use App\Http\Controllers\PortfolioAnalysisController;
 use App\Http\Controllers\PortfolioAccountingController;
 use App\Http\Controllers\GeneralExpenseController;
+use App\Http\Controllers\GlobalSupplierController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/health', function () {
@@ -58,6 +59,11 @@ Route::middleware('auth')->group(function () {
     Route::delete('/users/{user}', [UserController::class, 'destroy']);
     Route::get('/portfolio/costs', [PortfolioCostsController::class, 'index']);
     Route::get('/portfolio/accounting', [PortfolioAccountingController::class, 'index']);
+    Route::get('/suppliers', [GlobalSupplierController::class, 'index']);
+    Route::post('/suppliers', [GlobalSupplierController::class, 'store']);
+    Route::get('/suppliers/{supplier}', [GlobalSupplierController::class, 'show']);
+    Route::put('/suppliers/{supplier}', [GlobalSupplierController::class, 'update']);
+    Route::delete('/suppliers/{supplier}', [GlobalSupplierController::class, 'destroy']);
     Route::get('/expenses', [GeneralExpenseController::class, 'index']);
     Route::post('/expenses', [GeneralExpenseController::class, 'store']);
     Route::put('/expenses/{generalExpense}', [GeneralExpenseController::class, 'update']);

@@ -23,6 +23,7 @@ export const ROLE_ACCESS: Record<string, RoleGroup[]> = {
   '/execution': ['direction', 'gestion'],
   '/costs':       ['direction', 'gestion'],
   '/accounting':  ['direction', 'gestion'],
+  '/suppliers':   ['direction', 'gestion'],
   '/qse':         ['direction', 'terrain'],
   '/reporting': ['direction', 'gestion'],
   '/users':     ['direction'],
