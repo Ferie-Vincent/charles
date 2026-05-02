@@ -151,9 +151,8 @@ export default function ReportingPage() {
 
           {/* Search */}
           <div className="acct-search-wrap" style={{ flex: 1, minWidth: 200, maxWidth: 340 }}>
-            <svg className="acct-search-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth={1.8}>
-              <circle cx="8.5" cy="8.5" r="5.5" />
-              <path d="M15 15l-3.5-3.5" strokeLinecap="round" />
+            <svg className="acct-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
             </svg>
             <input
               type="text"
