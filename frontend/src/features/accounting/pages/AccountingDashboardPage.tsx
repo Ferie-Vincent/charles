@@ -66,6 +66,7 @@ export default function AccountingDashboardPage() {
   const [modal, setModal]       = useState<Partial<GeneralExpense> | null>(null);
   const [saving, setSaving]     = useState(false);
   const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [search, setSearch]     = useState('');
 
   const load = () => {
     setLoading(true);
@@ -104,6 +105,11 @@ export default function AccountingDashboardPage() {
   if (error || !data) return <div className="page-content"><p className="form-error">{error ?? 'Erreur.'}</p></div>;
 
   const { totals, projects, recent_activity, expenses } = data;
+
+  const q = search.toLowerCase().trim();
+  const filteredProjects = q
+    ? projects.filter(p => p.name.toLowerCase().includes(q) || p.code.toLowerCase().includes(q))
+    : projects;
 
   return (
     <div className="acct-dash">
@@ -205,10 +211,30 @@ export default function AccountingDashboardPage() {
         <div className="acct-projects">
           <div className="acct-panel__head">
             <h2 className="acct-panel__title">Chantiers</h2>
-            <span className="acct-panel__count">{projects.length} chantiers</span>
+            <span className="acct-panel__count">{filteredProjects.length}/{projects.length}</span>
+          </div>
+          <div className="acct-search-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="14" height="14" className="acct-search-icon">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input
+              type="text"
+              className="acct-search-input"
+              placeholder="Rechercher un chantier…"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+            />
+            {search && (
+              <button className="acct-search-clear" onClick={() => setSearch('')}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="12" height="12"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            )}
           </div>
           <div className="acct-project-list">
-            {projects.map((p) => {
+            {filteredProjects.length === 0 && (
+              <p className="acct-empty">Aucun chantier trouvé pour « {search} »</p>
+            )}
+            {filteredProjects.map((p) => {
               const barRealise = Math.min(100, p.taux_realise);
               const barEngage  = Math.min(100 - barRealise, p.taux_engage);
               const statusColor = PROJECT_STATUS_COLOR[p.status] ?? '#94a3b8';
