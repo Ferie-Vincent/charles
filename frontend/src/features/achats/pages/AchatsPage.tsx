@@ -334,14 +334,22 @@ export default function AchatsPage() {
                   placeholder="Ex: Cartons en bon état, 2 colis manquants signalés au chauffeur…" />
               </div>
 
-              <div className="acct-approval-notice" style={{ background: 'color-mix(in srgb, #10b981 8%, var(--surface))', borderColor: 'color-mix(in srgb, #10b981 30%, transparent)', color: '#10b981' }}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="14" height="14"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                Les pièces sont stockées de façon sécurisée et consultables depuis le détail du BDC.
-              </div>
+              {!receiveForm.deliveryNote && receiveForm.photos.length === 0 ? (
+                <div className="acct-approval-notice" style={{ background: 'color-mix(in srgb, #ef4444 6%, var(--surface))', borderColor: 'color-mix(in srgb, #ef4444 30%, transparent)', color: '#ef4444' }}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="14" height="14"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                  Un bon de livraison ou au moins une photo est obligatoire pour réceptionner.
+                </div>
+              ) : (
+                <div className="acct-approval-notice" style={{ background: 'color-mix(in srgb, #10b981 8%, var(--surface))', borderColor: 'color-mix(in srgb, #10b981 30%, transparent)', color: '#10b981' }}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="14" height="14"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                  Pièces prêtes — la réception sera enregistrée avec justificatifs.
+                </div>
+              )}
             </div>
             <div className="mr-modal__actions">
               <button className="btn btn--secondary" onClick={() => setReceiveModal(null)}>Annuler</button>
-              <button className="btn btn--primary" onClick={handleReceive} disabled={saving}>
+              <button className="btn btn--primary" onClick={handleReceive}
+                disabled={saving || (!receiveForm.deliveryNote && receiveForm.photos.length === 0)}>
                 {saving ? 'Enregistrement…' : 'Confirmer la réception'}
               </button>
             </div>

@@ -132,11 +132,17 @@ class PurchaseOrderController extends Controller
         abort_if($purchaseOrder->status !== 'approuve', 422, 'Seuls les BDC approuvés peuvent être marqués reçus.');
 
         $request->validate([
-            'delivery_note' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
-            'photos'        => 'nullable|array|max:10',
-            'photos.*'      => 'file|mimes:jpg,jpeg,png,webp|max:5120',
+            'delivery_note'   => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
+            'photos'          => 'nullable|array|max:10',
+            'photos.*'        => 'file|mimes:jpg,jpeg,png,webp|max:5120',
             'reception_notes' => 'nullable|string|max:1000',
         ]);
+
+        abort_if(
+            !$request->hasFile('delivery_note') && !$request->hasFile('photos'),
+            422,
+            'La réception doit être accompagnée d\'un bon de livraison ou d\'au moins une photo.'
+        );
 
         $data = ['status' => 'recu', 'received_at' => now()];
 
