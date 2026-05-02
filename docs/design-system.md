@@ -284,7 +284,7 @@ return (
 | `/projects/*/dqe/*` | DqeEditorPage.tsx | ✅ | ✅ | **Done** |
 | `/costs` | CostsPage.tsx | ✅ | ❌ | **Needs KPIs** |
 | `/ged` | GedPage.tsx | ✅ | ✅ | **Done** |
-| `/qhse` | QhsePage.tsx | ✅ | ❌ | **Needs KPIs** |
+| `/qhse` | QhsePage.tsx | ✅ | ✅ | **Done** |
 | `/reporting` | ReportingPage.tsx | ✅ | ❌ | **Needs KPIs** |
 | `/evaluation` | EvaluationPage.tsx | ✅ | ❌ | **Needs KPIs** |
 | `/operations` | OperationsDashboardPage.tsx | ✅ | ❌ | **Needs KPIs** |
