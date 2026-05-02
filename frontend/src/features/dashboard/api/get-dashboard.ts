@@ -19,7 +19,7 @@ export type ProjectHealth = {
   progress: number;
 };
 
-export type ActiveProject = Project & { health: ProjectHealth };
+export type ActiveProject = Project & { health: ProjectHealth; doc_count: number };
 
 export type LeaderboardEntry = {
   id: number;

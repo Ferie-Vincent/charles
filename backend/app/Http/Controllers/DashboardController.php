@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\DailyLog;
+use App\Models\GedDocument;
 use App\Models\Project;
 use App\Models\ProjectActivity;
 use App\Services\HealthScoreService;
@@ -49,10 +50,19 @@ class DashboardController extends Controller
 
         [$logStats, $latestLog] = $this->fetchLogData($activeProjects);
 
+        $ids      = $activeProjects->pluck('id');
+        $docCounts = $ids->isEmpty() ? collect() : GedDocument::whereIn('project_id', $ids)
+            ->selectRaw('project_id, count(*) as cnt')
+            ->groupBy('project_id')
+            ->pluck('cnt', 'project_id');
+
         $activeProjectsWithHealth = $activeProjects->map(
             fn (Project $p) => array_merge(
                 $p->toArray(),
-                ['health' => $this->computeHealth($p, $logStats, $latestLog)]
+                [
+                    'health'    => $this->computeHealth($p, $logStats, $latestLog),
+                    'doc_count' => (int) ($docCounts->get($p->id, 0)),
+                ]
             )
         )->values();
 
