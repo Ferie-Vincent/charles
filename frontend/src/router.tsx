@@ -15,6 +15,7 @@ import CostsPage from './features/costs/pages/CostsPage';
 import ReportingPage from './features/reporting/pages/ReportingPage';
 import DqePage from './features/dqe/pages/DqePage';
 import DqeEditorPage from './features/dqe/pages/DqeEditorPage';
+import UsersPage from './features/users/pages/UsersPage';
 
 function Shell({ children }: { children: ReactNode }) {
   return <AppShell>{children}</AppShell>;
@@ -35,5 +36,6 @@ export const router = createBrowserRouter([
   { path: '/reporting', element: <Shell><ReportingPage /></Shell> },
   { path: '/dqe', element: <Shell><DqePage /></Shell> },
   { path: '/projects/:id/dqe/:versionId', element: <Shell><DqeEditorPage /></Shell> },
+  { path: '/users', element: <Shell><UsersPage /></Shell> },
   { path: '*', element: <Navigate to="/" replace /> },
 ]);

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\UserController;
 use App\Http\Controllers\BudgetController;
 use App\Http\Controllers\ProjectReportController;
 use App\Http\Controllers\DailyLogController;
@@ -42,6 +43,11 @@ Route::prefix('auth')->group(function () {
 
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index']);
+    Route::get('/users/roles', [UserController::class, 'roles']);
+    Route::get('/users', [UserController::class, 'index']);
+    Route::post('/users', [UserController::class, 'store']);
+    Route::put('/users/{user}', [UserController::class, 'update']);
+    Route::delete('/users/{user}', [UserController::class, 'destroy']);
     Route::get('/portfolio/costs', [PortfolioCostsController::class, 'index']);
     Route::get('/portfolio/evaluation', [PortfolioEvaluationController::class, 'index']);
     Route::get('/portfolio/qhse', [PortfolioQhseController::class, 'index']);
