@@ -6425,3 +6425,162 @@ code {
     display: none;
   }
 }
+
+/* ─── Additional responsive fixes ≤ 768px ─── */
+@media (max-width: 768px) {
+
+  /* KPI bar: scroll horizontally instead of squishing */
+  .kpi-bar {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    flex-wrap: nowrap;
+  }
+  .kpi-bar__item {
+    min-width: 130px;
+    flex-shrink: 0;
+  }
+
+  /* Dashboard detail grid: 6 → 2 cols */
+  .detail-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .card--third { grid-column: span 1; }
+  .card--half  { grid-column: span 2; }
+
+  /* Direction synthèse card: 3 → 1 col */
+  .synthese-mini-stats {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* Timeline card: 4 → 2 cols. minmax(0,1fr) stops items from blowing grid width */
+  .tl-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    overflow-x: hidden;
+  }
+  .tl-card-v2 { min-width: 0; overflow: hidden; }
+
+  /* Log meta grid: 4 → 2 cols */
+  .log-meta-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* Accounting KPI row: 5 → 2 cols */
+  .acct-kpi-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* Accounting body: 2 → 1 col */
+  .acct-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* Suppliers / Stocks / Achats KPI rows: 4 → 2 cols */
+  .supp-kpi-row,
+  .stocks-kpi-row,
+  .achats-kpi-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* BDC items grid: scroll */
+  .bdc-items-head,
+  .bdc-items-row {
+    grid-template-columns: 2fr 1fr 1fr 1.2fr 32px;
+    font-size: 0.7rem;
+  }
+
+  /* Incident form: 3 → 1 col */
+  .inc-form__row {
+    grid-template-columns: 1fr;
+  }
+
+  /* Situation travaux form: 3 → 1 col */
+  .st-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Meeting report form: 2 → 1 col */
+  .mr-form-row {
+    grid-template-columns: 1fr;
+  }
+
+  /* DQE add-form: too complex for narrow screen, stack the inputs */
+  .dqe-add-form__row {
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+
+  /* PVP stage grid: 4 → 2 cols */
+  .pvp__stage-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* GED doc layout: compact */
+  .ged-controls {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  /* Sidebar form in content: full width */
+  .content-with-sidebar {
+    grid-template-columns: 1fr;
+  }
+  .content-sidebar-col {
+    display: none;
+  }
+
+  /* Stock movement form */
+  .stock-form-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ─── Additional responsive fixes ≤ 480px ─── */
+@media (max-width: 480px) {
+
+  /* KPI bar items: even smaller */
+  .kpi-bar__item {
+    min-width: 110px;
+    padding: 0.75rem 0.9rem;
+  }
+  .kpi-bar__value { font-size: 1.3rem; }
+  .kpi-bar__label { font-size: 0.68rem; }
+
+  /* All 4-col KPI rows: 2 cols */
+  .proj-kpi-row,
+  .supp-kpi-row,
+  .stocks-kpi-row,
+  .achats-kpi-row,
+  .acct-kpi-row {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  /* DQE add form: single col */
+  .dqe-add-form__row {
+    grid-template-columns: 1fr;
+  }
+
+  /* BDC hide minor columns */
+  .bdc-items-head .bdc-col--hide-xs,
+  .bdc-items-row .bdc-col--hide-xs {
+    display: none;
+  }
+
+  /* Page header h1: smaller */
+  .page-header h1 {
+    font-size: 1.25rem;
+  }
+
+  /* Cards full padding reduction */
+  .card {
+    padding: 12px;
+    border-radius: 10px;
+  }
+}
+
+/* ─── tl-card-v2 head: prevent overflow on mobile ─── */
+@media (max-width: 768px) {
+  .tl-card-v2__head { overflow: hidden; }
+  .tl-card-v2__name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tl-card-v2__loc  { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}
