@@ -1,3 +1,4 @@
+import SkeletonPage from '../../../components/ui/SkeletonPage';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -174,7 +175,7 @@ export default function StocksPage() {
         </div>
 
         {/* Table */}
-        {loading ? <p style={{ padding: 24, color: 'var(--text-muted)' }}>Chargement…</p> : (
+        {loading ? <SkeletonPage rows={2} /> : (
           <table className="data-table">
             <thead>
               <tr>
@@ -252,7 +253,7 @@ export default function StocksPage() {
           <div className="mr-modal" style={{ maxWidth: 520 }} onClick={e => e.stopPropagation()}>
             <div className="mr-modal__head">
               <h2 className="mr-modal__title">{itemModal.id ? 'Modifier l\'article' : 'Nouvel article'}</h2>
-              <button className="mr-modal__close" onClick={() => setItemModal(null)}>✕</button>
+              <button className="mr-modal__close" aria-label="Fermer" onClick={() => setItemModal(null)}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
             </div>
             <div className="mr-modal__body" style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
@@ -311,7 +312,7 @@ export default function StocksPage() {
                   Stock actuel : <strong style={{ color: movModal.is_low ? '#ef4444' : '#10b981' }}>{fmt(movModal.quantity, movModal.unit)}</strong>
                 </p>
               </div>
-              <button className="mr-modal__close" onClick={() => setMovModal(null)}>✕</button>
+              <button className="mr-modal__close" aria-label="Fermer" onClick={() => setMovModal(null)}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
             </div>
             <div className="mr-modal__body" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               {/* New movement form */}
@@ -379,7 +380,7 @@ export default function StocksPage() {
       {deleteId !== null && (
         <div className="mr-modal-overlay" onClick={() => setDeleteId(null)}>
           <div className="mr-modal" style={{ maxWidth: 380 }} onClick={e => e.stopPropagation()}>
-            <div className="mr-modal__head"><h2 className="mr-modal__title">Supprimer cet article ?</h2><button className="mr-modal__close" onClick={() => setDeleteId(null)}>✕</button></div>
+            <div className="mr-modal__head"><h2 className="mr-modal__title">Supprimer cet article ?</h2><button className="mr-modal__close" aria-label="Fermer" onClick={() => setDeleteId(null)}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
             <div className="mr-modal__body"><p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>L'historique des mouvements sera également supprimé.</p></div>
             <div className="mr-modal__actions">
               <button className="btn btn--secondary" onClick={() => setDeleteId(null)}>Annuler</button>

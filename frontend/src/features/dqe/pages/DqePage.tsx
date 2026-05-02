@@ -1,3 +1,4 @@
+import SkeletonPage from '../../../components/ui/SkeletonPage';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -125,7 +126,7 @@ export default function DqePage() {
         </div>
 
         {isLoading ? (
-          <p style={{ padding: '2rem 1rem', color: 'var(--text-muted)', textAlign: 'center' }}>Chargement…</p>
+          <SkeletonPage rows={2} />
         ) : filtered.length === 0 ? (
           <p className="empty-state">Aucun DQE trouvé.</p>
         ) : (

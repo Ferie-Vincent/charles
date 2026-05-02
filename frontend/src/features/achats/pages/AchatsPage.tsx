@@ -1,3 +1,4 @@
+import SkeletonPage from '../../../components/ui/SkeletonPage';
 import { useEffect, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -212,7 +213,7 @@ export default function AchatsPage() {
         </div>
 
         {loading ? (
-          <p style={{ padding: '2rem', color: 'var(--text-muted)', textAlign: 'center' }}>Chargement…</p>
+          <SkeletonPage rows={2} />
         ) : (
           <table className="data-table">
             <thead>
@@ -306,7 +307,7 @@ export default function AchatsPage() {
                   Joignez les pièces justificatives (optionnel mais recommandé)
                 </p>
               </div>
-              <button className="mr-modal__close" onClick={() => setReceiveModal(null)}>✕</button>
+              <button className="mr-modal__close" aria-label="Fermer" onClick={() => setReceiveModal(null)}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
             </div>
             <div className="mr-modal__body" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
 
@@ -318,7 +319,7 @@ export default function AchatsPage() {
                     <div className="bdc-file-chip">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="14" height="14"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
                       <span>{receiveForm.deliveryNote.name}</span>
-                      <button type="button" onClick={e => { e.stopPropagation(); setReceiveForm(f => ({ ...f, deliveryNote: null })); }}>✕</button>
+                      <button type="button" onClick={e => { e.stopPropagation(); setReceiveForm(f => ({ ...f, deliveryNote: null })); }}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
                     </div>
                   ) : (
                     <span className="bdc-file-placeholder">
@@ -346,7 +347,7 @@ export default function AchatsPage() {
                         <div key={i} className="bdc-file-chip bdc-photo-chip">
                           <img src={URL.createObjectURL(p)} alt={p.name} width={32} height={32} style={{ objectFit: 'cover', borderRadius: 4 }} />
                           <span>{p.name.length > 18 ? p.name.slice(0, 16) + '…' : p.name}</span>
-                          <button type="button" onClick={e => { e.stopPropagation(); setReceiveForm(f => ({ ...f, photos: f.photos.filter((_, j) => j !== i) })); }}>✕</button>
+                          <button type="button" onClick={e => { e.stopPropagation(); setReceiveForm(f => ({ ...f, photos: f.photos.filter((_, j) => j !== i) })); }}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
                         </div>
                       ))}
                       <span className="bdc-file-add-more">+ Ajouter</span>
@@ -399,7 +400,7 @@ export default function AchatsPage() {
           <div className="mr-modal" style={{ maxWidth: 700, maxHeight: '90vh' }} onClick={e => e.stopPropagation()}>
             <div className="mr-modal__head">
               <h2 className="mr-modal__title">Nouveau Bon de Commande</h2>
-              <button className="mr-modal__close" onClick={() => setModal(false)}>✕</button>
+              <button className="mr-modal__close" aria-label="Fermer" onClick={() => setModal(false)}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
             </div>
             <div className="mr-modal__body" style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem', overflowY: 'auto' }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
@@ -477,7 +478,7 @@ export default function AchatsPage() {
                   {BDC_STATUS_LABEL[detail.status]}
                 </span>
               </div>
-              <button className="mr-modal__close" onClick={() => setDetail(null)}>✕</button>
+              <button className="mr-modal__close" aria-label="Fermer" onClick={() => setDetail(null)}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
             </div>
             <div className="mr-modal__body" style={{ overflowY: 'auto' }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 24px', marginBottom: 20, fontSize: '0.84rem' }}>
@@ -486,7 +487,7 @@ export default function AchatsPage() {
                 <div><span style={{ color: 'var(--text-muted)' }}>Demandeur</span><p style={{ margin: '2px 0 0', fontWeight: 600 }}>{detail.requester?.name ?? '—'}</p></div>
                 <div><span style={{ color: 'var(--text-muted)' }}>Livraison souhaitée</span><p style={{ margin: '2px 0 0', fontWeight: 600 }}>{detail.expected_delivery ? fmtDate(detail.expected_delivery) : '—'}</p></div>
                 {detail.received_at && (
-                  <div><span style={{ color: 'var(--text-muted)' }}>Réceptionné le</span><p style={{ margin: '2px 0 0', fontWeight: 600, color: '#10b981' }}>{fmtDate(detail.received_at)}</p></div>
+                  <div><span style={{ color: 'var(--text-muted)' }}>Réceptionné le</span><p style={{ margin: '2px 0 0', fontWeight: 600, color: 'var(--success)' }}>{fmtDate(detail.received_at)}</p></div>
                 )}
               </div>
 
@@ -522,7 +523,7 @@ export default function AchatsPage() {
                     Pièces justificatives de réception
                   </div>
                   {loadingDocs ? (
-                    <p style={{ color: 'var(--text-muted)', fontSize: '0.84rem', padding: '8px 0' }}>Chargement des pièces…</p>
+                    <div className="skeleton" style={{ height: 32, borderRadius: 4, margin: '8px 0' }} />
                   ) : deliveryDocs ? (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                       {deliveryDocs.reception_notes && (
@@ -564,7 +565,7 @@ export default function AchatsPage() {
       {rejectModal && (
         <div className="mr-modal-overlay" onClick={() => setRejectModal(null)}>
           <div className="mr-modal" style={{ maxWidth: 420 }} onClick={e => e.stopPropagation()}>
-            <div className="mr-modal__head"><h2 className="mr-modal__title">Motif de rejet</h2><button className="mr-modal__close" onClick={() => setRejectModal(null)}>✕</button></div>
+            <div className="mr-modal__head"><h2 className="mr-modal__title">Motif de rejet</h2><button className="mr-modal__close" aria-label="Fermer" onClick={() => setRejectModal(null)}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
             <div className="mr-modal__body">
               <div className="form-field">
                 <label className="form-label">Motif *</label>

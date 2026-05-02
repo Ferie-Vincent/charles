@@ -1,3 +1,4 @@
+import SkeletonPage from '../../../components/ui/SkeletonPage';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { getProject } from '../api/get-project';
@@ -137,7 +138,7 @@ export default function JournalPage() {
               onSuccess={() => navigate(`/projects/${id}`)}
             />
           ) : (
-            <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>Chargement…</p>
+            <div className="skeleton skeleton-page__card" style={{ height: 48 }} />
           )}
         </div>
       </div>

@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getDashboard } from '../../dashboard/api/get-dashboard';
 import ProjectMap from '../components/ProjectMap';
+import PageHeader from '../../../components/ui/PageHeader';
+import SkeletonPage from '../../../components/ui/SkeletonPage';
 
 type Filter = 'all' | 'green' | 'orange' | 'red';
 
@@ -27,40 +29,36 @@ export default function MapPage() {
     red:    projects.filter(p => p.health.status === 'red').length,
   };
 
+  if (isLoading) return <div className="page-content"><SkeletonPage rows={2} /></div>;
+
   return (
     <div className="map-page">
-      <div className="map-page__header">
-        <div>
-          <h2 className="map-page__title">Carte des chantiers</h2>
-          <p className="map-page__sub">{projects.filter(p => p.latitude && p.longitude).length} chantiers géolocalisés</p>
-        </div>
-        <div className="map-filter-bar">
-          {FILTER_OPTIONS.map(opt => (
-            <button
-              key={opt.value}
-              type="button"
-              className={`map-filter-btn ${filter === opt.value ? 'map-filter-btn--active' : ''}`}
-              style={filter === opt.value ? { borderColor: opt.color, color: opt.color, background: `${opt.color}14` } : {}}
-              onClick={() => setFilter(opt.value)}
-            >
-              {opt.value !== 'all' && (
-                <span className="map-filter-btn__dot" style={{ background: opt.color }} />
-              )}
-              {opt.label}
-              {opt.value !== 'all' && (
-                <span className="map-filter-btn__count">{counts[opt.value as keyof typeof counts]}</span>
-              )}
-            </button>
-          ))}
-        </div>
+      <PageHeader
+        title="Carte des chantiers"
+        subtitle={`${projects.filter(p => p.latitude && p.longitude).length} chantiers géolocalisés`}
+      />
+      <div className="map-filter-bar" style={{ marginBottom: 12 }}>
+        {FILTER_OPTIONS.map(opt => (
+          <button
+            key={opt.value}
+            type="button"
+            className={`map-filter-btn ${filter === opt.value ? 'map-filter-btn--active' : ''}`}
+            style={filter === opt.value ? { borderColor: opt.color, color: opt.color, background: `${opt.color}14` } : {}}
+            onClick={() => setFilter(opt.value)}
+          >
+            {opt.value !== 'all' && (
+              <span className="map-filter-btn__dot" style={{ background: opt.color }} />
+            )}
+            {opt.label}
+            {opt.value !== 'all' && (
+              <span className="map-filter-btn__count">{counts[opt.value as keyof typeof counts]}</span>
+            )}
+          </button>
+        ))}
       </div>
 
       <div className="map-card">
-        {isLoading ? (
-          <div className="map-loading">Chargement de la carte…</div>
-        ) : (
-          <ProjectMap projects={projects} filter={filter} />
-        )}
+        <ProjectMap projects={projects} filter={filter} />
       </div>
 
       <div className="map-legend">

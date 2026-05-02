@@ -1,3 +1,4 @@
+import SkeletonPage from '../../../components/ui/SkeletonPage';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import PageHeader from '../../../components/ui/PageHeader';
@@ -234,7 +235,7 @@ export default function QhsePage() {
         <h2 className="qh-section__title">Score sécurité par chantier (mois en cours)</h2>
 
         {isLoading && (
-          <div className="qh-loading">Chargement…</div>
+          <div className="skeleton skeleton-page__card" style={{ height: 120 }} />
         )}
 
         {isError && (
@@ -281,7 +282,7 @@ export default function QhsePage() {
         </div>
 
         {isLoading ? (
-          <p style={{ padding: '2rem', color: 'var(--text-muted)', textAlign: 'center' }}>Chargement…</p>
+          <div className="skeleton skeleton-page__card" style={{ height: 80, margin: 16 }} />
         ) : isError ? (
           <p style={{ padding: '2rem', color: 'var(--text-muted)', textAlign: 'center' }}>Impossible de charger les données QHSE.</p>
         ) : (

@@ -264,7 +264,7 @@ export default function AccountingDashboardPage() {
                     </div>
                     <div>
                       <span className="acct-proj-stat__label">Écart</span>
-                      <span className="acct-proj-stat__val" style={{ color: p.ecart >= 0 ? '#10b981' : '#ef4444' }}>
+                      <span className="acct-proj-stat__val" style={{ color: p.ecart >= 0 ? 'var(--success)' : 'var(--danger)' }}>
                         {p.ecart >= 0 ? '+' : ''}{fmt(p.ecart)}
                       </span>
                     </div>
@@ -429,7 +429,7 @@ export default function AccountingDashboardPage() {
           <div className="mr-modal" style={{ maxWidth: 520 }} onClick={e => e.stopPropagation()}>
             <div className="mr-modal__head">
               <h2 className="mr-modal__title">{modal.id ? 'Modifier le décaissement' : 'Nouveau décaissement hors projet'}</h2>
-              <button type="button" className="mr-modal__close" onClick={() => setModal(null)}>✕</button>
+              <button type="button" className="mr-modal__close" aria-label="Fermer" onClick={() => setModal(null)}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
             </div>
             <div className="mr-modal__body" style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
@@ -485,7 +485,7 @@ export default function AccountingDashboardPage() {
           <div className="mr-modal" style={{ maxWidth: 420 }} onClick={e => e.stopPropagation()}>
             <div className="mr-modal__head">
               <h2 className="mr-modal__title">Motif de rejet</h2>
-              <button type="button" className="mr-modal__close" onClick={() => setRejectModal(null)}>✕</button>
+              <button type="button" className="mr-modal__close" aria-label="Fermer" onClick={() => setRejectModal(null)}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
             </div>
             <div className="mr-modal__body">
               <div className="form-field">
@@ -516,7 +516,7 @@ export default function AccountingDashboardPage() {
           <div className="mr-modal" style={{ maxWidth: 380 }} onClick={e => e.stopPropagation()}>
             <div className="mr-modal__head">
               <h2 className="mr-modal__title">Supprimer ce décaissement ?</h2>
-              <button type="button" className="mr-modal__close" onClick={() => setDeleteId(null)}>✕</button>
+              <button type="button" className="mr-modal__close" aria-label="Fermer" onClick={() => setDeleteId(null)}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
             </div>
             <div className="mr-modal__body">
               <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Cette action est irréversible.</p>

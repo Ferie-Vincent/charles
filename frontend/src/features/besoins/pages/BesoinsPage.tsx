@@ -215,7 +215,7 @@ export default function BesoinsPage() {
           })}
         </div>
 
-        {loading ? <p style={{ padding: 24, color: 'var(--text-muted)' }}>Chargement…</p> : (
+        {loading ? <div className="skeleton skeleton-page__card" style={{ margin: 16 }} /> : (
           <table className="data-table">
             <thead>
               <tr>
@@ -262,7 +262,7 @@ export default function BesoinsPage() {
                       {isDirection && b.status === 'soumis' && (
                         <>
                           <button className="btn btn--sm btn--primary" style={{ background: 'var(--success)', borderColor: 'var(--success)', color: '#fff' }} onClick={() => handleApprove(b.id)}>✓</button>
-                          <button className="btn btn--sm btn--danger" onClick={() => setRejectModal({ id: b.id, reason: '' })}>✕</button>
+                          <button className="btn btn--sm btn--danger" onClick={() => setRejectModal({ id: b.id, reason: '' })}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
                         </>
                       )}
                       {/* Logistique: prepare */}
@@ -296,7 +296,7 @@ export default function BesoinsPage() {
           <div className="mr-modal" style={{ maxWidth: 540 }} onClick={e => e.stopPropagation()}>
             <div className="mr-modal__head">
               <h2 className="mr-modal__title">Nouvelle demande de besoin</h2>
-              <button className="mr-modal__close" onClick={() => setModal(false)}>✕</button>
+              <button className="mr-modal__close" aria-label="Fermer" onClick={() => setModal(false)}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
             </div>
             <div className="mr-modal__body" style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
               <div className="form-field">
@@ -359,7 +359,7 @@ export default function BesoinsPage() {
           <div className="mr-modal" style={{ maxWidth: 420 }} onClick={e => e.stopPropagation()}>
             <div className="mr-modal__head">
               <h2 className="mr-modal__title">Motif de rejet</h2>
-              <button className="mr-modal__close" onClick={() => setRejectModal(null)}>✕</button>
+              <button className="mr-modal__close" aria-label="Fermer" onClick={() => setRejectModal(null)}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
             </div>
             <div className="mr-modal__body">
               <div className="form-field">
@@ -381,7 +381,7 @@ export default function BesoinsPage() {
           <div className="mr-modal" style={{ maxWidth: 380 }} onClick={e => e.stopPropagation()}>
             <div className="mr-modal__head">
               <h2 className="mr-modal__title">Enregistrer le décaissement</h2>
-              <button className="mr-modal__close" onClick={() => setRecordModal(null)}>✕</button>
+              <button className="mr-modal__close" aria-label="Fermer" onClick={() => setRecordModal(null)}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
             </div>
             <div className="mr-modal__body">
               <p style={{ fontSize: '0.84rem', color: 'var(--text-muted)', marginBottom: 12 }}>

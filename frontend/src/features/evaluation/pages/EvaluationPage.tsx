@@ -1,3 +1,4 @@
+import SkeletonPage from '../../../components/ui/SkeletonPage';
 import { useQuery } from '@tanstack/react-query';
 import { getEvaluation, type ProjectEvaluation } from '../api/get-evaluation';
 import PageHeader from '../../../components/ui/PageHeader';
@@ -162,7 +163,7 @@ export default function EvaluationPage() {
 
         {!isError && (
           isLoading ? (
-            <p style={{ padding: '2rem', color: 'var(--text-muted)', textAlign: 'center' }}>Chargement…</p>
+            <div className="skeleton skeleton-page__card" style={{ height: 80, margin: 16 }} />
           ) : (
             <table className="data-table">
               <thead>

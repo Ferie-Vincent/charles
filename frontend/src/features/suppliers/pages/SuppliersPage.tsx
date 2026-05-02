@@ -1,3 +1,4 @@
+import SkeletonPage from '../../../components/ui/SkeletonPage';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -184,7 +185,7 @@ export default function SuppliersPage() {
         </div>
 
         {loading ? (
-          <p style={{ padding: '2rem', color: 'var(--text-muted)', textAlign: 'center' }}>Chargement…</p>
+          <SkeletonPage rows={2} />
         ) : (
           <table className="data-table supp-table">
             <thead>
@@ -269,7 +270,7 @@ export default function SuppliersPage() {
           <div className="mr-modal" style={{ maxWidth: 560 }} onClick={e => e.stopPropagation()}>
             <div className="mr-modal__head">
               <h2 className="mr-modal__title">{modal.id ? 'Modifier fournisseur' : 'Nouveau fournisseur'}</h2>
-              <button className="mr-modal__close" onClick={() => setModal(null)}>✕</button>
+              <button className="mr-modal__close" aria-label="Fermer" onClick={() => setModal(null)}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
             </div>
             <div className="mr-modal__body" style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
@@ -321,7 +322,7 @@ export default function SuppliersPage() {
           <div className="mr-modal" style={{ maxWidth: 400 }} onClick={e => e.stopPropagation()}>
             <div className="mr-modal__head">
               <h2 className="mr-modal__title">Supprimer ce fournisseur ?</h2>
-              <button className="mr-modal__close" onClick={() => setDeleteId(null)}>✕</button>
+              <button className="mr-modal__close" aria-label="Fermer" onClick={() => setDeleteId(null)}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
             </div>
             <div className="mr-modal__body">
               <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Cette action est irréversible.</p>

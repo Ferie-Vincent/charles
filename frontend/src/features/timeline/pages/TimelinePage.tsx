@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { getDashboard } from '../../dashboard/api/get-dashboard';
+import PageHeader from '../../../components/ui/PageHeader';
+import SkeletonPage from '../../../components/ui/SkeletonPage';
 
 const HEALTH_COLOR = { green: '#10b981', orange: '#f59e0b', red: '#ef4444' };
 const HEALTH_LABEL = { green: 'Sain', orange: 'Attention', critical: 'Critique' };
@@ -29,7 +31,9 @@ export default function TimelinePage() {
     (a, b) => new Date(a.end_date!).getTime() - new Date(b.end_date!).getTime()
   );
 
-  if (!dated.length && !isLoading) {
+  if (isLoading) return <div className="page-content"><SkeletonPage rows={3} /></div>;
+
+  if (!dated.length) {
     return <div className="tl-empty">Aucun chantier actif avec dates contractuelles.</div>;
   }
 
@@ -76,23 +80,18 @@ export default function TimelinePage() {
 
   return (
     <div className="tl-page">
-      <div className="tl-header">
-        <div>
-          <h2 className="tl-title">Vue chronologique</h2>
-          <p className="tl-sub">{dated.length} chantier{dated.length > 1 ? 's' : ''} actif{dated.length > 1 ? 's' : ''} avec dates contractuelles</p>
-        </div>
-        <div className="tl-legend">
-          <span className="tl-legend__item"><span className="tl-legend__dot" style={{ background: '#10b981' }} />Sain</span>
-          <span className="tl-legend__item"><span className="tl-legend__dot" style={{ background: '#f59e0b' }} />Attention</span>
-          <span className="tl-legend__item"><span className="tl-legend__dot" style={{ background: '#ef4444' }} />Critique</span>
-          <span className="tl-legend__item"><span className="tl-today-dot" />Aujourd'hui</span>
-        </div>
+      <PageHeader
+        title="Vue chronologique"
+        subtitle={`${dated.length} chantier${dated.length > 1 ? 's' : ''} actif${dated.length > 1 ? 's' : ''} avec dates contractuelles`}
+      />
+      <div className="tl-legend" style={{ display: 'flex', gap: 16, marginBottom: 12, flexWrap: 'wrap' }}>
+        <span className="tl-legend__item"><span className="tl-legend__dot" style={{ background: '#10b981' }} />Sain</span>
+        <span className="tl-legend__item"><span className="tl-legend__dot" style={{ background: '#f59e0b' }} />Attention</span>
+        <span className="tl-legend__item"><span className="tl-legend__dot" style={{ background: '#ef4444' }} />Critique</span>
+        <span className="tl-legend__item"><span className="tl-today-dot" />Aujourd'hui</span>
       </div>
 
-      {isLoading ? (
-        <div className="tl-loading">Chargement…</div>
-      ) : (
-        <div className="tl-card">
+      <div className="tl-card">
           {/* Month axis */}
           <div className="tl-axis">
             <div className="tl-axis__labels">
@@ -170,7 +169,6 @@ export default function TimelinePage() {
             })}
           </div>
         </div>
-      )}
     </div>
   );
 }

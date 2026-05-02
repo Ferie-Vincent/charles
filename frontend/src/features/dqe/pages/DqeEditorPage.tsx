@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import SkeletonPage from '../../../components/ui/SkeletonPage';
 import {
   getDqeVersion,
   createDqeLine,
@@ -101,7 +102,7 @@ export default function DqeEditorPage() {
     });
   }
 
-  if (isLoading) return <p style={{ padding: 40, color: 'var(--text-muted)', textAlign: 'center' }}>Chargement…</p>;
+  if (isLoading) return <div className="page-content"><SkeletonPage /></div>;
   if (error || !data) return <p style={{ padding: 40, color: 'var(--text-muted)', textAlign: 'center' }}>Erreur de chargement.</p>;
 
   const { version, lots } = data;

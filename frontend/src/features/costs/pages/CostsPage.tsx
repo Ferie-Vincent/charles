@@ -1,3 +1,4 @@
+import SkeletonPage from '../../../components/ui/SkeletonPage';
 import { useQuery } from '@tanstack/react-query';
 import {
   BarChart,
@@ -54,29 +55,7 @@ export default function CostsPage() {
     queryFn: getPortfolioCosts,
   });
 
-  if (isLoading) {
-    return (
-      <div>
-        <PageHeader
-          breadcrumb="PORTEFEUILLE · 2026"
-          title="Trésorerie Portefeuille"
-          subtitle="Synthèse des budgets, engagements et paiements par chantier."
-        />
-        <div className="proj-kpi-row">
-          {[1, 2, 3, 4].map(i => (
-            <div key={i} className="proj-kpi">
-              <div className="proj-kpi__icon proj-kpi__icon--blue" />
-              <div className="proj-kpi__body">
-                <div className="proj-kpi__value" style={{ color: 'var(--text-muted)' }}>—</div>
-                <div className="proj-kpi__label">Chargement…</div>
-              </div>
-            </div>
-          ))}
-        </div>
-        <p style={{ padding: 24, color: 'var(--text-muted)' }}>Chargement des données…</p>
-      </div>
-    );
-  }
+  if (isLoading) return <div className="page-content"><SkeletonPage rows={3} /></div>;
 
   if (isError || !data) {
     return (

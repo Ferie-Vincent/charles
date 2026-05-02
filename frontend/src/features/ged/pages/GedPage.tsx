@@ -1,3 +1,4 @@
+import SkeletonPage from '../../../components/ui/SkeletonPage';
 import { useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -238,7 +239,7 @@ export default function GedPage() {
 
         {/* Table */}
         {loading ? (
-          <p style={{ padding: '2rem', color: 'var(--text-muted)', textAlign: 'center' }}>Chargement…</p>
+          <SkeletonPage rows={2} />
         ) : (
           <table className="data-table">
             <thead>

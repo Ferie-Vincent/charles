@@ -7,6 +7,7 @@ import {
   type Supplier, type Invoice,
 } from '../api/accounting';
 import PageHeader from '../../../components/ui/PageHeader';
+import SkeletonPage from '../../../components/ui/SkeletonPage';
 
 const fmtFCFA = (n: number) => {
   if (n >= 1_000_000_000) return (n / 1_000_000_000).toFixed(2) + ' Mds';
@@ -47,10 +48,10 @@ export default function ProjectAccountingPage() {
     staleTime: 60_000,
   });
 
-  if (isLoading) return <div className="page-content"><p>Chargement comptabilité…</p></div>;
+  if (isLoading) return <div className="page-content"><SkeletonPage rows={3} /></div>;
   if (!data) return <div className="page-content"><p className="form-error">Erreur de chargement.</p></div>;
 
-  const ecartColor = data.ecart >= 0 ? '#10b981' : '#ef4444';
+  const ecartColor = data.ecart >= 0 ? 'var(--success)' : 'var(--danger)';
   const ecartSign  = data.ecart >= 0 ? '+' : '';
 
   return (
@@ -319,7 +320,7 @@ export default function ProjectAccountingPage() {
           <div className="mr-modal" style={{ maxWidth: 380 }} onClick={e => e.stopPropagation()}>
             <div className="mr-modal__head">
               <h2 className="mr-modal__title">Confirmer la suppression</h2>
-              <button type="button" className="mr-modal__close" onClick={() => setDeleteTarget(null)}>✕</button>
+              <button type="button" className="mr-modal__close" aria-label="Fermer" onClick={() => setDeleteTarget(null)}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
             </div>
             <div className="mr-modal__body">
               <p style={{ margin: '0 0 1.5rem', color: 'var(--color-text-secondary)' }}>
@@ -371,7 +372,7 @@ function SupplierModal({ supplier, projectId: _, onSave, onClose }: {
       <div className="mr-modal" style={{ maxWidth: 520 }} onClick={e => e.stopPropagation()}>
         <div className="mr-modal__head">
           <h2 className="mr-modal__title">{supplier ? 'Modifier fournisseur' : 'Nouveau fournisseur'}</h2>
-          <button type="button" className="mr-modal__close" onClick={onClose}>✕</button>
+          <button type="button" className="mr-modal__close" aria-label="Fermer" onClick={onClose}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
         </div>
         <form onSubmit={handleSubmit} className="mr-modal__body" style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
           <div className="form-field">
@@ -464,7 +465,7 @@ function InvoiceModal({ invoice, suppliers, projectId, onSave, onClose }: {
       <div className="mr-modal" style={{ maxWidth: 580 }} onClick={e => e.stopPropagation()}>
         <div className="mr-modal__head">
           <h2 className="mr-modal__title">{invoice ? 'Modifier facture' : 'Nouvelle facture'}</h2>
-          <button type="button" className="mr-modal__close" onClick={onClose}>✕</button>
+          <button type="button" className="mr-modal__close" aria-label="Fermer" onClick={onClose}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
         </div>
         <form onSubmit={handleSubmit} className="mr-modal__body" style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
@@ -544,7 +545,7 @@ function InvoiceModal({ invoice, suppliers, projectId, onSave, onClose }: {
                 <div className="inv-dropzone__file">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="18" height="18"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
                   <span>{attachment.name}</span>
-                  <button type="button" className="inv-dropzone__remove" onClick={e => { e.stopPropagation(); setAttachment(null); }}>✕</button>
+                  <button type="button" className="inv-dropzone__remove" onClick={e => { e.stopPropagation(); setAttachment(null); }}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
                 </div>
               ) : invoice?.attachment_name ? (
                 <div className="inv-dropzone__existing">
