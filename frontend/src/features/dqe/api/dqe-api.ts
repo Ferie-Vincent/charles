@@ -37,6 +37,13 @@ export async function deleteDqeVersion(projectId: number, versionId: number): Pr
   await api.delete(`/projects/${projectId}/dqe-versions/${versionId}`);
 }
 
+export async function duplicateDqeVersion(projectId: number, versionId: number): Promise<DqeVersion> {
+  const { data } = await api.post<DqeVersion>(
+    `/projects/${projectId}/dqe-versions/${versionId}/duplicate`,
+  );
+  return data;
+}
+
 // ── Lines ─────────────────────────────────────────────────────────────────────
 
 export async function createDqeLine(
