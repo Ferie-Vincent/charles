@@ -32,6 +32,7 @@ use App\Http\Controllers\GlobalSupplierController;
 use App\Http\Controllers\StockController;
 use App\Http\Controllers\PurchaseOrderController;
 use App\Http\Controllers\GedController;
+use App\Http\Controllers\PortfolioOperationsController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/health', function () {
@@ -62,6 +63,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/users/{user}', [UserController::class, 'destroy']);
     Route::get('/portfolio/costs', [PortfolioCostsController::class, 'index']);
     Route::get('/portfolio/accounting', [PortfolioAccountingController::class, 'index']);
+    Route::get('/portfolio/operations', [PortfolioOperationsController::class, 'index']);
     // Stock items & movements
     Route::get('/stock-items', [StockController::class, 'index']);
     Route::post('/stock-items', [StockController::class, 'store']);
