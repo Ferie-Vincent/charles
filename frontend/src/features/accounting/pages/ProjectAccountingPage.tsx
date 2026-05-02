@@ -521,7 +521,7 @@ function InvoiceModal({ invoice, suppliers, projectId, onSave, onClose }: {
           </div>
           <div className="form-field">
             <label className="form-label">Note</label>
-            <input className="form-input" value={form.note} onChange={e => setForm(f => ({ ...f, note: e.target.value }))} />
+            <textarea className="form-textarea" rows={2} value={form.note} onChange={e => setForm(f => ({ ...f, note: e.target.value }))} />
           </div>
 
           {/* File upload zone */}
