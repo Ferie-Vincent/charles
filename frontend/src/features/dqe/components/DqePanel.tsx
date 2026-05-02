@@ -21,10 +21,15 @@ export default function DqePanel({ projectId }: Props) {
     queryFn: () => getDqeVersions(projectId),
   });
 
+  function invalidateDqe() {
+    qc.invalidateQueries({ queryKey: ['dqe-versions', projectId] });
+    qc.invalidateQueries({ queryKey: ['portfolio-dqe'] });
+  }
+
   const create = useMutation({
     mutationFn: (name: string) => createDqeVersion(projectId, { name }),
     onSuccess: (v) => {
-      qc.invalidateQueries({ queryKey: ['dqe-versions', projectId] });
+      invalidateDqe();
       setShowNew(false);
       setNewName('');
       nav(`/projects/${projectId}/dqe/${v.id}`);
@@ -33,13 +38,13 @@ export default function DqePanel({ projectId }: Props) {
 
   const remove = useMutation({
     mutationFn: (id: number) => deleteDqeVersion(projectId, id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['dqe-versions', projectId] }),
+    onSuccess: invalidateDqe,
   });
 
   const duplicate = useMutation({
     mutationFn: (id: number) => duplicateDqeVersion(projectId, id),
     onSuccess: (v) => {
-      qc.invalidateQueries({ queryKey: ['dqe-versions', projectId] });
+      invalidateDqe();
       nav(`/projects/${projectId}/dqe/${v.id}`);
     },
   });

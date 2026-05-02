@@ -50,12 +50,18 @@ export default function DqeEditorPage() {
 
   const updateVersion = useMutation({
     mutationFn: (status: string) => updateDqeVersion(pid, vid, { status: status as any }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['dqe-version', pid, vid] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['dqe-version', pid, vid] });
+      qc.invalidateQueries({ queryKey: ['portfolio-dqe'] });
+    },
   });
 
   const dupVersion = useMutation({
     mutationFn: () => duplicateDqeVersion(pid, vid),
-    onSuccess: (v) => nav(`/projects/${pid}/dqe/${v.id}`),
+    onSuccess: (v) => {
+      qc.invalidateQueries({ queryKey: ['portfolio-dqe'] });
+      nav(`/projects/${pid}/dqe/${v.id}`);
+    },
   });
 
   const addLine = useMutation({
