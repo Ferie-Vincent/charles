@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getDashboard, type DashboardData } from '../api/get-dashboard';
 import { useAuth } from '../../auth/stores/auth-store';
+import { getRoleGroup } from '../../../lib/roles';
 import PageHeader from '../../../components/ui/PageHeader';
 import KpiBar from '../components/KpiBar';
 import SynthesePortefeuille from '../components/SynthesePortefeuille';
@@ -11,15 +12,6 @@ import MapView from '../components/MapView';
 import TimelineView from '../components/TimelineView';
 import AlertsPanel from '../components/AlertsPanel';
 import AiAnalysisWidget from '../components/AiAnalysisWidget';
-
-type RoleGroup = 'direction' | 'terrain' | 'gestion' | 'lecture';
-
-function getRoleGroup(slug: string): RoleGroup {
-  if (['direction', 'directeur-technique'].includes(slug)) return 'direction';
-  if (['conducteur-travaux', 'chef-chantier'].includes(slug)) return 'terrain';
-  if (['metreur-economiste', 'comptable'].includes(slug)) return 'gestion';
-  return 'lecture';
-}
 
 const ROLE_HEADER: Record<RoleGroup, { breadcrumb: string; title: string; subtitle: string }> = {
   direction: {

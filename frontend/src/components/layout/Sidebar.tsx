@@ -1,50 +1,60 @@
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../features/auth/stores/auth-store';
+import { getRoleGroup, canAccess } from '../../lib/roles';
 
 const navItems = [
   {
-    label: 'Dashboard', to: '/',
+    to: '/',
+    label: 'Dashboard',
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>,
   },
   {
-    label: 'Chantiers', to: '/projects',
+    to: '/projects',
+    label: 'Chantiers',
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>,
   },
   {
-    label: 'Carte', to: '/map',
+    to: '/map',
+    label: 'Carte',
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>,
   },
   {
-    label: 'Calendrier', to: '/timeline',
+    to: '/timeline',
+    label: 'Calendrier',
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>,
   },
   {
-    label: 'DQE', to: '/dqe',
+    to: '/dqe',
+    label: 'DQE',
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>,
   },
   {
-    label: 'Évaluation', to: '/execution',
+    to: '/execution',
+    label: 'Évaluation',
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>,
   },
   {
-    label: 'Coûts', to: '/costs',
+    to: '/costs',
+    label: 'Coûts',
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>,
   },
   {
-    label: 'QHSE', to: '/qse',
+    to: '/qse',
+    label: 'QHSE',
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>,
   },
   {
-    label: 'Reporting', to: '/reporting',
+    to: '/reporting',
+    label: 'Reporting',
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>,
   },
 ];
 
-const DIRECTION_ROLES = ['direction', 'directeur-technique'];
-
 export default function Sidebar() {
   const { user } = useAuth();
-  const isDirection = DIRECTION_ROLES.includes(user?.role?.name ?? '');
+  const group = getRoleGroup(user?.role?.name ?? '');
+
+  const visibleItems = navItems.filter(item => canAccess(item.to, group));
 
   const initials = user?.name
     ? user.name.split(' ').map((w: string) => w[0]).slice(0, 2).join('').toUpperCase()
@@ -69,7 +79,7 @@ export default function Sidebar() {
       <nav style={{ flex: 1 }}>
         <div className="sidebar-section-label">Pilotage</div>
         <ul>
-          {navItems.map((item) => (
+          {visibleItems.map((item) => (
             <li key={item.to}>
               <NavLink to={item.to} end={item.to === '/'}>
                 {item.icon}
@@ -82,7 +92,7 @@ export default function Sidebar() {
 
       <div className="sidebar-footer">
         <ul>
-          {isDirection && (
+          {canAccess('/users', group) && (
             <li>
               <NavLink to="/users">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
