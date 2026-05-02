@@ -286,7 +286,7 @@ return (
 | `/ged` | GedPage.tsx | ✅ | ✅ | **Done** |
 | `/qhse` | QhsePage.tsx | ✅ | ✅ | **Done** |
 | `/reporting` | ReportingPage.tsx | ✅ | ❌ | **Needs KPIs** |
-| `/evaluation` | EvaluationPage.tsx | ✅ | ❌ | **Needs KPIs** |
+| `/evaluation` | EvaluationPage.tsx | ✅ | ✅ | **Done** |
 | `/operations` | OperationsDashboardPage.tsx | ✅ | ❌ | **Needs KPIs** |
 | `/users` | UsersPage.tsx | ✅ | ❌ | **Needs KPIs** |
 | `/permissions` | PermissionsPage.tsx | ✅ | ❌ | **Needs KPIs** |
