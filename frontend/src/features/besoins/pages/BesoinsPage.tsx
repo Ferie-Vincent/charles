@@ -7,7 +7,8 @@ import {
   CATEGORY_LABEL, URGENCY_COLOR, STATUS_LABEL, STATUS_BADGE,
   type DemandeBesoin, type BesoinCategory, type BesoinUrgency,
 } from '../api/besoins';
-import { getProjects, type Project } from '../../projects/api/projects';
+import { listProjects } from '../../projects/api/list-projects';
+import type { Project } from '../../projects/types';
 
 const fmt = (n: number) =>
   n >= 1_000_000 ? `${(n / 1_000_000).toFixed(1)} M FCFA`
@@ -56,7 +57,7 @@ export default function BesoinsPage() {
 
   const load = () => {
     setLoading(true);
-    Promise.all([getBesoins(), canCreate ? getProjects() : Promise.resolve([])])
+    Promise.all([getBesoins(), canCreate ? listProjects() : Promise.resolve([])])
       .then(([b, p]) => { setBesoins(b); setProjects(p); })
       .finally(() => setLoading(false));
   };
