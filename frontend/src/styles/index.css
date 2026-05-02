@@ -4937,7 +4937,7 @@ code {
 .dqe-th--qty { width: 90px; }
 .dqe-th--pu { width: 130px; }
 .dqe-th--total { width: 130px; }
-.dqe-lot-header td { background: #1e293b; color: #f8fafc; font-weight: 700; font-size: 11px; padding: 7px 10px; letter-spacing: .06em; }
+.dqe-lot-header td { background: var(--color-primary); color: #fff; font-weight: 700; font-size: 11px; padding: 7px 10px; letter-spacing: .06em; }
 .dqe-lot-name { }
 .dqe-lot-subtotal { text-align: right; font-variant-numeric: tabular-nums; }
 .dqe-line td { border-bottom: 1px solid #f1f5f9; padding: 7px 10px; }
