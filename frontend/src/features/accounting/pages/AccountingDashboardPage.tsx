@@ -5,9 +5,13 @@ import {
   createExpense,
   updateExpense,
   deleteExpense,
+  approveExpense,
+  rejectExpense,
   type PortfolioAccounting,
   type GeneralExpense,
 } from '../api/portfolio-accounting';
+import { useAuth } from '../../auth/stores/auth-store';
+import { getRoleGroup } from '../../../lib/roles';
 
 const fmt = (n: number) =>
   n >= 1_000_000
@@ -20,46 +24,40 @@ const fmtDate = (d: string) =>
   new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
 
 const STATUS_LABEL: Record<string, string> = {
-  brouillon: 'Brouillon',
-  soumise:   'Soumise',
-  validee:   'Validée',
-  payee:     'Payée',
-  disputee:  'Disputée',
+  brouillon: 'Brouillon', soumise: 'Soumise', validee: 'Validée', payee: 'Payée', disputee: 'Disputée',
 };
 const STATUS_COLOR: Record<string, string> = {
-  brouillon: '#94a3b8',
-  soumise:   '#f59e0b',
-  validee:   '#3b7ddd',
-  payee:     '#10b981',
-  disputee:  '#ef4444',
+  brouillon: '#94a3b8', soumise: '#f59e0b', validee: '#3b7ddd', payee: '#10b981', disputee: '#ef4444',
 };
 const PROJECT_STATUS_COLOR: Record<string, string> = {
-  en_cours:  '#10b981',
-  planifie:  '#3b7ddd',
-  termine:   '#94a3b8',
-  suspendu:  '#f59e0b',
+  en_cours: '#10b981', planifie: '#3b7ddd', termine: '#94a3b8', suspendu: '#f59e0b',
 };
 const PROJECT_STATUS_LABEL: Record<string, string> = {
-  en_cours:  'En cours',
-  planifie:  'Planifié',
-  termine:   'Terminé',
-  suspendu:  'Suspendu',
+  en_cours: 'En cours', planifie: 'Planifié', termine: 'Terminé', suspendu: 'Suspendu',
 };
-
 const EXPENSE_CATEGORIES: Record<string, string> = {
-  transport:     'Transport',
-  hebergement:   'Hébergement',
-  restauration:  'Restauration',
-  fournitures:   'Fournitures',
-  communication: 'Communication',
-  salaires:      'Salaires',
-  charges:       'Charges',
-  autre:         'Autre',
+  transport: 'Transport', hebergement: 'Hébergement', restauration: 'Restauration',
+  fournitures: 'Fournitures', communication: 'Communication', salaires: 'Salaires',
+  charges: 'Charges', autre: 'Autre',
+};
+const EXPENSE_STATUS_LABEL: Record<string, string> = {
+  en_attente: 'En attente', approuvee: 'Approuvée', rejetee: 'Rejetée',
+};
+const EXPENSE_STATUS_COLOR: Record<string, string> = {
+  en_attente: '#f59e0b', approuvee: '#10b981', rejetee: '#ef4444',
 };
 
-const EMPTY_EXPENSE = { category: 'transport', label: '', amount: 0, expense_date: new Date().toISOString().slice(0, 10), paid_by: '', notes: '' };
+const EMPTY_EXPENSE = {
+  category: 'transport', label: '', amount: 0,
+  expense_date: new Date().toISOString().slice(0, 10), paid_by: '', notes: '',
+};
 
 export default function AccountingDashboardPage() {
+  const { user } = useAuth();
+  const canApprove = user ? ['direction', 'gestion'].includes(getRoleGroup(user.role.name)) && user.role.name !== 'comptable' : false;
+  // approve: direction + directeur-technique only
+  const isApprover = user ? ['direction', 'directeur-technique'].includes(user.role.name) : false;
+
   const [data, setData]         = useState<PortfolioAccounting | null>(null);
   const [loading, setLoading]   = useState(true);
   const [error, setError]       = useState<string | null>(null);
@@ -67,6 +65,7 @@ export default function AccountingDashboardPage() {
   const [saving, setSaving]     = useState(false);
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [search, setSearch]     = useState('');
+  const [rejectModal, setRejectModal] = useState<{ id: number; reason: string } | null>(null);
 
   const load = () => {
     setLoading(true);
@@ -82,22 +81,29 @@ export default function AccountingDashboardPage() {
     if (!modal) return;
     setSaving(true);
     try {
-      if (modal.id) {
-        await updateExpense(modal.id, modal);
-      } else {
-        await createExpense(modal);
-      }
+      if (modal.id) await updateExpense(modal.id, modal);
+      else          await createExpense(modal);
       setModal(null);
       load();
-    } finally {
-      setSaving(false);
-    }
+    } finally { setSaving(false); }
   };
 
   const handleDeleteExpense = async () => {
     if (!deleteId) return;
     await deleteExpense(deleteId);
     setDeleteId(null);
+    load();
+  };
+
+  const handleApprove = async (id: number) => {
+    await approveExpense(id);
+    load();
+  };
+
+  const handleReject = async () => {
+    if (!rejectModal || !rejectModal.reason.trim()) return;
+    await rejectExpense(rejectModal.id, rejectModal.reason);
+    setRejectModal(null);
     load();
   };
 
@@ -111,8 +117,22 @@ export default function AccountingDashboardPage() {
     ? projects.filter(p => p.name.toLowerCase().includes(q) || p.code.toLowerCase().includes(q))
     : projects;
 
+  const pendingExpenses = expenses.filter(e => e.status === 'en_attente');
+
   return (
     <div className="acct-dash">
+
+      {/* ── Pending approvals banner (direction/DT only) ── */}
+      {isApprover && pendingExpenses.length > 0 && (
+        <div className="acct-pending-banner">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          <strong>{pendingExpenses.length} décaissement{pendingExpenses.length > 1 ? 's' : ''} en attente d'approbation</strong>
+          <span>— votre validation est requise avant exécution</span>
+          <a href="#decaissements" className="acct-pending-banner__link">Voir ↓</a>
+        </div>
+      )}
 
       {/* ── Header ── */}
       <div className="acct-dash__header">
@@ -149,12 +169,10 @@ export default function AccountingDashboardPage() {
           <span className="acct-kpi__value">{fmt(totals.rac)}</span>
           <span className="acct-kpi__sub">RAC estimé</span>
         </div>
-        <div className={`acct-kpi ${totals.ecart >= 0 ? 'acct-kpi--green' : 'acct-kpi--red'}`}>
-          <span className="acct-kpi__label">Coût à terminaison</span>
-          <span className="acct-kpi__value">{fmt(totals.cat)}</span>
-          <span className="acct-kpi__sub" style={{ color: totals.ecart >= 0 ? '#10b981' : '#ef4444' }}>
-            Écart {totals.ecart >= 0 ? '+' : ''}{fmt(totals.ecart)}
-          </span>
+        <div className={`acct-kpi ${pendingExpenses.length > 0 ? 'acct-kpi--warning' : 'acct-kpi--neutral'}`}>
+          <span className="acct-kpi__label">En attente approbation</span>
+          <span className="acct-kpi__value">{pendingExpenses.length}</span>
+          <span className="acct-kpi__sub">{pendingExpenses.length > 0 ? `${fmt(pendingExpenses.reduce((s,e) => s+e.amount,0))} à valider` : 'Aucun en attente'}</span>
         </div>
       </div>
 
@@ -181,9 +199,7 @@ export default function AccountingDashboardPage() {
                   )}
                 </div>
                 <div className="acct-feed__info">
-                  <span className="acct-feed__ref">
-                    {item.reference ?? item.label}
-                  </span>
+                  <span className="acct-feed__ref">{item.reference ?? item.label}</span>
                   <span className="acct-feed__meta">
                     {item.project_name
                       ? <Link to={`/projects/${item.project_id}/accounting`} className="acct-feed__link">{item.project_code}</Link>
@@ -235,18 +251,15 @@ export default function AccountingDashboardPage() {
               <p className="acct-empty">Aucun chantier trouvé pour « {search} »</p>
             )}
             {filteredProjects.map((p) => {
-              const barRealise = Math.min(100, p.taux_realise);
-              const barEngage  = Math.min(100 - barRealise, p.taux_engage);
+              const barRealise  = Math.min(100, p.taux_realise);
+              const barEngage   = Math.min(100 - barRealise, p.taux_engage);
               const statusColor = PROJECT_STATUS_COLOR[p.status] ?? '#94a3b8';
               return (
                 <Link key={p.id} to={`/projects/${p.id}/accounting`} className="acct-proj-card">
                   <div className="acct-proj-card__top">
                     <div>
                       <span className="acct-proj-card__code">{p.code}</span>
-                      <span
-                        className="acct-proj-card__status"
-                        style={{ background: `${statusColor}18`, color: statusColor }}
-                      >
+                      <span className="acct-proj-card__status" style={{ background: `${statusColor}18`, color: statusColor }}>
                         {PROJECT_STATUS_LABEL[p.status] ?? p.status}
                       </span>
                     </div>
@@ -280,19 +293,19 @@ export default function AccountingDashboardPage() {
         </div>
       </div>
 
-      {/* ── General expenses ── */}
-      <div className="acct-panel acct-panel--full">
+      {/* ── General expenses table ── */}
+      <div className="acct-panel acct-panel--full" id="decaissements">
         <div className="acct-panel__head">
           <div>
             <h2 className="acct-panel__title">Décaissements hors projet</h2>
-            <p className="acct-panel__desc">Frais généraux non rattachés à un chantier spécifique</p>
+            <p className="acct-panel__desc">Frais généraux non rattachés à un chantier — toute dépense requiert une approbation</p>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <span className="acct-panel__count">
-              Total : <strong>{fmt(expenses.reduce((s, e) => s + e.amount, 0))}</strong>
+              Total approuvé : <strong>{fmt(expenses.filter(e => e.status === 'approuvee').reduce((s, e) => s + e.amount, 0))}</strong>
             </span>
             <button className="btn btn--sm btn--primary" onClick={() => setModal({ ...EMPTY_EXPENSE })}>
-              + Ajouter
+              + Nouveau décaissement
             </button>
           </div>
         </div>
@@ -305,34 +318,89 @@ export default function AccountingDashboardPage() {
                 <th>Libellé</th>
                 <th>Payé par</th>
                 <th>Montant</th>
-                <th>Notes</th>
+                <th>Statut</th>
+                <th>Soumis par</th>
                 <th></th>
               </tr>
             </thead>
             <tbody>
               {expenses.length === 0 && (
-                <tr><td colSpan={7} className="acct-empty">Aucun décaissement hors projet</td></tr>
+                <tr><td colSpan={8} className="acct-empty">Aucun décaissement hors projet</td></tr>
               )}
-              {expenses.map((exp) => (
-                <tr key={exp.id}>
-                  <td>{fmtDate(exp.expense_date)}</td>
-                  <td><span className="badge badge--neutral">{EXPENSE_CATEGORIES[exp.category] ?? exp.category}</span></td>
-                  <td>{exp.label}</td>
-                  <td>{exp.paid_by ?? '—'}</td>
-                  <td><strong>{fmt(exp.amount)}</strong></td>
-                  <td style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>{exp.notes ?? '—'}</td>
-                  <td>
-                    <div style={{ display: 'flex', gap: '6px' }}>
-                      <button className="btn-icon btn-icon--edit" onClick={() => setModal({ ...exp })}>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="13" height="13"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                      </button>
-                      <button className="btn-icon btn-icon--delete" onClick={() => setDeleteId(exp.id)}>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="13" height="13"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+              {expenses.map((exp) => {
+                const sc = EXPENSE_STATUS_COLOR[exp.status] ?? '#94a3b8';
+                return (
+                  <tr key={exp.id} className={exp.status === 'en_attente' ? 'acct-table__row--pending' : ''}>
+                    <td>{fmtDate(exp.expense_date)}</td>
+                    <td><span className="badge badge--neutral">{EXPENSE_CATEGORIES[exp.category] ?? exp.category}</span></td>
+                    <td>
+                      <span>{exp.label}</span>
+                      {exp.status === 'rejetee' && exp.rejection_reason && (
+                        <p className="acct-rejection-reason">Motif : {exp.rejection_reason}</p>
+                      )}
+                    </td>
+                    <td>{exp.paid_by ?? '—'}</td>
+                    <td><strong>{fmt(exp.amount)}</strong></td>
+                    <td>
+                      <span className="acct-status-badge" style={{ background: `${sc}15`, color: sc, borderColor: `${sc}40` }}>
+                        {exp.status === 'en_attente' && (
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="10" height="10"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        )}
+                        {exp.status === 'approuvee' && (
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="10" height="10"><polyline points="20 6 9 17 4 12"/></svg>
+                        )}
+                        {exp.status === 'rejetee' && (
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="10" height="10"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        )}
+                        {EXPENSE_STATUS_LABEL[exp.status]}
+                      </span>
+                      {exp.approver && (
+                        <p className="acct-approver-name">par {exp.approver.name}</p>
+                      )}
+                    </td>
+                    <td style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>
+                      {exp.creator?.name ?? '—'}
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                        {/* Approve/Reject — direction/DT on pending items */}
+                        {isApprover && exp.status === 'en_attente' && (
+                          <>
+                            <button
+                              className="btn btn--sm acct-btn--approve"
+                              onClick={() => handleApprove(exp.id)}
+                              title="Approuver"
+                            >
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="12" height="12"><polyline points="20 6 9 17 4 12"/></svg>
+                              Approuver
+                            </button>
+                            <button
+                              className="btn btn--sm acct-btn--reject"
+                              onClick={() => setRejectModal({ id: exp.id, reason: '' })}
+                              title="Rejeter"
+                            >
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="12" height="12"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                              Rejeter
+                            </button>
+                          </>
+                        )}
+                        {/* Edit — only on pending */}
+                        {exp.status === 'en_attente' && (
+                          <button className="btn-icon btn-icon--edit" onClick={() => setModal({ ...exp })} title="Modifier">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="13" height="13"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                          </button>
+                        )}
+                        {/* Delete — only on non-approved */}
+                        {exp.status !== 'approuvee' && (
+                          <button className="btn-icon btn-icon--delete" onClick={() => setDeleteId(exp.id)} title="Supprimer">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="13" height="13"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -340,85 +408,85 @@ export default function AccountingDashboardPage() {
 
       {/* ── Expense modal ── */}
       {modal !== null && (
-        <div className="modal-overlay" onClick={() => setModal(null)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal__header">
-              <h3>{modal.id ? 'Modifier le décaissement' : 'Nouveau décaissement hors projet'}</h3>
-              <button className="modal__close" onClick={() => setModal(null)}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-              </button>
+        <div className="mr-modal-overlay" onClick={() => setModal(null)}>
+          <div className="mr-modal" style={{ maxWidth: 520 }} onClick={e => e.stopPropagation()}>
+            <div className="mr-modal__head">
+              <h2 className="mr-modal__title">{modal.id ? 'Modifier le décaissement' : 'Nouveau décaissement hors projet'}</h2>
+              <button className="mr-modal__close" onClick={() => setModal(null)}>✕</button>
             </div>
-            <div className="modal__body">
-              <div className="form-row">
-                <div className="form-group">
+            <div className="mr-modal__body" style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                <div className="form-field">
                   <label className="form-label">Date *</label>
-                  <input
-                    type="date"
-                    className="form-control"
-                    value={modal.expense_date ?? ''}
-                    onChange={(e) => setModal({ ...modal, expense_date: e.target.value })}
-                  />
+                  <input type="date" className="form-input" value={modal.expense_date ?? ''} onChange={e => setModal({ ...modal, expense_date: e.target.value })} />
                 </div>
-                <div className="form-group">
+                <div className="form-field">
                   <label className="form-label">Catégorie *</label>
-                  <select
-                    className="form-control"
-                    value={modal.category ?? 'transport'}
-                    onChange={(e) => setModal({ ...modal, category: e.target.value })}
-                  >
-                    {Object.entries(EXPENSE_CATEGORIES).map(([k, v]) => (
-                      <option key={k} value={k}>{v}</option>
-                    ))}
+                  <select className="form-select" value={modal.category ?? 'transport'} onChange={e => setModal({ ...modal, category: e.target.value })}>
+                    {Object.entries(EXPENSE_CATEGORIES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                   </select>
                 </div>
               </div>
-              <div className="form-group">
+              <div className="form-field">
                 <label className="form-label">Libellé *</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  placeholder="ex: Transport DT vers plateau"
-                  value={modal.label ?? ''}
-                  onChange={(e) => setModal({ ...modal, label: e.target.value })}
-                />
+                <input type="text" className="form-input" placeholder="ex: Transport DT vers plateau" value={modal.label ?? ''} onChange={e => setModal({ ...modal, label: e.target.value })} />
               </div>
-              <div className="form-row">
-                <div className="form-group">
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                <div className="form-field">
                   <label className="form-label">Montant (FCFA) *</label>
-                  <input
-                    type="number"
-                    className="form-control"
-                    min={0}
-                    value={modal.amount ?? ''}
-                    onChange={(e) => setModal({ ...modal, amount: parseFloat(e.target.value) || 0 })}
-                  />
+                  <input type="number" className="form-input" min={0} value={modal.amount ?? ''} onChange={e => setModal({ ...modal, amount: parseFloat(e.target.value) || 0 })} />
                 </div>
-                <div className="form-group">
+                <div className="form-field">
                   <label className="form-label">Payé par</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    placeholder="ex: DT Charles"
-                    value={modal.paid_by ?? ''}
-                    onChange={(e) => setModal({ ...modal, paid_by: e.target.value })}
-                  />
+                  <input type="text" className="form-input" placeholder="ex: DT Charles" value={modal.paid_by ?? ''} onChange={e => setModal({ ...modal, paid_by: e.target.value })} />
                 </div>
               </div>
-              <div className="form-group">
+              <div className="form-field">
                 <label className="form-label">Notes</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  placeholder="Détails supplémentaires…"
-                  value={modal.notes ?? ''}
-                  onChange={(e) => setModal({ ...modal, notes: e.target.value })}
+                <textarea className="form-textarea" rows={2} placeholder="Détails supplémentaires…" value={modal.notes ?? ''} onChange={e => setModal({ ...modal, notes: e.target.value })} />
+              </div>
+              {!modal.id && (
+                <div className="acct-approval-notice">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="14" height="14"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                  Ce décaissement sera soumis en attente d'approbation par la Direction ou le DT.
+                </div>
+              )}
+            </div>
+            <div className="mr-modal__actions">
+              <button className="btn btn--secondary" onClick={() => setModal(null)}>Annuler</button>
+              <button className="btn btn--primary" onClick={handleSaveExpense} disabled={saving || !modal.label || !modal.amount}>
+                {saving ? 'Enregistrement…' : modal.id ? 'Modifier' : 'Soumettre pour approbation'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Reject reason modal ── */}
+      {rejectModal !== null && (
+        <div className="mr-modal-overlay" onClick={() => setRejectModal(null)}>
+          <div className="mr-modal" style={{ maxWidth: 420 }} onClick={e => e.stopPropagation()}>
+            <div className="mr-modal__head">
+              <h2 className="mr-modal__title">Motif de rejet</h2>
+              <button className="mr-modal__close" onClick={() => setRejectModal(null)}>✕</button>
+            </div>
+            <div className="mr-modal__body">
+              <div className="form-field">
+                <label className="form-label">Expliquez le motif *</label>
+                <textarea
+                  className="form-textarea"
+                  rows={3}
+                  placeholder="ex: Montant anormalement élevé, justificatif insuffisant…"
+                  value={rejectModal.reason}
+                  onChange={e => setRejectModal({ ...rejectModal, reason: e.target.value })}
+                  autoFocus
                 />
               </div>
             </div>
-            <div className="modal__footer">
-              <button className="btn btn--ghost" onClick={() => setModal(null)}>Annuler</button>
-              <button className="btn btn--primary" onClick={handleSaveExpense} disabled={saving || !modal.label || !modal.amount}>
-                {saving ? 'Enregistrement…' : modal.id ? 'Modifier' : 'Enregistrer'}
+            <div className="mr-modal__actions">
+              <button className="btn btn--secondary" onClick={() => setRejectModal(null)}>Annuler</button>
+              <button className="btn btn--danger" onClick={handleReject} disabled={!rejectModal.reason.trim()}>
+                Confirmer le rejet
               </button>
             </div>
           </div>
@@ -427,16 +495,17 @@ export default function AccountingDashboardPage() {
 
       {/* ── Delete confirmation ── */}
       {deleteId !== null && (
-        <div className="modal-overlay" onClick={() => setDeleteId(null)}>
-          <div className="modal modal--sm" onClick={(e) => e.stopPropagation()}>
-            <div className="modal__header">
-              <h3>Supprimer ce décaissement ?</h3>
+        <div className="mr-modal-overlay" onClick={() => setDeleteId(null)}>
+          <div className="mr-modal" style={{ maxWidth: 380 }} onClick={e => e.stopPropagation()}>
+            <div className="mr-modal__head">
+              <h2 className="mr-modal__title">Supprimer ce décaissement ?</h2>
+              <button className="mr-modal__close" onClick={() => setDeleteId(null)}>✕</button>
             </div>
-            <div className="modal__body">
-              <p style={{ color: 'var(--text-secondary)' }}>Cette action est irréversible.</p>
+            <div className="mr-modal__body">
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Cette action est irréversible.</p>
             </div>
-            <div className="modal__footer">
-              <button className="btn btn--ghost" onClick={() => setDeleteId(null)}>Annuler</button>
+            <div className="mr-modal__actions">
+              <button className="btn btn--secondary" onClick={() => setDeleteId(null)}>Annuler</button>
               <button className="btn btn--danger" onClick={handleDeleteExpense}>Supprimer</button>
             </div>
           </div>
