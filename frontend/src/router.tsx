@@ -4,6 +4,7 @@ import AppShell from './components/layout/AppShell';
 import RoleGuard from './components/guards/RoleGuard';
 import LoginPage from './features/auth/pages/LoginPage';
 import DashboardPage from './features/dashboard/pages/DashboardPage';
+import OperationsDashboardPage from './features/operations/pages/OperationsDashboardPage';
 import ProjectsPage from './features/projects/pages/ProjectsPage';
 import NewProjectPage from './features/projects/pages/NewProjectPage';
 import ProjectDetailPage from './features/projects/pages/ProjectDetailPage';
@@ -40,6 +41,7 @@ function Guarded({ path, children }: { path: string; children: ReactNode }) {
 export const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
   { path: '/',                         element: <Shell><DashboardPage /></Shell> },
+  { path: '/operations',               element: <Guarded path="/operations"><OperationsDashboardPage /></Guarded> },
   { path: '/projects',                 element: <Shell><ProjectsPage /></Shell> },
   { path: '/projects/new',             element: <Shell><NewProjectPage /></Shell> },
   { path: '/projects/:id',             element: <Shell><ProjectDetailPage /></Shell> },

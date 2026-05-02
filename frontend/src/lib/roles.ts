@@ -30,7 +30,8 @@ export const ROLE_ACCESS: Record<string, RoleGroup[]> = {
   '/ged':         ['direction', 'terrain', 'gestion', 'logistique', 'lecture'],
   '/qse':         ['direction', 'terrain'],
   '/reporting': ['direction', 'gestion'],
-  '/users':     ['direction'],
+  '/users':      ['direction'],
+  '/operations': ['direction'],
 };
 
 export function canAccess(path: string, group: RoleGroup): boolean {
