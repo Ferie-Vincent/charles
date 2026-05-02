@@ -9,16 +9,16 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Supplier extends Model
 {
     protected $fillable = [
-        'project_id', 'category', 'name', 'contact_name',
+        'company_id', 'project_id', 'created_by',
+        'category', 'name', 'contact_name',
         'phone', 'email', 'contract_amount', 'notes',
     ];
 
     protected $casts = ['contract_amount' => 'float'];
 
-    public function project(): BelongsTo
-    {
-        return $this->belongsTo(Project::class);
-    }
+    public function company(): BelongsTo  { return $this->belongsTo(Company::class); }
+    public function project(): BelongsTo  { return $this->belongsTo(Project::class); }
+    public function creator(): BelongsTo  { return $this->belongsTo(User::class, 'created_by'); }
 
     public function invoices(): HasMany
     {
