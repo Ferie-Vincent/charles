@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { logout } from '../../features/auth/api/login';
 import { useAuth } from '../../features/auth/stores/auth-store';
+import { getRoleGroup } from '../../lib/roles';
 import { useNavigate } from 'react-router-dom';
 
 export default function Topbar() {
@@ -12,6 +13,8 @@ export default function Topbar() {
     setUser(null);
     navigate('/login');
   }
+
+  const canCreateProject = getRoleGroup(user?.role?.name ?? '') === 'direction';
 
   const initials = user?.name
     ? user.name.split(' ').map((w: string) => w[0]).slice(0, 2).join('').toUpperCase()
@@ -47,12 +50,14 @@ export default function Topbar() {
           </svg>
         </button>
 
-        <Link to="/projects/new" className="btn-primary topbar-cta">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-          </svg>
-          Nouveau chantier
-        </Link>
+        {canCreateProject && (
+          <Link to="/projects/new" className="btn-primary topbar-cta">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            Nouveau chantier
+          </Link>
+        )}
 
         <button type="button" className="topbar-logout" onClick={handleLogout} aria-label="Déconnexion" title="Déconnexion">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

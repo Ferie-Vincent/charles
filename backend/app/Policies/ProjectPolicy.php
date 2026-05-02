@@ -27,7 +27,7 @@ class ProjectPolicy
 
     public function create(User $user): bool
     {
-        return $user->company_id !== null;
+        return in_array($user->role->name, ['direction', 'directeur-technique']);
     }
 
     public function update(User $user, Project $project): bool
