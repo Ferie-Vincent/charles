@@ -23,6 +23,7 @@ import AccountingDashboardPage from './features/accounting/pages/AccountingDashb
 import SuppliersPage from './features/suppliers/pages/SuppliersPage';
 import StocksPage from './features/stocks/pages/StocksPage';
 import AchatsPage from './features/achats/pages/AchatsPage';
+import GedPage from './features/ged/pages/GedPage';
 
 function Shell({ children }: { children: ReactNode }) {
   return <AppShell>{children}</AppShell>;
@@ -54,6 +55,7 @@ export const router = createBrowserRouter([
   { path: '/suppliers',               element: <Guarded path="/suppliers"><SuppliersPage /></Guarded> },
   { path: '/achats',                  element: <Guarded path="/achats"><AchatsPage /></Guarded> },
   { path: '/stocks',                  element: <Guarded path="/stocks"><StocksPage /></Guarded> },
+  { path: '/ged',                     element: <Guarded path="/ged"><GedPage /></Guarded> },
   { path: '/qse',                      element: <Guarded path="/qse"><QhsePage /></Guarded> },
   { path: '/reporting',                element: <Guarded path="/reporting"><ReportingPage /></Guarded> },
   { path: '/users',                    element: <Guarded path="/users"><UsersPage /></Guarded> },

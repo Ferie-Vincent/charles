@@ -149,7 +149,7 @@ class PurchaseOrderController extends Controller
         if ($request->hasFile('delivery_note')) {
             $file = $request->file('delivery_note');
             $path = "purchase-orders/{$purchaseOrder->id}/bl/" . $file->getClientOriginalName();
-            Storage::disk('s3')->put($path, file_get_contents($file->getRealPath()));
+            Storage::disk('public')->put($path, file_get_contents($file->getRealPath()));
             $data['delivery_note_path'] = $path;
         }
 
@@ -157,7 +157,7 @@ class PurchaseOrderController extends Controller
             $paths = [];
             foreach ($request->file('photos') as $photo) {
                 $path = "purchase-orders/{$purchaseOrder->id}/photos/" . uniqid() . '_' . $photo->getClientOriginalName();
-                Storage::disk('s3')->put($path, file_get_contents($photo->getRealPath()));
+                Storage::disk('public')->put($path, file_get_contents($photo->getRealPath()));
                 $paths[] = $path;
             }
             $data['delivery_photos'] = $paths;
@@ -178,11 +178,11 @@ class PurchaseOrderController extends Controller
         abort_if($purchaseOrder->company_id !== $request->user()->company_id, 403);
 
         $blUrl = $purchaseOrder->delivery_note_path
-            ? Storage::disk('s3')->temporaryUrl($purchaseOrder->delivery_note_path, now()->addHour())
+            ? Storage::disk('public')->url($purchaseOrder->delivery_note_path)
             : null;
 
         $photoUrls = collect($purchaseOrder->delivery_photos ?? [])->map(
-            fn($p) => Storage::disk('s3')->temporaryUrl($p, now()->addHour())
+            fn($p) => Storage::disk('public')->url($p)
         )->values()->all();
 
         return response()->json([
