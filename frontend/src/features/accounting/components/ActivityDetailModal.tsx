@@ -159,10 +159,11 @@ export default function ActivityDetailModal({ type, sourceId, onClose }: Props) 
   const { data, isLoading } = useQuery({
     queryKey: ['activity-detail', type, sourceId],
     queryFn: () => getActivityDetail(type, sourceId),
+    enabled: !!sourceId,
   });
 
   return (
-    <div className="mr-modal-backdrop" onClick={onClose}>
+    <div className="mr-modal-overlay" onClick={onClose}>
       <div className="mr-modal" style={{ maxWidth: 520, maxHeight: '85vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
         <div className="mr-modal__head">
           <h2 className="mr-modal__title">{TYPE_TITLE[type] ?? 'Détail transaction'}</h2>

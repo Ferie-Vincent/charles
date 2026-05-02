@@ -294,10 +294,10 @@ export default function AccountingDashboardPage() {
               <div
                 key={item.id}
                 className="acct-feed__row acct-feed__row--clickable"
-                onClick={() => setDetailItem({ type: item.type, sourceId: item.source_id })}
+                onClick={() => item.source_id && setDetailItem({ type: item.type, sourceId: item.source_id })}
                 role="button"
                 tabIndex={0}
-                onKeyDown={e => e.key === 'Enter' && setDetailItem({ type: item.type, sourceId: item.source_id })}
+                onKeyDown={e => e.key === 'Enter' && item.source_id && setDetailItem({ type: item.type, sourceId: item.source_id })}
               >
                 <div className={`acct-feed__icon ${item.type === 'invoice' ? 'acct-feed__icon--inv' : item.type === 'budget_entry' ? 'acct-feed__icon--be' : 'acct-feed__icon--exp'}`}>
                   {item.type === 'invoice' ? (
