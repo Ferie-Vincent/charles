@@ -30,7 +30,7 @@ docs/       Product spec and implementation plans
 | Testing (frontend) | Vitest + React Testing Library |
 | Styles | Custom CSS vars (no Tailwind — plain CSS in `src/styles/index.css`) |
 | Charts | Recharts |
-| File Storage | MinIO (S3-compatible, self-hosted) — for photos and documents |
+| File Storage | `Storage::disk('public')` en dev (symlink `public/storage/`). `docker-compose.yml` prêt pour MinIO prod — changer `FILESYSTEM_DISK=s3` dans `.env`. |
 
 ## Commands
 
@@ -82,6 +82,7 @@ cd frontend && npm run build
 - **Authorization via Laravel Policies** — use `$this->authorize()` in controllers. Policies live in `backend/app/Policies/`.
 - **Role seeding** — roles are seeded via `RoleSeeder`, not created in migrations. Seven seeded role slugs: `direction`, `directeur-technique`, `conducteur-travaux`, `chef-chantier`, `metreur-economiste`, `comptable`, `lecture-seule`.
 - **CORS** — allowed origins include both `http://localhost:5173` and `http://localhost:5174` (Vite port may vary).
+- **File storage** — `Storage::disk('public')` en dev. Swap to `disk('s3')` with MinIO in prod via `FILESYSTEM_DISK=s3`.
 
 API routes (`backend/routes/api.php`):
 - Public: `GET /api/health`, `POST /api/auth/login`
@@ -98,6 +99,10 @@ src/
     dashboard/      api/, components/, pages/
     projects/       api/, components/, pages/, types.ts
     daily-logs/     api/, components/, data/, types.ts
+    dqe/            api/, components/, pages/, types.ts
+    achats/         api/, pages/
+    stocks/         api/, pages/
+    ged/            api/, pages/
   components/
     layout/         AppShell, Sidebar, Topbar
     guards/         ProtectedRoute
@@ -105,31 +110,30 @@ src/
   lib/
     api.ts              Axios instance (baseURL + withCredentials)
     query-client.ts     TanStack Query client
+    roles.ts            RBAC feature → role group access map
   styles/
     index.css           All styles — CSS custom properties, component classes
 ```
 
 - `src/lib/api.ts` is the single Axios instance. All feature API modules import from it.
 - The app shell uses CSS class names from `src/styles/index.css`.
+- `src/lib/roles.ts` maps features (route paths) to allowed role groups.
 
-### Data Model (V1 entities)
+### Data Model (V1 — all live)
 
-**Live:**
 - `companies`, `users` (company_id + role_id), `roles`, `projects`, `project_members`, `project_activities`
 - `daily_logs` — weather, workers_count, progress_percent, has_incident, incident_type, equipment_status, materials_received (JSON), log_date (unique per project per day)
 - `incidents` — type, severity (mineur/majeur/critique), description, location, corrective_action, witnesses, status, occurred_at, resolved_at
 - `budget_entries` — type (previsionnel/engagement/paiement), category, label, amount, entry_date
 - `project_reports` — filename, path, week_of, size_bytes, type (hebdo/manuel)
-
-**Planned:**
-- `dqe_versions`, `dqe_lines` — DQE engine
-- `quality_issues`, `safety_events` — QSE module
-- `documents` — GED (stored in MinIO)
-- `project_contacts` — on-site labor/subcontractors who don't log into the app
-
-**Upcoming schema additions needed:**
-- `projects.latitude` + `projects.longitude` — required for map feature (#3)
-- `projects.target_progress` (avancement_cible) — required for courbe S (#7) and health score (#2)
+- `dqe_versions` — name, version_number, status (draft/validated/archived), total_ht, notes
+- `dqe_lines` — lot, ouvrage, unite, quantite, prix_unitaire, montant_ht (computed), ordre
+- `stock_items` — name, reference, unit, quantity, min_quantity, company_id
+- `stock_movements` — stock_item_id, type (in/out/adjustment), quantity, note, user_id
+- `purchase_orders` — supplier, description, amount, status (pending/approved/rejected/received), delivery_note_path, delivery_photos (JSON), received_at
+- `ged_documents` — name, original_name, path, mime_type, size_bytes, type (plan/contrat/pv/rapport/facture/photo/autre), project_id (nullable), uploaded_by
+- `situation_travaux` — generated via Groq AI from DQE + daily logs
+- `invoices`, `suppliers` (per project), `general_expenses`
 
 ### Seeded Reference Data
 
@@ -142,6 +146,7 @@ src/
 | Statut paiement | Payé, En attente, Partiel |
 | Matériaux courants | Ciment, Fer, Sable, Gravier, Briques, Bois, Carrelage, Peinture, Autre |
 | Catégories finances | Installation, Main d'œuvre, Matériaux, Transport, Équipements, Sous-traitance |
+| Unités BTP (DQE) | m², m³, ml, kg, t, u, forfait, jour, semaine, mois |
 
 ## Implementation Approach
 
@@ -154,14 +159,16 @@ TDD discipline:
 
 **User preference:** run tests at end of a feature batch, not between each individual file.
 
-## Feature Roadmap V1
+## Feature Roadmap
 
-### Done ✅
+### V1 — Complété ✅ (61 tests passing)
 
 | # | Feature | Notes |
 |---|---------|-------|
 | — | Platform Foundation | Auth, companies, users, roles, projects, project_members |
-| — | Daily Logs module | Backend (store/index + policy + tests), form, history, KPIs |
+| — | Daily Logs module | Backend + form + history + KPIs |
+| — | RBAC + Permissions matrix | 4 role groups, dynamic sidebar, DB-backed perms (Direction config) |
+| — | User management | CRUD direction-only, UsersAdminPage |
 | #29 | Référence Visuelle | ProgressVisualPicker — 6 phases BTP × 4 milestones |
 | #27 | Leaderboard Chantier du Mois | Score = progress×0.5 + regularity×30 − incidents×10 |
 | #30 | Interface Terrain Unifiée | Materials received chips + qty in DailyLogForm |
@@ -169,42 +176,70 @@ TDD discipline:
 | #38 | Zéro Date | Auto-today enforced at DB level (unique constraint) |
 | #39 | Zéro Texte | All structured fields, no textareas |
 | #42 | Problème-First | Incident toggle is first field in form |
-| #2 | Health Score 0–100 per project | Badge, tooltip breakdown, hero KPI |
-| #1 | Alerte Persistante d'Action | localStorage persistence, AlertsPanel card |
-| #3 | Carte Géo + Font Awesome markers | Leaflet, 13 markers CI, health color |
-| #4 | Vue Chronologique Contractuelle | Gantt timeline, TimelinePage |
-| #5 | Dashboard par Rôle | 4 role groups, conditional sections |
-| #7 | Courbe S réel vs théorique | Recharts LineChart, carry-forward pattern |
-| #8 | Galerie Photo Terrain Taguée | Upload/tag/delete, Storage::disk('public') |
-| #9 | Comparateur Photo Avant/Après | clip-path slider, mouse+touch drag |
+| #2  | Health Score 0–100 per project | Badge, tooltip breakdown, hero KPI |
+| #1  | Alerte Persistante d'Action | localStorage persistence, AlertsPanel card |
+| #3  | Carte Géo + Font Awesome markers | Leaflet, 13 markers CI, health color |
+| #4  | Vue Chronologique Contractuelle | Gantt timeline, TimelinePage |
+| #5  | Dashboard par Rôle | 4 role groups, conditional sections |
+| #7  | Courbe S réel vs théorique | Recharts LineChart, carry-forward pattern |
+| #8  | Galerie Photo Terrain Taguée | Upload/tag/delete, Storage::disk('public') |
+| #9  | Comparateur Photo Avant/Après | clip-path slider, mouse+touch drag |
 | #10 | Fiche Incident PDF auto-générée | DomPDF, fiche A4, statuts, signatures |
-| #12 | Trésorerie Prévisionnelle 90j | BudgetEntry model, 3-month BarChart, KPIs (solde/taux) |
-| #19 | Export Rapport PDF à la demande | On-demand A4 via "Exporter rapport" hero button |
+| #12 | Trésorerie Prévisionnelle 90j | BudgetEntry model, 3-month BarChart, KPIs |
+| #13 | Situation Travaux Auto-générée | Groq AI, modal structuré depuis DQE + journaux |
+| #15 | Réception Matériaux Express | Agrège daily_logs.materials_received |
 | #18 | Rapport Hebdo Auto-PDF | Laravel scheduler Mon 07:00, archived + ReportsWidget |
-| #23 | Score & Badge Sécurité Mensuel | SVG ring badge, severity-weighted formula, monthly window |
-| #15 | Réception Matériaux Express | Agrège daily_logs.materials_received — grille totaux + historique |
-| #24 | Gantt BTP Simplifié | Distribution estimée 6 phases, marqueurs Aujourd'hui + avancement réel |
-| #25 | PWA Offline | vite-plugin-pwa, SW NetworkFirst API, OfflineBanner, manifest standalone |
-| #28 | CR Réunion IA Auto-généré | Claude Haiku via Guzzle, modal structuré, markdown output — nécessite ANTHROPIC_API_KEY |
+| #19 | Export Rapport PDF à la demande | On-demand A4 via "Exporter rapport" |
+| #23 | Score & Badge Sécurité Mensuel | SVG ring badge, severity-weighted formula |
+| #24 | Gantt BTP Simplifié | Distribution estimée 6 phases, marqueurs |
+| #25 | PWA Offline | vite-plugin-pwa, SW NetworkFirst, OfflineBanner |
+| #26 | Alertes WhatsApp | Twilio, E.164 normalization (CI 0XXXXXXXXX → +225…) |
+| #28 | CR Réunion IA Auto-généré | Anthropic API, modal structuré, markdown output |
+| —  | DQE Engine complet | Versions, lignes, lots, PDF, duplicate, portfolio view |
+| —  | Achats / BDC | Purchase orders workflow, approbation, réception BL+photos |
+| —  | Stocks | Items, mouvements (in/out/ajustement), historique |
+| —  | GED Documents | Upload, téléchargement, filtres, Storage::disk('public') |
+| —  | Portfolio pages | Costs, evaluation, QSE, reporting, DQE portfolio |
+| —  | Comptabilité projet | Fournisseurs, factures, budget engagé/réalisé/RAC/écart |
 
-### Backlog V1 (ordered by dependency)
+### Prochaine feature — Dashboard Opérationnel DT/DG 🔜
 
-| # | Feature | Depends on | Priority |
-|---|---------|-----------|---------|
-| #13 | Situation Travaux Auto-générée | DQE engine | Low |
-| #15 | Réception Matériaux Express | partially done in form | Low |
-| #24 | Gantt BTP Simplifié | project phases | Low |
-| #25 | PWA Offline | Service Worker | Low |
-| #26 | Alertes WhatsApp | WhatsApp Business API | Low |
-| #28 | CR Réunion IA Auto-généré | Claude API | Low |
+Vue centralisée de pilotage pour Directeur Technique / Directeur Général.
 
-### Deferred to end of V1
+**Bloc 1 — KPIs sommaires**
+- Score santé portefeuille agrégé (moyenne pondérée health scores actifs)
+- Budget total engagé vs prévisionnel (tous chantiers)
+- Nb BDC en attente d'approbation
+- Nb stocks en alerte (qty < min_quantity)
 
-| # | Feature | Raison |
-|---|---------|--------|
-| #11 | GED Documents Chantier | Requires MinIO setup — defer to end of V1 |
+**Bloc 2 — Listes actionnables**
+- BDC en attente + compteur âge (jours depuis soumission) → bouton Approuver inline
+- Chantiers health score < 50 + fil d'actu 7 derniers événements
+- Stocks en alerte + suggestion BDC pré-rempli
 
-### Health Score Formula (#2)
+**Bloc 3 — Alertes intelligentes**
+- Deadline approbation 48h avec badge rouge
+- Snooze alertes non critiques (X jours)
+- Top 3 actions du jour (algo priorité)
+
+**Bloc 4 — V2**
+- Score fournisseur (délais + qualité + prix)
+- Trésorerie consolidée multi-chantiers 30/60/90j
+- Carte thermique budget (projets × catégories)
+- Mode réunion plein écran
+
+**Endpoint backend à créer :** `GET /api/portfolio/operations`
+Retourne : health_scores[], bdc_pending[], stock_alerts[], budget_summary{}
+
+### V2 (deferred)
+
+#16 Surconsommation matériaux · #20 Mode présentation réunion · #21 Checklist QSE · #22 Kanban non-conformités
+
+### Out of scope V1
+
+#14 Paiements reçus client · #17 Portail Sous-traitant · #32 Fitness · #37 Client-facing features
+
+## Health Score Formula (#2)
 
 Score 0–100 per active project, computed from 4 groups:
 
@@ -218,30 +253,23 @@ health_score    = planning_score + regularity_score + budget_score + safety_scor
 
 Thresholds: 🔴 < 50 · 🟠 50–74 · 🟢 ≥ 75
 
-### Map Feature Notes (#3)
+## Map Feature Notes (#3)
 
 - Use **Leaflet.js** + **Font Awesome 6** for map markers
 - Marker color = health score threshold (red/orange/green)
-- Marker icon = project type (building, road, etc.) from FA
 - Requires `latitude` + `longitude` columns on `projects` table
 - Côte d'Ivoire default center: `[7.54, -5.55]`, zoom 7
 
-### V2 (deferred)
-
-#16 Surconsommation matériaux · #20 Mode présentation réunion · #21 Checklist QSE · #22 Kanban non-conformités
-
-### Out of scope V1
-
-#14 Paiements reçus client · #17 Portail Sous-traitant · #32 Fitness · #37 Client-facing features
-
-## Module Build Sequence (updated)
+## Module Build Sequence (état actuel)
 
 1. ✅ Platform Foundation
 2. ✅ Daily Logs (Execution module)
-3. **Health Score + Map + Timeline** ← next
-4. DQE Engine v1
-5. Costs & Payments
-6. QSE
-7. Photos & GED (MinIO)
-8. Reporting & Exports
-9. PWA + WhatsApp
+3. ✅ Health Score + Map + Timeline
+4. ✅ DQE Engine v1 (+ duplicate + portfolio)
+5. ✅ Costs & Payments (budget, invoices, suppliers, general expenses)
+6. ✅ QSE (incidents PDF, safety score)
+7. ✅ Photos & GED (Storage::disk public, MinIO docker ready)
+8. ✅ Reporting & Exports (PDF on-demand, scheduler hebdo)
+9. ✅ PWA + WhatsApp (E.164 normalization CI)
+10. ✅ Achats / BDC / Stocks (purchase orders, réception BL+photos, stock movements)
+11. **→ Dashboard Opérationnel DT/DG** ← en cours
