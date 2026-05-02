@@ -1,4 +1,4 @@
-import api from '../../../lib/api';
+import { api } from '../../../lib/api';
 
 export type BesoinStatus = 'soumis' | 'approuve' | 'rejete' | 'en_preparation' | 'livre' | 'comptabilise';
 export type BesoinCategory = 'materiaux' | 'equipement' | 'sous-traitance' | 'main-oeuvre' | 'autre';
