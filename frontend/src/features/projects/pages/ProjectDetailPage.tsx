@@ -20,6 +20,8 @@ import WhatsAppTestButton from '../components/WhatsAppTestButton';
 import DqePanel from '../../dqe/components/DqePanel';
 import { useAuth } from '../../auth/stores/auth-store';
 import { getRoleGroup } from '../../../lib/roles';
+import CollapsibleSection from '../../../components/ui/CollapsibleSection';
+import TerrainFAB from '../../../components/ui/TerrainFAB';
 
 const STATUS_LABELS: Record<string, string> = {
   draft: 'Brouillon', active: 'Actif', completed: 'Terminé', archived: 'Archivé',
@@ -86,7 +88,20 @@ export default function ProjectDetailPage() {
   const logs    = logsData?.data ?? [];
   const logMeta = logsData?.meta ?? null;
 
-  if (isLoading) return <div className="page-content"><p>Chargement…</p></div>;
+  if (isLoading) return (
+    <div className="project-detail">
+      <div className="skeleton skeleton-hero" />
+      <div className="skeleton-kpi-row">
+        <div className="skeleton skeleton-kpi" />
+        <div className="skeleton skeleton-kpi" />
+        <div className="skeleton skeleton-kpi" />
+        <div className="skeleton skeleton-kpi" />
+      </div>
+      <div className="skeleton skeleton-card" />
+      <div className="skeleton skeleton-card" />
+      <div className="skeleton skeleton-card" />
+    </div>
+  );
   if (isError || !project) return <div className="page-content"><p className="form-error">Chantier introuvable.</p></div>;
 
   const avancement   = logMeta?.latest_progress ?? null;
@@ -276,107 +291,62 @@ export default function ProjectDetailPage() {
 
       {/* ── Courbe S ── */}
       {project.start_date && project.end_date && (
-        <div className="card card--full" style={{ marginBottom: 16 }}>
-          <div className="card-head">
-            <div className="card-icon card-icon--blue">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16">
-                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-              </svg>
-            </div>
-            <div>
-              <h3 className="card-title" style={{ margin: 0 }}>Courbe S — Avancement réel vs théorique</h3>
-              <p className="card-subtitle" style={{ margin: 0 }}>Progression cumulée depuis le début du chantier</p>
-            </div>
-          </div>
-          <SCurveChart
-            logs={logs}
-            startDate={project.start_date}
-            endDate={project.end_date}
-            targetProgress={project.target_progress ?? 100}
-          />
-        </div>
+        <CollapsibleSection
+          title="Courbe S — Avancement réel vs théorique"
+          subtitle="Progression cumulée depuis le début du chantier"
+          icon={<div className="card-icon card-icon--blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>}
+        >
+          <SCurveChart logs={logs} startDate={project.start_date} endDate={project.end_date} targetProgress={project.target_progress ?? 100} />
+        </CollapsibleSection>
       )}
 
       {/* ── Gantt BTP (#24) ── */}
-      <div className="card card--full" style={{ marginBottom: 16 }}>
-        <div className="card-head">
-          <div className="card-icon" style={{ background: '#ede9fe' }}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="#7c3aed" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16">
-              <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
-              <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
-            </svg>
-          </div>
-          <div>
-            <h3 className="card-title" style={{ margin: 0 }}>Planning phases BTP</h3>
-            <p className="card-subtitle" style={{ margin: 0 }}>Distribution estimée selon la répartition standard BTP</p>
-          </div>
-        </div>
+      <CollapsibleSection
+        title="Planning phases BTP"
+        subtitle="Distribution estimée selon la répartition standard BTP"
+        icon={<div className="card-icon" style={{ background: '#ede9fe' }}><svg viewBox="0 0 24 24" fill="none" stroke="#7c3aed" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></div>}
+      >
         <PhaseGanttWidget project={project} progressPercent={avancement} />
-      </div>
+      </CollapsibleSection>
 
       {/* ── Journal exploration ── */}
-      <div className="card card--full" style={{ marginBottom: 16 }}>
-        <div className="card-head">
-          <div className="card-icon card-icon--orange">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-          </div>
-          <div>
-            <h3 className="card-title" style={{ margin: 0 }}>Rapports journaliers</h3>
-            <p className="card-subtitle" style={{ margin: 0 }}>Historique des rapports terrain saisis par l'équipe</p>
-          </div>
-        </div>
+      <CollapsibleSection
+        id="journal-section"
+        title="Rapports journaliers"
+        subtitle="Historique des rapports terrain saisis par l'équipe"
+        defaultOpen
+        icon={<div className="card-icon card-icon--orange"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div>}
+      >
         <LogExplorer logs={logs} meta={logMeta} projectId={project.id} />
-      </div>
+      </CollapsibleSection>
 
       {/* ── Galerie Photos ── */}
-      <div className="card card--full" style={{ marginBottom: 16 }}>
-        <div className="card-head">
-          <div className="card-icon card-icon--purple">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16">
-              <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
-            </svg>
-          </div>
-          <div>
-            <h3 className="card-title" style={{ margin: 0 }}>Galerie photos terrain</h3>
-            <p className="card-subtitle" style={{ margin: 0 }}>Photos taguées par phase — glisser-déposer pour ajouter</p>
-          </div>
-        </div>
+      <CollapsibleSection
+        title="Galerie photos terrain"
+        subtitle="Photos taguées par phase — glisser-déposer pour ajouter"
+        defaultOpen
+        icon={<div className="card-icon card-icon--purple"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>}
+      >
         <PhotoGallery projectId={project.id} />
-      </div>
+      </CollapsibleSection>
 
       {/* ── Réception Matériaux (#15) ── */}
-      <div className="card card--full" style={{ marginBottom: 16 }}>
-        <div className="card-head">
-          <div className="card-icon" style={{ background: '#fef9c3' }}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="#ca8a04" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16">
-              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
-              <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
-              <line x1="12" y1="22.08" x2="12" y2="12"/>
-            </svg>
-          </div>
-          <div>
-            <h3 className="card-title" style={{ margin: 0 }}>Réceptions matériaux</h3>
-            <p className="card-subtitle" style={{ margin: 0 }}>Totaux et historique des livraisons enregistrées dans le journal</p>
-          </div>
-        </div>
+      <CollapsibleSection
+        title="Réceptions matériaux"
+        subtitle="Totaux et historique des livraisons enregistrées dans le journal"
+        icon={<div className="card-icon" style={{ background: '#fef9c3' }}><svg viewBox="0 0 24 24" fill="none" stroke="#ca8a04" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></div>}
+      >
         <MaterialReceiptsPanel projectId={project.id} />
-      </div>
+      </CollapsibleSection>
 
       {/* ── Trésorerie ── */}
-      <div className="card card--full" style={{ marginBottom: 16 }}>
-        <div className="card-head">
-          <div className="card-icon card-icon--green">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16">
-              <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-            </svg>
-          </div>
-          <div>
-            <h3 className="card-title" style={{ margin: 0 }}>Trésorerie prévisionnelle — 90 jours</h3>
-            <p className="card-subtitle" style={{ margin: 0 }}>Suivi budget prévisionnel, engagements et décaissements</p>
-          </div>
-        </div>
+      <CollapsibleSection
+        title="Trésorerie prévisionnelle — 90 jours"
+        subtitle="Suivi budget prévisionnel, engagements et décaissements"
+        icon={<div className="card-icon card-icon--green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>}
+      >
         <BudgetPanel projectId={project.id} />
-      </div>
+      </CollapsibleSection>
 
       {/* ── DQE ── */}
       <div style={{ marginBottom: 16 }}>
@@ -389,49 +359,31 @@ export default function ProjectDetailPage() {
       </div>
 
       {/* ── Score Sécurité Mensuel (#23) ── */}
-      <div className="card card--full" style={{ marginBottom: 16 }}>
-        <div className="card-head">
-          <div className="card-icon" style={{ background: '#fef2f2' }}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-            </svg>
-          </div>
-          <div>
-            <h3 className="card-title" style={{ margin: 0 }}>Score Sécurité Mensuel</h3>
-            <p className="card-subtitle" style={{ margin: 0 }}>Basé sur les incidents déclarés ce mois — pondérés par gravité</p>
-          </div>
-        </div>
+      <CollapsibleSection
+        title="Score Sécurité Mensuel"
+        subtitle="Basé sur les incidents déclarés ce mois — pondérés par gravité"
+        icon={<div className="card-icon" style={{ background: '#fef2f2' }}><svg viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>}
+      >
         <SafetyScoreWidget projectId={project.id} />
-      </div>
+      </CollapsibleSection>
 
       {/* ── Rapports archivés ── */}
-      <div className="card card--full" style={{ marginBottom: 16 }}>
-        <div className="card-head">
-          <div className="card-icon card-icon--orange">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-              <polyline points="14 2 14 8 20 8"/>
-              <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
-            </svg>
-          </div>
-          <div style={{ flex: 1 }}>
-            <h3 className="card-title" style={{ margin: 0 }}>Rapports hebdomadaires</h3>
-            <p className="card-subtitle" style={{ margin: 0 }}>Archives générées automatiquement — téléchargeables à tout moment</p>
-          </div>
-          <WhatsAppTestButton projectId={project.id} />
-        </div>
+      <CollapsibleSection
+        title="Rapports hebdomadaires"
+        subtitle="Archives générées automatiquement — téléchargeables à tout moment"
+        icon={<div className="card-icon card-icon--orange"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div>}
+        extra={<WhatsAppTestButton projectId={project.id} />}
+      >
         <ReportsWidget projectId={project.id} />
-      </div>
+      </CollapsibleSection>
 
       {/* ── Équipe + Activité ── */}
       <div className="detail-grid">
-        <div className="card card--half">
-          <div className="card-head">
-            <div className="card-icon card-icon--teal">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-            </div>
-            <h3 className="card-title" style={{ margin: 0 }}>Équipe du chantier</h3>
-          </div>
+        <CollapsibleSection
+          className="col-half"
+          title="Équipe du chantier"
+          icon={<div className="card-icon card-icon--teal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>}
+        >
           {!project.members || project.members.length === 0 ? (
             <p className="empty-state">Aucun membre assigné.</p>
           ) : (
@@ -458,18 +410,18 @@ export default function ProjectDetailPage() {
               </tbody>
             </table>
           )}
-        </div>
+        </CollapsibleSection>
 
-        <div className="card card--half card--activity">
-          <div className="card-head">
-            <div className="card-icon card-icon--gray">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-            </div>
-            <h3 className="card-title" style={{ margin: 0 }}>Historique des actions</h3>
-          </div>
+        <CollapsibleSection
+          className="col-half card--activity"
+          title="Historique des actions"
+          icon={<div className="card-icon card-icon--gray"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>}
+        >
           <ActivityTimeline activities={project.activities ?? []} />
-        </div>
+        </CollapsibleSection>
       </div>
+
+      <TerrainFAB targetId="journal-section" />
 
     </div>
   );
