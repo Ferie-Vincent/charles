@@ -194,6 +194,16 @@ export default function ProjectDetailPage() {
                 </svg>
                 Situation Travaux IA
               </button>
+              <Link
+                to={`/projects/${project.id}/accounting`}
+                className="proj-hero__report-btn"
+                style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', color: '#fff' }}
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="13" height="13">
+                  <rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+                </svg>
+                Comptabilité
+              </Link>
             </div>
           </div>
         </div>
