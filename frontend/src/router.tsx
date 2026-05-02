@@ -17,6 +17,7 @@ import ReportingPage from './features/reporting/pages/ReportingPage';
 import DqePage from './features/dqe/pages/DqePage';
 import DqeEditorPage from './features/dqe/pages/DqeEditorPage';
 import UsersPage from './features/users/pages/UsersPage';
+import PermissionsPage from './features/permissions/pages/PermissionsPage';
 
 function Shell({ children }: { children: ReactNode }) {
   return <AppShell>{children}</AppShell>;
@@ -46,5 +47,6 @@ export const router = createBrowserRouter([
   { path: '/qse',                      element: <Guarded path="/qse"><QhsePage /></Guarded> },
   { path: '/reporting',                element: <Guarded path="/reporting"><ReportingPage /></Guarded> },
   { path: '/users',                    element: <Guarded path="/users"><UsersPage /></Guarded> },
+  { path: '/permissions',              element: <Guarded path="/users"><PermissionsPage /></Guarded> },
   { path: '*',                         element: <Navigate to="/" replace /> },
 ]);

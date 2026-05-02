@@ -4,6 +4,7 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { router } from './router';
 import { queryClient } from './lib/query-client';
 import { AuthProvider, useAuth } from './features/auth/stores/auth-store';
+import { PermissionsProvider } from './lib/permissions-context';
 import { getMe, login } from './features/auth/api/login';
 
 function SessionRestorer({ children }: { children: ReactNode }) {
@@ -34,7 +35,9 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <SessionRestorer>
-          <RouterProvider router={router} />
+          <PermissionsProvider>
+            <RouterProvider router={router} />
+          </PermissionsProvider>
         </SessionRestorer>
       </AuthProvider>
     </QueryClientProvider>
