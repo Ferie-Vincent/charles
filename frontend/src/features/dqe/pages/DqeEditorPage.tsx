@@ -8,6 +8,7 @@ import {
   deleteDqeLine,
   updateDqeVersion,
   downloadDqePdf,
+  duplicateDqeVersion,
 } from '../api/dqe-api';
 import { UNITES_BTP, STATUS_LABELS, type DqeLine, type DqeLineInput } from '../types';
 
@@ -46,10 +47,14 @@ export default function DqeEditorPage() {
   const [addForm, setAddForm] = useState<DqeLineInput>({ ...EMPTY_LINE });
   const [editingLine, setEditingLine] = useState<(DqeLine & Partial<DqeLineInput>) | null>(null);
 
-  // Status change
   const updateVersion = useMutation({
     mutationFn: (status: string) => updateDqeVersion(pid, vid, { status: status as any }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['dqe-version', pid, vid] }),
+  });
+
+  const dupVersion = useMutation({
+    mutationFn: () => duplicateDqeVersion(pid, vid),
+    onSuccess: (v) => nav(`/projects/${pid}/dqe/${v.id}`),
   });
 
   const addLine = useMutation({
@@ -136,6 +141,14 @@ export default function DqeEditorPage() {
                 ✓ Valider
               </button>
             )}
+            <button
+              className="dqe-dup-btn"
+              onClick={() => dupVersion.mutate()}
+              disabled={dupVersion.isPending}
+              title="Dupliquer cette version DQE"
+            >
+              ⎘ Dupliquer
+            </button>
             <button
               className="dqe-pdf-btn"
               onClick={() => downloadDqePdf(

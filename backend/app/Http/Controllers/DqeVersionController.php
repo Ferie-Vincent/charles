@@ -154,6 +154,32 @@ class DqeVersionController extends Controller
         return response()->json(null, 204);
     }
 
+    public function duplicate(Request $request, Project $project, DqeVersion $dqeVersion): JsonResponse
+    {
+        $this->authorize('view', $project);
+        abort_unless($dqeVersion->project_id === $project->id, 404);
+
+        $next = ($project->dqeVersions()->max('version_number') ?? 0) + 1;
+
+        $copy = $project->dqeVersions()->create([
+            'name'           => $dqeVersion->name . ' (copie)',
+            'version_number' => $next,
+            'created_by'     => $request->user()->id,
+            'status'         => 'draft',
+            'notes'          => $dqeVersion->notes,
+            'total_ht'       => 0,
+        ]);
+
+        foreach ($dqeVersion->lines as $line) {
+            $copy->lines()->create($line->only(['lot', 'ouvrage', 'unite', 'quantite', 'prix_unitaire', 'ordre']));
+        }
+
+        $copy->recomputeTotal();
+        $copy->load('lines');
+
+        return response()->json($copy, 201);
+    }
+
     public function pdf(Request $request, Project $project, DqeVersion $dqeVersion): Response
     {
         $this->authorize('view', $project);

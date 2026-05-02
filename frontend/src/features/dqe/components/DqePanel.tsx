@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getDqeVersions, createDqeVersion, deleteDqeVersion } from '../api/dqe-api';
+import { getDqeVersions, createDqeVersion, deleteDqeVersion, duplicateDqeVersion } from '../api/dqe-api';
 import { STATUS_LABELS, type DqeVersion } from '../types';
 
 function fmtHT(n: number) {
@@ -34,6 +34,14 @@ export default function DqePanel({ projectId }: Props) {
   const remove = useMutation({
     mutationFn: (id: number) => deleteDqeVersion(projectId, id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['dqe-versions', projectId] }),
+  });
+
+  const duplicate = useMutation({
+    mutationFn: (id: number) => duplicateDqeVersion(projectId, id),
+    onSuccess: (v) => {
+      qc.invalidateQueries({ queryKey: ['dqe-versions', projectId] });
+      nav(`/projects/${projectId}/dqe/${v.id}`);
+    },
   });
 
   function handleCreate(e: React.FormEvent) {
@@ -100,6 +108,14 @@ export default function DqePanel({ projectId }: Props) {
                   onClick={() => nav(`/projects/${projectId}/dqe/${v.id}`)}
                 >
                   Ouvrir
+                </button>
+                <button
+                  className="dqe-row__dup"
+                  title="Dupliquer cette version"
+                  onClick={() => duplicate.mutate(v.id)}
+                  disabled={duplicate.isPending}
+                >
+                  ⎘
                 </button>
                 <button
                   className="dqe-row__delete"

@@ -147,5 +147,6 @@ Route::middleware('auth')->group(function () {
     Route::post('/projects/{project}/dqe-versions/{dqeVersion}/lines', [DqeVersionController::class, 'storeLine']);
     Route::put('/projects/{project}/dqe-versions/{dqeVersion}/lines/{dqeLine}', [DqeVersionController::class, 'updateLine']);
     Route::delete('/projects/{project}/dqe-versions/{dqeVersion}/lines/{dqeLine}', [DqeVersionController::class, 'destroyLine']);
+    Route::post('/projects/{project}/dqe-versions/{dqeVersion}/duplicate', [DqeVersionController::class, 'duplicate']);
     Route::get('/projects/{project}/dqe-versions/{dqeVersion}/pdf', [DqeVersionController::class, 'pdf']);
 });
