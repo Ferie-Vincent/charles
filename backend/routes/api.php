@@ -32,6 +32,7 @@ use App\Http\Controllers\GlobalSupplierController;
 use App\Http\Controllers\StockController;
 use App\Http\Controllers\PurchaseOrderController;
 use App\Http\Controllers\GedController;
+use App\Http\Controllers\DemandeBesoinController;
 use App\Http\Controllers\PortfolioOperationsController;
 use Illuminate\Support\Facades\Route;
 
@@ -81,6 +82,15 @@ Route::middleware('auth')->group(function () {
     Route::patch('/purchase-orders/{purchaseOrder}/receive', [PurchaseOrderController::class, 'markReceived']);
     Route::get('/purchase-orders/{purchaseOrder}/delivery-docs', [PurchaseOrderController::class, 'deliveryDocs']);
     // GED
+    // Demandes de besoins
+    Route::get('/demandes-besoins', [DemandeBesoinController::class, 'index']);
+    Route::post('/demandes-besoins', [DemandeBesoinController::class, 'store']);
+    Route::patch('/demandes-besoins/{demande}/approve',  [DemandeBesoinController::class, 'approve']);
+    Route::patch('/demandes-besoins/{demande}/reject',   [DemandeBesoinController::class, 'reject']);
+    Route::patch('/demandes-besoins/{demande}/prepare',  [DemandeBesoinController::class, 'prepare']);
+    Route::patch('/demandes-besoins/{demande}/deliver',  [DemandeBesoinController::class, 'deliver']);
+    Route::patch('/demandes-besoins/{demande}/record',   [DemandeBesoinController::class, 'record']);
+
     Route::get('/ged', [GedController::class, 'index']);
     Route::post('/ged', [GedController::class, 'store']);
     Route::get('/ged/{gedDocument}/url', [GedController::class, 'url']);
