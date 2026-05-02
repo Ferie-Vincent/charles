@@ -86,7 +86,7 @@ const navItems = [
   },
 ];
 
-export default function Sidebar() {
+export default function Sidebar({ open, onClose }: { open?: boolean; onClose?: () => void }) {
   const { user } = useAuth();
   const { canAccess } = usePermissions();
   const group = getRoleGroup(user?.role?.name ?? '');
@@ -103,7 +103,8 @@ export default function Sidebar() {
     : '?';
 
   return (
-    <aside className="sidebar">
+    <aside className={`sidebar${open ? ' sidebar--open' : ''}`}>
+      <button type="button" className="sidebar-close" onClick={onClose} aria-label="Fermer le menu">✕</button>
       <div className="sidebar-brand">
         <div className="sidebar-brand__logo">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">

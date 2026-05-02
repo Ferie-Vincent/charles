@@ -6126,3 +6126,302 @@ code {
 .ops-critical-card__code { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: #f97316; }
 .ops-critical-card__name { font-size: 0.8125rem; font-weight: 600; color: var(--text); }
 .ops-empty { font-size: 0.8125rem; color: var(--text-muted); padding: 0.5rem 0; }
+
+
+/* ═══════════════════════════════════════════════════════════
+   RESPONSIVE — MOBILE & TABLET
+   ═══════════════════════════════════════════════════════════ */
+
+/* ─── Hamburger button (desktop: hidden) ─── */
+.topbar-hamburger {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s;
+}
+.topbar-hamburger:hover {
+  background: var(--bg-app);
+  color: var(--text-main);
+}
+
+/* ─── Sidebar close button (desktop: hidden) ─── */
+.sidebar-close {
+  display: none;
+  position: absolute;
+  top: 14px;
+  right: 10px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.6);
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+.sidebar-close:hover { background: rgba(255,255,255,0.15); color: #fff; }
+
+/* ─── Sidebar overlay backdrop (desktop: hidden) ─── */
+.sidebar-overlay { display: none; }
+
+/* ─── Mobile bottom nav (hidden by default) ─── */
+.mobile-bottom-nav { display: none; }
+
+/* ════════════════════════════════
+   ≤ 768px  (tablets + phones)
+   ════════════════════════════════ */
+@media (max-width: 768px) {
+
+  /* Layout: collapse sidebar column */
+  .app-shell {
+    grid-template-columns: 1fr;
+  }
+
+  /* Sidebar becomes a slide-in drawer */
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 300;
+    width: 260px;
+    height: 100dvh;
+    transform: translateX(-100%);
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 4px 0 32px rgba(0, 0, 0, 0.35);
+  }
+
+  .sidebar--open {
+    transform: translateX(0);
+  }
+
+  /* Show close button inside sidebar */
+  .sidebar-close {
+    display: flex;
+  }
+
+  /* Backdrop overlay */
+  .sidebar-overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 299;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+  }
+
+  /* Show hamburger in topbar */
+  .topbar-hamburger {
+    display: flex;
+  }
+
+  /* Topbar adjustments */
+  .topbar {
+    padding: 0 12px;
+    gap: 10px;
+  }
+
+  .topbar-search {
+    max-width: 180px;
+  }
+
+  /* Smaller page padding, space for bottom nav */
+  .page-content {
+    padding: 14px 16px 80px;
+  }
+
+  /* ─── Mobile bottom nav — terrain only ─── */
+  .mobile-bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 200;
+    height: 62px;
+    background: var(--bg-sidebar);
+    border-top: 1px solid rgba(255,255,255,0.07);
+    box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.3);
+    align-items: stretch;
+    /* Safe area for iOS home indicator */
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .mobile-bottom-nav__item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    color: rgba(148, 163, 184, 0.7);
+    text-decoration: none;
+    font-size: 9.5px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+    padding: 8px 4px 6px;
+    transition: color 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .mobile-bottom-nav__item svg {
+    width: 22px;
+    height: 22px;
+    flex-shrink: 0;
+    opacity: 0.55;
+    transition: opacity 0.15s;
+  }
+
+  .mobile-bottom-nav__item.active {
+    color: var(--accent);
+  }
+  .mobile-bottom-nav__item.active svg {
+    opacity: 1;
+  }
+
+  /* ─── Touch-friendly terrain project rows ─── */
+  .terrain-project-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 14px 16px;
+    min-height: 0;
+  }
+
+  .terrain-project-row__info {
+    width: 100%;
+  }
+
+  .terrain-project-row__actions {
+    width: 100%;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .terrain-project-row__cta {
+    padding: 10px 20px;
+    font-size: 13px;
+    flex: 1;
+    max-width: 200px;
+    justify-content: center;
+    text-align: center;
+  }
+
+  /* ─── KPI row: 2 columns on tablet ─── */
+  .proj-kpi-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* ─── Page header: stack on mobile ─── */
+  .page-header {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .page-header__right { margin-top: 0; }
+
+  /* ─── Data tables: scroll horizontally ─── */
+  .data-table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* ─── Dashboard top row: stack ─── */
+  .db-top-row {
+    grid-template-columns: 1fr;
+  }
+
+  /* ─── Timeline bar labels: smaller font ─── */
+  .tl-axis__label { font-size: 9px; }
+  .tl-row__name { min-width: 80px; max-width: 80px; font-size: 10px; }
+}
+
+/* ════════════════════════════════
+   ≤ 480px  (phones portrait)
+   ════════════════════════════════ */
+@media (max-width: 480px) {
+
+  /* Hide search bar to save space */
+  .topbar-search {
+    display: none;
+  }
+
+  /* Hide user name/role text in topbar */
+  .topbar-username,
+  .topbar-role {
+    display: none;
+  }
+
+  /* Hide divider next to hidden elements */
+  .topbar-divider {
+    display: none;
+  }
+
+  /* Even smaller page padding */
+  .page-content {
+    padding: 10px 12px 80px;
+  }
+
+  /* KPIs: 2×2 tight grid */
+  .proj-kpi-row {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .proj-kpi {
+    padding: 12px;
+    gap: 8px;
+  }
+
+  .proj-kpi__value {
+    font-size: 20px;
+  }
+
+  .proj-kpi__label {
+    font-size: 10px;
+  }
+
+  /* Tighter card padding */
+  .card {
+    padding: 14px;
+  }
+
+  /* Form inputs: larger touch targets */
+  .form-field input,
+  .form-field select,
+  .form-field textarea {
+    font-size: 16px; /* prevents iOS zoom on focus */
+    padding: 12px 14px;
+  }
+
+  .btn-primary,
+  .btn {
+    min-height: 44px;
+    padding: 10px 20px;
+  }
+
+  /* DailyLog form: single column */
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  /* Hide CTA text in Topbar (keep icon) */
+  .topbar-cta {
+    display: none;
+  }
+}
