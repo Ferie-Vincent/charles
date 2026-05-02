@@ -1,4 +1,4 @@
-export type RoleGroup = 'direction' | 'terrain' | 'gestion' | 'lecture';
+export type RoleGroup = 'direction' | 'terrain' | 'gestion' | 'logistique' | 'lecture';
 
 const ROLE_MAP: Record<string, RoleGroup> = {
   'direction':           'direction',
@@ -7,6 +7,7 @@ const ROLE_MAP: Record<string, RoleGroup> = {
   'chef-chantier':       'terrain',
   'metreur-economiste':  'gestion',
   'comptable':           'gestion',
+  'moyens-generaux':     'logistique',
   'lecture-seule':       'lecture',
 };
 
@@ -23,7 +24,9 @@ export const ROLE_ACCESS: Record<string, RoleGroup[]> = {
   '/execution': ['direction', 'gestion'],
   '/costs':       ['direction', 'gestion'],
   '/accounting':  ['direction', 'gestion'],
-  '/suppliers':   ['direction', 'gestion'],
+  '/suppliers':   ['direction', 'gestion', 'logistique'],
+  '/achats':      ['direction', 'gestion', 'logistique'],
+  '/stocks':      ['direction', 'gestion', 'logistique'],
   '/qse':         ['direction', 'terrain'],
   '/reporting': ['direction', 'gestion'],
   '/users':     ['direction'],

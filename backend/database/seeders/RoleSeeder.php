@@ -16,6 +16,7 @@ class RoleSeeder extends Seeder
             ['name' => 'chef-chantier', 'label' => 'Chef de chantier'],
             ['name' => 'metreur-economiste', 'label' => 'Métreur / économiste'],
             ['name' => 'comptable', 'label' => 'Comptable'],
+            ['name' => 'moyens-generaux', 'label' => 'Moyens Généraux'],
             ['name' => 'lecture-seule', 'label' => 'Lecture seule'],
         ];
 
