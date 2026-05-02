@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\PermissionsController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\BudgetController;
 use App\Http\Controllers\ProjectReportController;
@@ -43,6 +44,8 @@ Route::prefix('auth')->group(function () {
 
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index']);
+    Route::get('/permissions', [PermissionsController::class, 'index']);
+    Route::put('/permissions', [PermissionsController::class, 'update']);
     Route::get('/users/roles', [UserController::class, 'roles']);
     Route::get('/users', [UserController::class, 'index']);
     Route::post('/users', [UserController::class, 'store']);

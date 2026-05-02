@@ -1,6 +1,7 @@
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../features/auth/stores/auth-store';
-import { getRoleGroup, canAccess } from '../../lib/roles';
+import { getRoleGroup } from '../../lib/roles';
+import { usePermissions } from '../../lib/permissions-context';
 
 const navItems = [
   {
@@ -52,9 +53,15 @@ const navItems = [
 
 export default function Sidebar() {
   const { user } = useAuth();
+  const { canAccess } = usePermissions();
   const group = getRoleGroup(user?.role?.name ?? '');
 
-  const visibleItems = navItems.filter(item => canAccess(item.to, group));
+  const visibleItems = navItems.filter(item => {
+    const feature = item.to.replace('/', '');
+    if (!feature) return true; // dashboard always visible
+    if (group === 'direction') return true;
+    return canAccess(feature, group);
+  });
 
   const initials = user?.name
     ? user.name.split(' ').map((w: string) => w[0]).slice(0, 2).join('').toUpperCase()
@@ -92,18 +99,29 @@ export default function Sidebar() {
 
       <div className="sidebar-footer">
         <ul>
-          {canAccess('/users', group) && (
-            <li>
-              <NavLink to="/users">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                  <circle cx="9" cy="7" r="4"/>
-                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-                  <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                </svg>
-                Utilisateurs
-              </NavLink>
-            </li>
+          {group === 'direction' && (
+            <>
+              <li>
+                <NavLink to="/users">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                    <circle cx="9" cy="7" r="4"/>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                  </svg>
+                  Utilisateurs
+                </NavLink>
+              </li>
+              <li>
+                <NavLink to="/permissions">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                  </svg>
+                  Permissions
+                </NavLink>
+              </li>
+            </>
           )}
           <li>
             <NavLink to="/settings">

@@ -5233,3 +5233,35 @@ code {
 }
 .btn--danger:hover { background: #dc2626; }
 .btn--danger:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* ─── Permissions Matrix ──────────────────────────── */
+.perm-table td { vertical-align: middle; }
+.perm-toggle {
+  position: relative;
+  width: 40px;
+  height: 22px;
+  border-radius: 11px;
+  border: none;
+  background: #e2e8f0;
+  cursor: pointer;
+  transition: background 0.2s;
+  padding: 0;
+  flex-shrink: 0;
+}
+.perm-toggle--on {
+  background: #10b981;
+}
+.perm-toggle__thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+.perm-toggle--on .perm-toggle__thumb {
+  transform: translateX(18px);
+}
