@@ -283,7 +283,7 @@ return (
 | `/dqe` | DqePage.tsx | ✅ | ✅ | **Done** |
 | `/projects/*/dqe/*` | DqeEditorPage.tsx | ✅ | ✅ | **Done** |
 | `/costs` | CostsPage.tsx | ✅ | ❌ | **Needs KPIs** |
-| `/ged` | GedPage.tsx | ❌ | ❌ | **Needs full redesign** |
+| `/ged` | GedPage.tsx | ✅ | ✅ | **Done** |
 | `/qhse` | QhsePage.tsx | ✅ | ❌ | **Needs KPIs** |
 | `/reporting` | ReportingPage.tsx | ✅ | ❌ | **Needs KPIs** |
 | `/evaluation` | EvaluationPage.tsx | ✅ | ❌ | **Needs KPIs** |
