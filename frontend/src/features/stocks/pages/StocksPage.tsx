@@ -4,6 +4,7 @@ import {
   getMovements, addMovement,
   STOCK_CATEGORIES, type StockItem, type StockMovement,
 } from '../api/stocks';
+import PageHeader from '../../../components/ui/PageHeader';
 
 const fmt = (n: number, unit = '') => `${n % 1 === 0 ? n : n.toFixed(2)}${unit ? ' ' + unit : ''}`;
 const fmtDate = (d: string) => new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
@@ -77,19 +78,53 @@ export default function StocksPage() {
 
   const criticalItems = items.filter(i => i.is_low);
 
-  return (
-    <div className="stocks-page">
+  const rupture = items.filter(i => (i.quantity ?? 0) === 0).length;
+  const ok = items.filter(i => !i.is_low && (i.quantity ?? 0) > 0).length;
 
-      <div className="supp-header">
-        <div>
-          <p className="supp-header__label">MOYENS GÉNÉRAUX</p>
-          <h1 className="supp-header__title">Gestion des Stocks</h1>
-          <p className="supp-header__sub">Inventaire temps réel — alertes seuil automatiques</p>
+  return (
+    <div className="page-container">
+
+      <PageHeader
+        title="Gestion des Stocks"
+        subtitle="Inventaire temps réel — alertes seuil automatiques"
+        actions={
+          <button className="btn-primary" onClick={() => setItemModal({ ...EMPTY_ITEM })}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="14" height="14"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Nouvel article
+          </button>
+        }
+      />
+
+      {/* KPIs */}
+      <div className="proj-kpi-row">
+        <div className="proj-kpi">
+          <span className="proj-kpi__icon">📦</span>
+          <div>
+            <p className="proj-kpi__val">{items.length}</p>
+            <p className="proj-kpi__lbl">Articles en stock</p>
+          </div>
         </div>
-        <button className="btn btn--primary" onClick={() => setItemModal({ ...EMPTY_ITEM })}>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="14" height="14"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          Nouvel article
-        </button>
+        <div className="proj-kpi">
+          <span className="proj-kpi__icon" style={{ color: '#ef4444' }}>⚠</span>
+          <div>
+            <p className="proj-kpi__val" style={{ color: criticalItems.length > 0 ? '#ef4444' : 'var(--text-body)' }}>{criticalItems.length}</p>
+            <p className="proj-kpi__lbl">Critiques (sous seuil)</p>
+          </div>
+        </div>
+        <div className="proj-kpi">
+          <span className="proj-kpi__icon" style={{ color: '#ef4444' }}>✕</span>
+          <div>
+            <p className="proj-kpi__val" style={{ color: rupture > 0 ? '#ef4444' : 'var(--text-body)' }}>{rupture}</p>
+            <p className="proj-kpi__lbl">En rupture</p>
+          </div>
+        </div>
+        <div className="proj-kpi">
+          <span className="proj-kpi__icon" style={{ color: '#10b981' }}>✓</span>
+          <div>
+            <p className="proj-kpi__val" style={{ color: '#10b981' }}>{ok}</p>
+            <p className="proj-kpi__lbl">Niveaux OK</p>
+          </div>
+        </div>
       </div>
 
       {/* Critical alert */}
@@ -101,47 +136,28 @@ export default function StocksPage() {
         </div>
       )}
 
-      {/* KPIs */}
-      <div className="supp-kpi-row">
-        <div className="supp-kpi">
-          <span className="supp-kpi__val">{items.length}</span>
-          <span className="supp-kpi__lbl">Articles en stock</span>
+      {/* Table panel */}
+      <div className="bg-panel" style={{ borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
+        {/* Toolbar */}
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center', padding: '14px 18px', borderBottom: '1px solid var(--border)', flexWrap: 'wrap' }}>
+          <div className="acct-search-wrap" style={{ flex: 1, minWidth: 200, maxWidth: 340 }}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="14" height="14" className="acct-search-icon"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" className="acct-search-input" placeholder="Rechercher un article…" value={search} onChange={e => setSearch(e.target.value)} />
+            {search && <button className="acct-search-clear" onClick={() => setSearch('')}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="12" height="12"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>}
+          </div>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            <button className={`bud-tab ${!catFilter ? 'bud-tab--active' : ''}`} onClick={() => setCatFilter('')}>Tous <span className="dqe-filter-count">{items.length}</span></button>
+            {Object.entries(STOCK_CATEGORIES).map(([k, v]) => {
+              const count = items.filter(i => i.category === k).length;
+              if (!count) return null;
+              return <button key={k} className={`bud-tab ${catFilter === k ? 'bud-tab--active' : ''}`} onClick={() => setCatFilter(k === catFilter ? '' : k)}>{v} <span className="dqe-filter-count">{count}</span></button>;
+            })}
+          </div>
         </div>
-        <div className="supp-kpi" style={{ borderLeft: '3px solid #ef4444' }}>
-          <span className="supp-kpi__val" style={{ color: criticalItems.length > 0 ? '#ef4444' : 'inherit' }}>{criticalItems.length}</span>
-          <span className="supp-kpi__lbl">Critiques (sous seuil)</span>
-        </div>
-        <div className="supp-kpi">
-          <span className="supp-kpi__val">{items.filter(i => (i.quantity ?? 0) === 0).length}</span>
-          <span className="supp-kpi__lbl">En rupture</span>
-        </div>
-        <div className="supp-kpi">
-          <span className="supp-kpi__val">{items.filter(i => !i.is_low && (i.quantity ?? 0) > 0).length}</span>
-          <span className="supp-kpi__lbl" style={{ color: '#10b981' }}>Niveaux OK</span>
-        </div>
-      </div>
 
-      {/* Filters */}
-      <div className="supp-filters">
-        <div className="acct-search-wrap" style={{ flex: 1, maxWidth: 360 }}>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="14" height="14" className="acct-search-icon"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <input type="text" className="acct-search-input" placeholder="Rechercher un article…" value={search} onChange={e => setSearch(e.target.value)} />
-          {search && <button className="acct-search-clear" onClick={() => setSearch('')}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="12" height="12"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>}
-        </div>
-        <div className="supp-cat-filters">
-          <button className={`dqe-filter-btn ${!catFilter ? 'dqe-filter-btn--active' : ''}`} onClick={() => setCatFilter('')}>Tous <span className="dqe-filter-count">{items.length}</span></button>
-          {Object.entries(STOCK_CATEGORIES).map(([k, v]) => {
-            const count = items.filter(i => i.category === k).length;
-            if (!count) return null;
-            return <button key={k} className={`dqe-filter-btn ${catFilter === k ? 'dqe-filter-btn--active' : ''}`} onClick={() => setCatFilter(k === catFilter ? '' : k)}>{v} <span className="dqe-filter-count">{count}</span></button>;
-          })}
-        </div>
-      </div>
-
-      {/* Table */}
-      {loading ? <p style={{ padding: 24, color: 'var(--text-muted)' }}>Chargement…</p> : (
-        <div className="acct-table-wrap">
-          <table className="acct-table">
+        {/* Table */}
+        {loading ? <p style={{ padding: 24, color: 'var(--text-muted)' }}>Chargement…</p> : (
+          <table className="data-table">
             <thead>
               <tr>
                 <th>Article</th>
@@ -160,12 +176,12 @@ export default function StocksPage() {
                 const isLow = item.is_low;
                 const isEmpty = item.quantity === 0;
                 return (
-                  <tr key={item.id} className={isLow ? 'acct-table__row--pending' : ''}>
+                  <tr key={item.id}>
                     <td>
-                      <span className="supp-name">{item.name}</span>
-                      {item.reference && <p className="supp-notes">Réf: {item.reference}</p>}
+                      <span style={{ fontWeight: 600, color: 'var(--text-body)' }}>{item.name}</span>
+                      {item.reference && <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--text-muted)' }}>Réf: {item.reference}</p>}
                     </td>
-                    <td><span className="acct-status-badge" style={{ background: `${cc}12`, color: cc, borderColor: `${cc}35` }}>{STOCK_CATEGORIES[item.category]}</span></td>
+                    <td><span className="badge" style={{ background: `${cc}12`, color: cc, borderColor: `${cc}35` }}>{STOCK_CATEGORIES[item.category]}</span></td>
                     <td style={{ color: 'var(--text-muted)', fontSize: '0.84rem' }}>{item.location || '—'}</td>
                     <td style={{ textAlign: 'right', fontWeight: 700, color: isEmpty ? '#ef4444' : isLow ? '#f59e0b' : 'var(--text-body)' }}>
                       {fmt(item.quantity, item.unit)}
@@ -175,17 +191,17 @@ export default function StocksPage() {
                     </td>
                     <td>
                       {isEmpty ? (
-                        <span className="acct-status-badge" style={{ background: '#ef444415', color: '#ef4444', borderColor: '#ef444440' }}>
+                        <span className="badge" style={{ background: '#ef444415', color: '#ef4444', borderColor: '#ef444440' }}>
                           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="10" height="10"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                           Rupture
                         </span>
                       ) : isLow ? (
-                        <span className="acct-status-badge" style={{ background: '#f59e0b15', color: '#f59e0b', borderColor: '#f59e0b40' }}>
+                        <span className="badge" style={{ background: '#f59e0b15', color: '#f59e0b', borderColor: '#f59e0b40' }}>
                           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="10" height="10"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
                           Critique
                         </span>
                       ) : (
-                        <span className="acct-status-badge" style={{ background: '#10b98115', color: '#10b981', borderColor: '#10b98140' }}>
+                        <span className="badge" style={{ background: '#10b98115', color: '#10b981', borderColor: '#10b98140' }}>
                           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="10" height="10"><polyline points="20 6 9 17 4 12"/></svg>
                           OK
                         </span>
@@ -209,8 +225,8 @@ export default function StocksPage() {
               })}
             </tbody>
           </table>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Item modal */}
       {itemModal !== null && (
