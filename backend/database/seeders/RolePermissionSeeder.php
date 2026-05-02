@@ -12,6 +12,7 @@ class RolePermissionSeeder extends Seeder
     // Matches the hardcoded ROLE_ACCESS in frontend/src/lib/roles.ts
     private const DEFAULTS = [
         'terrain' => [
+            'projects'   => true,
             'map'        => true,
             'timeline'   => true,
             'dqe'        => false,
@@ -22,8 +23,11 @@ class RolePermissionSeeder extends Seeder
             'reporting'  => false,
             'achats'     => false,
             'stocks'     => false,
+            'besoins'    => true,
+            'ged'        => true,
         ],
         'gestion' => [
+            'projects'   => true,
             'map'        => false,
             'timeline'   => false,
             'dqe'        => true,
@@ -34,8 +38,12 @@ class RolePermissionSeeder extends Seeder
             'reporting'  => true,
             'achats'     => false,
             'stocks'     => false,
+            'suppliers'  => false,
+            'besoins'    => true,
+            'ged'        => true,
         ],
         'logistique' => [
+            'projects'   => false,
             'map'        => false,
             'timeline'   => false,
             'dqe'        => false,
@@ -46,8 +54,12 @@ class RolePermissionSeeder extends Seeder
             'reporting'  => false,
             'achats'     => true,
             'stocks'     => true,
+            'suppliers'  => true,
+            'besoins'    => true,
+            'ged'        => true,
         ],
         'lecture' => [
+            'projects'   => true,
             'map'        => true,
             'timeline'   => false,
             'dqe'        => false,
@@ -58,6 +70,8 @@ class RolePermissionSeeder extends Seeder
             'reporting'  => false,
             'achats'     => false,
             'stocks'     => false,
+            'besoins'    => false,
+            'ged'        => true,
         ],
     ];
 
