@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useParams, Link } from 'react-router-dom';
 import { getProject } from '../api/get-project';
 import ActivityTimeline from '../components/ActivityTimeline';
-import LogExplorer from '../../daily-logs/components/LogExplorer';
+import LogCalendar from '../../daily-logs/components/LogCalendar';
 import { getDailyLogs } from '../../daily-logs/api/get-daily-logs';
 import HealthScoreBadge from '../components/HealthScoreBadge';
 import SCurveChart from '../components/SCurveChart';
@@ -289,7 +289,32 @@ export default function ProjectDetailPage() {
         </div>
       </div>
 
-      {/* ── Courbe S ── */}
+      {/* ── 1. Journal mensuel (calendrier) ── */}
+      <CollapsibleSection
+        id="journal-section"
+        title="Rapports journaliers"
+        subtitle="Calendrier mensuel — cliquer un jour pour voir le détail"
+        defaultOpen
+        icon={<div className="card-icon card-icon--orange"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>}
+      >
+        <LogCalendar logs={logs} meta={logMeta} projectId={project.id} />
+      </CollapsibleSection>
+
+      {/* ── 2. Incidents ── */}
+      <div style={{ marginBottom: 16 }}>
+        <IncidentPanel projectId={project.id} />
+      </div>
+
+      {/* ── 3. Score Sécurité ── */}
+      <CollapsibleSection
+        title="Score Sécurité Mensuel"
+        subtitle="Basé sur les incidents déclarés ce mois — pondérés par gravité"
+        icon={<div className="card-icon" style={{ background: '#fef2f2' }}><svg viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>}
+      >
+        <SafetyScoreWidget projectId={project.id} />
+      </CollapsibleSection>
+
+      {/* ── 4. Courbe S ── */}
       {project.start_date && project.end_date && (
         <CollapsibleSection
           title="Courbe S — Avancement réel vs théorique"
@@ -300,46 +325,7 @@ export default function ProjectDetailPage() {
         </CollapsibleSection>
       )}
 
-      {/* ── Gantt BTP (#24) ── */}
-      <CollapsibleSection
-        title="Planning phases BTP"
-        subtitle="Distribution estimée selon la répartition standard BTP"
-        icon={<div className="card-icon" style={{ background: '#ede9fe' }}><svg viewBox="0 0 24 24" fill="none" stroke="#7c3aed" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></div>}
-      >
-        <PhaseGanttWidget project={project} progressPercent={avancement} />
-      </CollapsibleSection>
-
-      {/* ── Journal exploration ── */}
-      <CollapsibleSection
-        id="journal-section"
-        title="Rapports journaliers"
-        subtitle="Historique des rapports terrain saisis par l'équipe"
-        defaultOpen
-        icon={<div className="card-icon card-icon--orange"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div>}
-      >
-        <LogExplorer logs={logs} meta={logMeta} projectId={project.id} />
-      </CollapsibleSection>
-
-      {/* ── Galerie Photos ── */}
-      <CollapsibleSection
-        title="Galerie photos terrain"
-        subtitle="Photos taguées par phase — glisser-déposer pour ajouter"
-        defaultOpen
-        icon={<div className="card-icon card-icon--purple"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>}
-      >
-        <PhotoGallery projectId={project.id} />
-      </CollapsibleSection>
-
-      {/* ── Réception Matériaux (#15) ── */}
-      <CollapsibleSection
-        title="Réceptions matériaux"
-        subtitle="Totaux et historique des livraisons enregistrées dans le journal"
-        icon={<div className="card-icon" style={{ background: '#fef9c3' }}><svg viewBox="0 0 24 24" fill="none" stroke="#ca8a04" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></div>}
-      >
-        <MaterialReceiptsPanel projectId={project.id} />
-      </CollapsibleSection>
-
-      {/* ── Trésorerie ── */}
+      {/* ── 5. Trésorerie ── */}
       <CollapsibleSection
         title="Trésorerie prévisionnelle — 90 jours"
         subtitle="Suivi budget prévisionnel, engagements et décaissements"
@@ -348,26 +334,39 @@ export default function ProjectDetailPage() {
         <BudgetPanel projectId={project.id} />
       </CollapsibleSection>
 
-      {/* ── DQE ── */}
+      {/* ── 6. DQE ── */}
       <div style={{ marginBottom: 16 }}>
         <DqePanel projectId={project.id} />
       </div>
 
-      {/* ── Incidents ── */}
-      <div style={{ marginBottom: 16 }}>
-        <IncidentPanel projectId={project.id} />
-      </div>
-
-      {/* ── Score Sécurité Mensuel (#23) ── */}
+      {/* ── 7. Gantt BTP ── */}
       <CollapsibleSection
-        title="Score Sécurité Mensuel"
-        subtitle="Basé sur les incidents déclarés ce mois — pondérés par gravité"
-        icon={<div className="card-icon" style={{ background: '#fef2f2' }}><svg viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>}
+        title="Planning phases BTP"
+        subtitle="Distribution estimée selon la répartition standard BTP"
+        icon={<div className="card-icon" style={{ background: '#ede9fe' }}><svg viewBox="0 0 24 24" fill="none" stroke="#7c3aed" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></div>}
       >
-        <SafetyScoreWidget projectId={project.id} />
+        <PhaseGanttWidget project={project} progressPercent={avancement} />
       </CollapsibleSection>
 
-      {/* ── Rapports archivés ── */}
+      {/* ── 8. Réceptions matériaux ── */}
+      <CollapsibleSection
+        title="Réceptions matériaux"
+        subtitle="Totaux et historique des livraisons enregistrées dans le journal"
+        icon={<div className="card-icon" style={{ background: '#fef9c3' }}><svg viewBox="0 0 24 24" fill="none" stroke="#ca8a04" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></div>}
+      >
+        <MaterialReceiptsPanel projectId={project.id} />
+      </CollapsibleSection>
+
+      {/* ── 9. Galerie Photos ── */}
+      <CollapsibleSection
+        title="Galerie photos terrain"
+        subtitle="Photos taguées par phase — glisser-déposer pour ajouter"
+        icon={<div className="card-icon card-icon--purple"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>}
+      >
+        <PhotoGallery projectId={project.id} />
+      </CollapsibleSection>
+
+      {/* ── 10. Rapports archivés ── */}
       <CollapsibleSection
         title="Rapports hebdomadaires"
         subtitle="Archives générées automatiquement — téléchargeables à tout moment"
@@ -377,7 +376,7 @@ export default function ProjectDetailPage() {
         <ReportsWidget projectId={project.id} />
       </CollapsibleSection>
 
-      {/* ── Équipe + Activité ── */}
+      {/* ── 11. Équipe + Activité ── */}
       <div className="detail-grid">
         <CollapsibleSection
           className="col-half"
