@@ -5535,7 +5535,7 @@ code {
 .acct-kpi__sub   { font-size: 0.78rem; color: var(--text-muted); }
 
 /* Body layout */
-.acct-body { display: grid; grid-template-columns: 1fr 300px; gap: 20px; margin-bottom: 24px; }
+.acct-body { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
 
 /* Panel */
 .acct-panel     { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
