@@ -319,7 +319,7 @@ export default function ProjectAccountingPage() {
           <div className="mr-modal" style={{ maxWidth: 380 }} onClick={e => e.stopPropagation()}>
             <div className="mr-modal__head">
               <h2 className="mr-modal__title">Confirmer la suppression</h2>
-              <button className="mr-modal__close" onClick={() => setDeleteTarget(null)}>✕</button>
+              <button type="button" className="mr-modal__close" onClick={() => setDeleteTarget(null)}>✕</button>
             </div>
             <div className="mr-modal__body">
               <p style={{ margin: '0 0 1.5rem', color: 'var(--color-text-secondary)' }}>
@@ -371,7 +371,7 @@ function SupplierModal({ supplier, projectId: _, onSave, onClose }: {
       <div className="mr-modal" style={{ maxWidth: 520 }} onClick={e => e.stopPropagation()}>
         <div className="mr-modal__head">
           <h2 className="mr-modal__title">{supplier ? 'Modifier fournisseur' : 'Nouveau fournisseur'}</h2>
-          <button className="mr-modal__close" onClick={onClose}>✕</button>
+          <button type="button" className="mr-modal__close" onClick={onClose}>✕</button>
         </div>
         <form onSubmit={handleSubmit} className="mr-modal__body" style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
           <div className="form-field">
@@ -464,7 +464,7 @@ function InvoiceModal({ invoice, suppliers, projectId, onSave, onClose }: {
       <div className="mr-modal" style={{ maxWidth: 580 }} onClick={e => e.stopPropagation()}>
         <div className="mr-modal__head">
           <h2 className="mr-modal__title">{invoice ? 'Modifier facture' : 'Nouvelle facture'}</h2>
-          <button className="mr-modal__close" onClick={onClose}>✕</button>
+          <button type="button" className="mr-modal__close" onClick={onClose}>✕</button>
         </div>
         <form onSubmit={handleSubmit} className="mr-modal__body" style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>

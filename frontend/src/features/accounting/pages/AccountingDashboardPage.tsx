@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
+import SkeletonPage from '../../../components/ui/SkeletonPage';
 import {
   getPortfolioAccounting,
   createExpense,
@@ -99,7 +100,7 @@ export default function AccountingDashboardPage() {
     queryClient.invalidateQueries({ queryKey: ['portfolio-accounting'] });
   };
 
-  if (isLoading) return <p style={{ padding: 40, color: 'var(--text-muted)', textAlign: 'center' }}>Chargement…</p>;
+  if (isLoading) return <div className="page-content"><SkeletonPage rows={3} /></div>;
   if (isError || !data) return <p style={{ padding: 40, color: 'var(--text-muted)', textAlign: 'center' }}>Impossible de charger les données comptables.</p>;
 
   const { totals, projects, recent_activity, expenses } = data;
@@ -117,7 +118,7 @@ export default function AccountingDashboardPage() {
         title="Comptabilité"
         subtitle="Engagements · Réalisé · Reste à consommer · Décaissements"
         action={
-          <button className="btn-primary" onClick={() => setModal({ ...EMPTY_EXPENSE })}>
+          <button type="button" className="btn-primary" onClick={() => setModal({ ...EMPTY_EXPENSE })}>
             + Décaissement hors projet
           </button>
         }
@@ -223,7 +224,7 @@ export default function AccountingDashboardPage() {
               onChange={e => setSearch(e.target.value)}
             />
             {search && (
-              <button className="acct-search-clear" onClick={() => setSearch('')}>
+              <button type="button" className="acct-search-clear" onClick={() => setSearch('')}>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" width="12" height="12"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
               </button>
             )}
@@ -392,23 +393,23 @@ export default function AccountingDashboardPage() {
                       <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                         {isApprover && exp.status === 'en_attente' && (
                           <>
-                            <button className="btn btn--sm acct-btn--approve" onClick={() => handleApprove(exp.id)} title="Approuver">
+                            <button type="button" className="btn btn--sm acct-btn--approve" onClick={() => handleApprove(exp.id)} title="Approuver">
                               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" width="12" height="12"><polyline points="20 6 9 17 4 12"/></svg>
                               Approuver
                             </button>
-                            <button className="btn btn--sm acct-btn--reject" onClick={() => setRejectModal({ id: exp.id, reason: '' })} title="Rejeter">
+                            <button type="button" className="btn btn--sm acct-btn--reject" onClick={() => setRejectModal({ id: exp.id, reason: '' })} title="Rejeter">
                               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" width="12" height="12"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                               Rejeter
                             </button>
                           </>
                         )}
                         {exp.status === 'en_attente' && (
-                          <button className="btn-icon btn-icon--edit" onClick={() => setModal({ ...exp })} title="Modifier">
+                          <button type="button" className="btn-icon btn-icon--edit" onClick={() => setModal({ ...exp })} title="Modifier">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="13" height="13"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                           </button>
                         )}
                         {exp.status !== 'approuvee' && (
-                          <button className="btn-icon btn-icon--delete" onClick={() => setDeleteId(exp.id)} title="Supprimer">
+                          <button type="button" className="btn-icon btn-icon--delete" onClick={() => setDeleteId(exp.id)} title="Supprimer">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="13" height="13"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
                           </button>
                         )}
@@ -428,7 +429,7 @@ export default function AccountingDashboardPage() {
           <div className="mr-modal" style={{ maxWidth: 520 }} onClick={e => e.stopPropagation()}>
             <div className="mr-modal__head">
               <h2 className="mr-modal__title">{modal.id ? 'Modifier le décaissement' : 'Nouveau décaissement hors projet'}</h2>
-              <button className="mr-modal__close" onClick={() => setModal(null)}>✕</button>
+              <button type="button" className="mr-modal__close" onClick={() => setModal(null)}>✕</button>
             </div>
             <div className="mr-modal__body" style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
@@ -469,7 +470,7 @@ export default function AccountingDashboardPage() {
               )}
             </div>
             <div className="mr-modal__actions">
-              <button className="btn btn--secondary" onClick={() => setModal(null)}>Annuler</button>
+              <button type="button" className="btn btn--secondary" onClick={() => setModal(null)}>Annuler</button>
               <button className="btn btn--primary" onClick={handleSaveExpense} disabled={saving || !modal.label || !modal.amount}>
                 {saving ? 'Enregistrement…' : modal.id ? 'Modifier' : 'Soumettre pour approbation'}
               </button>
@@ -484,7 +485,7 @@ export default function AccountingDashboardPage() {
           <div className="mr-modal" style={{ maxWidth: 420 }} onClick={e => e.stopPropagation()}>
             <div className="mr-modal__head">
               <h2 className="mr-modal__title">Motif de rejet</h2>
-              <button className="mr-modal__close" onClick={() => setRejectModal(null)}>✕</button>
+              <button type="button" className="mr-modal__close" onClick={() => setRejectModal(null)}>✕</button>
             </div>
             <div className="mr-modal__body">
               <div className="form-field">
@@ -500,7 +501,7 @@ export default function AccountingDashboardPage() {
               </div>
             </div>
             <div className="mr-modal__actions">
-              <button className="btn btn--secondary" onClick={() => setRejectModal(null)}>Annuler</button>
+              <button type="button" className="btn btn--secondary" onClick={() => setRejectModal(null)}>Annuler</button>
               <button className="btn btn--danger" onClick={handleReject} disabled={!rejectModal.reason.trim()}>
                 Confirmer le rejet
               </button>
@@ -515,13 +516,13 @@ export default function AccountingDashboardPage() {
           <div className="mr-modal" style={{ maxWidth: 380 }} onClick={e => e.stopPropagation()}>
             <div className="mr-modal__head">
               <h2 className="mr-modal__title">Supprimer ce décaissement ?</h2>
-              <button className="mr-modal__close" onClick={() => setDeleteId(null)}>✕</button>
+              <button type="button" className="mr-modal__close" onClick={() => setDeleteId(null)}>✕</button>
             </div>
             <div className="mr-modal__body">
               <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Cette action est irréversible.</p>
             </div>
             <div className="mr-modal__actions">
-              <button className="btn btn--secondary" onClick={() => setDeleteId(null)}>Annuler</button>
+              <button type="button" className="btn btn--secondary" onClick={() => setDeleteId(null)}>Annuler</button>
               <button className="btn btn--danger" onClick={handleDeleteExpense}>Supprimer</button>
             </div>
           </div>

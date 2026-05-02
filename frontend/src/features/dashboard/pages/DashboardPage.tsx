@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { getDashboard, type DashboardData } from '../api/get-dashboard';
+import SkeletonPage from '../../../components/ui/SkeletonPage';
 import { useAuth } from '../../auth/stores/auth-store';
 import { getRoleGroup } from '../../../lib/roles';
 import PageHeader from '../../../components/ui/PageHeader';
@@ -175,7 +176,7 @@ export default function DashboardPage() {
     staleTime: 60_000,
   });
 
-  if (isLoading) return <div className="page-content"><p>Chargement…</p></div>;
+  if (isLoading) return <div className="page-content"><SkeletonPage rows={4} /></div>;
   if (isError || !data) return <div className="page-content"><p className="form-error">Erreur de chargement.</p></div>;
 
   const { stats, active_projects, recent_activities, alerts } = data;

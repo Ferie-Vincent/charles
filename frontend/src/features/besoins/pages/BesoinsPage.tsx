@@ -238,7 +238,7 @@ export default function BesoinsPage() {
                   <td>
                     <span style={{ fontWeight: 600, color: 'var(--text-body)' }}>{b.title}</span>
                     {b.requester && <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--text-muted)' }}>par {b.requester.name}</p>}
-                    {b.rejection_reason && <p style={{ margin: 0, fontSize: '0.75rem', color: '#ef4444' }}>↳ {b.rejection_reason}</p>}
+                    {b.rejection_reason && <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--danger)' }}>↳ {b.rejection_reason}</p>}
                   </td>
                   <td style={{ fontSize: '0.84rem' }}>
                     {b.project ? (
@@ -261,7 +261,7 @@ export default function BesoinsPage() {
                       {/* Direction: approve / reject */}
                       {isDirection && b.status === 'soumis' && (
                         <>
-                          <button className="btn btn--sm btn--primary" style={{ background: '#10b981', borderColor: '#10b981', color: '#fff' }} onClick={() => handleApprove(b.id)}>✓</button>
+                          <button className="btn btn--sm btn--primary" style={{ background: 'var(--success)', borderColor: 'var(--success)', color: '#fff' }} onClick={() => handleApprove(b.id)}>✓</button>
                           <button className="btn btn--sm btn--danger" onClick={() => setRejectModal({ id: b.id, reason: '' })}>✕</button>
                         </>
                       )}
@@ -271,7 +271,7 @@ export default function BesoinsPage() {
                       )}
                       {/* Logistique: deliver */}
                       {(isLogistique || isDirection) && b.status === 'en_preparation' && (
-                        <button className="btn btn--sm btn--primary" style={{ background: '#0891b2', borderColor: '#0891b2', color: '#fff' }} onClick={() => handleDeliver(b.id)}>Livré ✓</button>
+                        <button className="btn btn--sm btn--primary" style={{ background: 'var(--info)', borderColor: 'var(--info)', color: '#fff' }} onClick={() => handleDeliver(b.id)}>Livré ✓</button>
                       )}
                       {/* Comptable: record */}
                       {(isComptable || isDirection) && b.status === 'livre' && (
@@ -279,7 +279,7 @@ export default function BesoinsPage() {
                       )}
                       {/* Comptabilisé: show budget entry link */}
                       {b.status === 'comptabilise' && b.actual_cost && (
-                        <span style={{ fontSize: '0.78rem', color: '#10b981', fontWeight: 600 }}>{fmt(b.actual_cost)} ✓</span>
+                        <span style={{ fontSize: '0.78rem', color: 'var(--success)', fontWeight: 600 }}>{fmt(b.actual_cost)} ✓</span>
                       )}
                     </div>
                   </td>

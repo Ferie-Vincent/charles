@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { getOperations } from '../api/get-operations';
 import { approvePurchaseOrder } from '../../achats/api/purchase-orders';
+import SkeletonPage from '../../../components/ui/SkeletonPage';
 import PageHeader from '../../../components/ui/PageHeader';
 
 function fmtAmount(n: number) {
@@ -36,7 +37,7 @@ export default function OperationsDashboardPage() {
     approveMutation.mutate(id);
   }
 
-  if (isLoading) return <div className="ops-loading">Chargement…</div>;
+  if (isLoading) return <div className="page-content"><SkeletonPage rows={3} /></div>;
   if (error || !data) return <div className="ops-error">Erreur de chargement.</div>;
 
   const { health_summary, budget_summary, bdc_pending, stock_alerts, critical_projects } = data;
@@ -158,7 +159,7 @@ export default function OperationsDashboardPage() {
                     <span
                       className="badge"
                       style={bdc.age_days >= 2
-                        ? { background: '#ef444415', color: '#ef4444', borderColor: '#ef444435' }
+                        ? { background: '#ef444415', color: 'var(--danger)', borderColor: '#ef444435' }
                         : { background: 'var(--border)', color: 'var(--text-muted)', borderColor: 'var(--border)' }
                       }
                     >
@@ -205,10 +206,10 @@ export default function OperationsDashboardPage() {
                   <td>
                     <span style={{ fontWeight: 600, color: 'var(--text-body)' }}>{s.name}</span>
                   </td>
-                  <td style={{ color: '#ef4444', fontWeight: 600 }}>{s.quantity} {s.unit}</td>
+                  <td style={{ color: 'var(--danger)', fontWeight: 600 }}>{s.quantity} {s.unit}</td>
                   <td style={{ color: 'var(--text-muted)' }}>{s.threshold} {s.unit}</td>
                   <td>
-                    <span className="badge" style={{ background: '#ef444415', color: '#ef4444', borderColor: '#ef444435' }}>
+                    <span className="badge" style={{ background: '#ef444415', color: 'var(--danger)', borderColor: '#ef444435' }}>
                       −{s.deficit} {s.unit}
                     </span>
                   </td>

@@ -6947,3 +6947,81 @@ code {
     display: none;
   }
 }
+
+/* ─── Z-Index Scale (documented) ─── */
+/* decorative:  1-3  (chart overlays, pseudo-element layers)   */
+/* components:  10-100  (dropdowns, tooltips, sticky elements) */
+/* terrain-fab: 190                                             */
+/* bottom-nav:  200                                             */
+/* overlay:     299  (sidebar backdrop)                        */
+/* sidebar:     300  (drawer)                                   */
+/* modals:      1000-1100                                       */
+/* system:      9999  (offline banner)                          */
+
+/* ─── prefers-reduced-motion ─── */
+@media (prefers-reduced-motion: reduce) {
+  /* Disable skeleton shimmer */
+  .skeleton {
+    animation: none;
+    background: var(--border);
+  }
+
+  /* Disable sidebar slide transition */
+  .sidebar {
+    transition: none;
+  }
+
+  /* Disable collapsible section animation */
+  .collapsible-section__body {
+    transition: none;
+  }
+
+  /* Disable FAB active scale */
+  .terrain-fab:active {
+    transform: none;
+  }
+
+  /* Disable all micro-transitions globally */
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+/* ─── SkeletonPage layout ─── */
+.skeleton-page {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 4px 0;
+}
+
+.skeleton-page__header {
+  height: 56px;
+  border-radius: var(--radius-lg);
+}
+
+.skeleton-page__kpis {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.skeleton-page__kpi {
+  height: 88px;
+  border-radius: var(--radius-lg);
+}
+
+.skeleton-page__card {
+  height: 72px;
+  border-radius: var(--radius-lg);
+}
+
+@media (max-width: 768px) {
+  .skeleton-page__kpis {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
