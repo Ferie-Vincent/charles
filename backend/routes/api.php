@@ -55,6 +55,7 @@ Route::prefix('auth')->group(function () {
 
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index']);
+    Route::get('/my-permissions', [PermissionsController::class, 'myPermissions']);
     Route::get('/permissions', [PermissionsController::class, 'index']);
     Route::put('/permissions', [PermissionsController::class, 'update']);
     Route::get('/users/roles', [UserController::class, 'roles']);

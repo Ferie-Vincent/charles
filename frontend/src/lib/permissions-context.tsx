@@ -21,34 +21,32 @@ const Ctx = createContext<PermissionsCtx>({
   reload: async () => {},
 });
 
-const ROLE_GROUPS: Record<string, RoleGroup> = {
-  'conducteur-travaux':  'terrain',
-  'chef-chantier':       'terrain',
-  'metreur-economiste':  'gestion',
-  'comptable':           'gestion',
-  'lecture-seule':       'lecture',
-};
-
-// Map: group → which role names represent it
 const GROUP_ROLES: Record<RoleGroup, string[]> = {
   direction: [],
   terrain:   ['conducteur-travaux', 'chef-chantier'],
   gestion:   ['metreur-economiste', 'comptable'],
+  logistique: ['moyens-generaux'],
   lecture:   ['lecture-seule'],
 };
 
 export function PermissionsProvider({ children }: { children: ReactNode }) {
-  const [matrix, setMatrix]   = useState<PermMatrix>({});
-  const [features, setFeatures] = useState<string[]>([]);
-  const [loaded, setLoaded]   = useState(false);
+  const [matrix, setMatrix]       = useState<PermMatrix>({});
+  const [features, setFeatures]   = useState<string[]>([]);
+  const [myFeatures, setMyFeatures] = useState<FeatureMap>({});
+  const [loaded, setLoaded]       = useState(false);
 
   async function load() {
     try {
+      // Always load own permissions (works for all roles)
+      const myRes = await api.get('/my-permissions');
+      setMyFeatures(myRes.data.features ?? {});
+
+      // Load full matrix only for direction (for the Permissions admin page)
       const res = await api.get('/permissions');
       setMatrix(res.data.matrix);
       setFeatures(res.data.features);
     } catch {
-      // non-direction users can't fetch — use empty matrix (will fall back to hardcoded)
+      // non-direction users can't load full matrix — myFeatures already set above
     } finally {
       setLoaded(true);
     }
@@ -58,13 +56,13 @@ export function PermissionsProvider({ children }: { children: ReactNode }) {
 
   function canAccess(feature: string, group: RoleGroup): boolean {
     if (group === 'direction') return true;
-
+    // Use own features map (loaded via /my-permissions for all roles)
+    if (Object.keys(myFeatures).length > 0) {
+      return myFeatures[feature] ?? false;
+    }
+    // Fallback: check matrix (direction admin view)
     const roleNames = GROUP_ROLES[group];
-    // Check if any role in the group has this feature enabled
-    return roleNames.some(roleName => {
-      const roleData = matrix[roleName];
-      return roleData?.features[feature] ?? false;
-    });
+    return roleNames.some(roleName => matrix[roleName]?.features[feature] ?? false);
   }
 
   return (
