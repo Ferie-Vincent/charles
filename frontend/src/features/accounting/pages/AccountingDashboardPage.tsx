@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import {
   getPortfolioAccounting,
@@ -7,11 +8,9 @@ import {
   deleteExpense,
   approveExpense,
   rejectExpense,
-  type PortfolioAccounting,
   type GeneralExpense,
 } from '../api/portfolio-accounting';
 import { useAuth } from '../../auth/stores/auth-store';
-import { getRoleGroup } from '../../../lib/roles';
 import PageHeader from '../../../components/ui/PageHeader';
 
 const fmt = (n: number) =>
@@ -57,24 +56,18 @@ export default function AccountingDashboardPage() {
   const { user } = useAuth();
   const isApprover = user ? ['direction', 'directeur-technique'].includes(user.role.name) : false;
 
-  const [data, setData]         = useState<PortfolioAccounting | null>(null);
-  const [loading, setLoading]   = useState(true);
-  const [error, setError]       = useState<string | null>(null);
+  const queryClient = useQueryClient();
   const [modal, setModal]       = useState<Partial<GeneralExpense> | null>(null);
   const [saving, setSaving]     = useState(false);
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [search, setSearch]     = useState('');
   const [rejectModal, setRejectModal] = useState<{ id: number; reason: string } | null>(null);
 
-  const load = () => {
-    setLoading(true);
-    getPortfolioAccounting()
-      .then(setData)
-      .catch(() => setError('Impossible de charger les données comptables.'))
-      .finally(() => setLoading(false));
-  };
-
-  useEffect(load, []);
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ['portfolio-accounting'],
+    queryFn: getPortfolioAccounting,
+    staleTime: 60_000,
+  });
 
   const handleSaveExpense = async () => {
     if (!modal) return;
@@ -83,7 +76,7 @@ export default function AccountingDashboardPage() {
       if (modal.id) await updateExpense(modal.id, modal);
       else          await createExpense(modal);
       setModal(null);
-      load();
+      queryClient.invalidateQueries({ queryKey: ['portfolio-accounting'] });
     } finally { setSaving(false); }
   };
 
@@ -91,23 +84,23 @@ export default function AccountingDashboardPage() {
     if (!deleteId) return;
     await deleteExpense(deleteId);
     setDeleteId(null);
-    load();
+    queryClient.invalidateQueries({ queryKey: ['portfolio-accounting'] });
   };
 
   const handleApprove = async (id: number) => {
     await approveExpense(id);
-    load();
+    queryClient.invalidateQueries({ queryKey: ['portfolio-accounting'] });
   };
 
   const handleReject = async () => {
     if (!rejectModal || !rejectModal.reason.trim()) return;
     await rejectExpense(rejectModal.id, rejectModal.reason);
     setRejectModal(null);
-    load();
+    queryClient.invalidateQueries({ queryKey: ['portfolio-accounting'] });
   };
 
-  if (loading) return <p style={{ padding: 40, color: 'var(--text-muted)', textAlign: 'center' }}>Chargement…</p>;
-  if (error || !data) return <p style={{ padding: 40, color: 'var(--text-muted)', textAlign: 'center' }}>{error ?? 'Erreur.'}</p>;
+  if (isLoading) return <p style={{ padding: 40, color: 'var(--text-muted)', textAlign: 'center' }}>Chargement…</p>;
+  if (isError || !data) return <p style={{ padding: 40, color: 'var(--text-muted)', textAlign: 'center' }}>Impossible de charger les données comptables.</p>;
 
   const { totals, projects, recent_activity, expenses } = data;
 

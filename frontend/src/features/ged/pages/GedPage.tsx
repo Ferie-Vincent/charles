@@ -1,11 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   getDocuments, uploadDocument, deleteDocument, getDocumentUrl,
   GED_TYPES, GED_TYPE_ICON, formatSize,
   type GedDocument,
 } from '../api/ged';
 import { listProjects } from '../../projects/api/list-projects';
-import type { Project } from '../../projects/types';
 import { useAuth } from '../../auth/stores/auth-store';
 import PageHeader from '../../../components/ui/PageHeader';
 
@@ -36,9 +36,7 @@ export default function GedPage() {
   const { user } = useAuth();
   const isDirection = ['direction', 'directeur-technique'].includes(user?.role?.name ?? '');
 
-  const [docs, setDocs]         = useState<GedDocument[]>([]);
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [loading, setLoading]   = useState(true);
+  const queryClient = useQueryClient();
   const [typeFilter, setTypeFilter]   = useState('');
   const [projectFilter, setProjectFilter] = useState('');
   const [search, setSearch]     = useState('');
@@ -50,19 +48,22 @@ export default function GedPage() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const load = () => {
-    setLoading(true);
-    const params: Record<string, string | number> = {};
-    if (typeFilter)    params.type = typeFilter;
-    if (projectFilter) params.project_id = Number(projectFilter);
-    if (search.trim()) params.search = search.trim();
-
-    Promise.all([getDocuments(params), listProjects()])
-      .then(([d, p]) => { setDocs(d); setProjects(p); })
-      .finally(() => setLoading(false));
-  };
-
-  useEffect(load, [typeFilter, projectFilter, search]);
+  const { data: docs = [], isLoading: loading } = useQuery({
+    queryKey: ['ged-documents', typeFilter, projectFilter, search],
+    queryFn: () => {
+      const params: Record<string, string | number> = {};
+      if (typeFilter)    params.type = typeFilter;
+      if (projectFilter) params.project_id = Number(projectFilter);
+      if (search.trim()) params.search = search.trim();
+      return getDocuments(params);
+    },
+    staleTime: 30_000,
+  });
+  const { data: projects = [] } = useQuery({
+    queryKey: ['projects'],
+    queryFn: listProjects,
+    staleTime: 120_000,
+  });
 
   const handleUpload = async () => {
     if (!uploadForm.file) return;
@@ -77,7 +78,7 @@ export default function GedPage() {
       await uploadDocument(fd);
       setModal(false);
       setUploadForm({ file: null, type: 'autre', project_id: '', name: '', description: '' });
-      load();
+      queryClient.invalidateQueries({ queryKey: ['ged-documents'] });
     } finally { setSaving(false); }
   };
 
@@ -88,7 +89,7 @@ export default function GedPage() {
 
   const handleDelete = async (doc: GedDocument) => {
     await deleteDocument(doc.id);
-    load();
+    queryClient.invalidateQueries({ queryKey: ['ged-documents'] });
   };
 
   const canDelete = (doc: GedDocument) =>

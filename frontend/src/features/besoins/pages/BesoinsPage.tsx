@@ -1,14 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import PageHeader from '../../../components/ui/PageHeader';
 import { useAuth } from '../../auth/stores/auth-store';
 import {
   getBesoins, createBesoin, approveBesoin, rejectBesoin,
   prepareBesoin, deliverBesoin, recordBesoin,
   CATEGORY_LABEL, URGENCY_COLOR, STATUS_LABEL, STATUS_BADGE,
-  type DemandeBesoin, type BesoinCategory, type BesoinUrgency,
+  type BesoinCategory, type BesoinUrgency,
 } from '../api/besoins';
 import { listProjects } from '../../projects/api/list-projects';
-import type { Project } from '../../projects/types';
 
 const fmt = (n: number) =>
   n >= 1_000_000 ? `${(n / 1_000_000).toFixed(1)} M FCFA`
@@ -45,9 +45,7 @@ export default function BesoinsPage() {
   const isTerrain    = TERRAIN.includes(role);
   const canCreate    = isTerrain || isDirection;
 
-  const [besoins, setBesoins]   = useState<DemandeBesoin[]>([]);
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [loading, setLoading]   = useState(true);
+  const queryClient = useQueryClient();
   const [filter, setFilter]     = useState('');
   const [modal, setModal]       = useState(false);
   const [form, setForm]         = useState({ ...EMPTY_FORM });
@@ -55,14 +53,17 @@ export default function BesoinsPage() {
   const [rejectModal, setRejectModal] = useState<{ id: number; reason: string } | null>(null);
   const [recordModal, setRecordModal] = useState<{ id: number; cost: string } | null>(null);
 
-  const load = () => {
-    setLoading(true);
-    Promise.all([getBesoins(), canCreate ? listProjects() : Promise.resolve([])])
-      .then(([b, p]) => { setBesoins(b); setProjects(p); })
-      .finally(() => setLoading(false));
-  };
-
-  useEffect(load, []);
+  const { data: besoins = [], isLoading: loading } = useQuery({
+    queryKey: ['besoins'],
+    queryFn: getBesoins,
+    staleTime: 60_000,
+  });
+  const { data: projects = [] } = useQuery({
+    queryKey: ['projects'],
+    queryFn: listProjects,
+    enabled: canCreate,
+    staleTime: 120_000,
+  });
 
   const filtered = filter ? besoins.filter(b => b.status === filter) : besoins;
 
@@ -83,30 +84,30 @@ export default function BesoinsPage() {
       await createBesoin(form);
       setModal(false);
       setForm({ ...EMPTY_FORM });
-      load();
+      queryClient.invalidateQueries({ queryKey: ['besoins'] });
     } finally { setSaving(false); }
   };
 
   const handleApprove = async (id: number) => {
     await approveBesoin(id);
-    load();
+    queryClient.invalidateQueries({ queryKey: ['besoins'] });
   };
 
   const handleReject = async () => {
     if (!rejectModal?.reason.trim()) return;
     await rejectBesoin(rejectModal.id, rejectModal.reason);
     setRejectModal(null);
-    load();
+    queryClient.invalidateQueries({ queryKey: ['besoins'] });
   };
 
   const handlePrepare = async (id: number) => {
     await prepareBesoin(id);
-    load();
+    queryClient.invalidateQueries({ queryKey: ['besoins'] });
   };
 
   const handleDeliver = async (id: number) => {
     await deliverBesoin(id);
-    load();
+    queryClient.invalidateQueries({ queryKey: ['besoins'] });
   };
 
   const handleRecord = async () => {
@@ -117,7 +118,7 @@ export default function BesoinsPage() {
     try {
       await recordBesoin(recordModal.id, cost);
       setRecordModal(null);
-      load();
+      queryClient.invalidateQueries({ queryKey: ['besoins'] });
     } finally { setSaving(false); }
   };
 

@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
 import {
   getProjectAccounting, createSupplier, updateSupplier, deleteSupplier,
   createInvoice, updateInvoice, deleteInvoice, invoiceAttachmentUrl,
-  type ProjectAccounting, type Supplier, type Invoice,
+  type Supplier, type Invoice,
 } from '../api/accounting';
 import PageHeader from '../../../components/ui/PageHeader';
 
@@ -32,8 +33,7 @@ export default function ProjectAccountingPage() {
   const { id } = useParams<{ id: string }>();
   const projectId = Number(id);
 
-  const [data, setData]         = useState<ProjectAccounting | null>(null);
-  const [loading, setLoading]   = useState(true);
+  const queryClient = useQueryClient();
   const [tab, setTab]           = useState<Tab>('synthese');
 
   // Modal states
@@ -41,14 +41,13 @@ export default function ProjectAccountingPage() {
   const [invoiceModal, setInvoiceModal]   = useState<Invoice | null | 'new'>(null);
   const [deleteTarget, setDeleteTarget]   = useState<{ type: 'supplier' | 'invoice'; id: number } | null>(null);
 
-  function load() {
-    setLoading(true);
-    getProjectAccounting(projectId).then(setData).finally(() => setLoading(false));
-  }
+  const { data, isLoading } = useQuery({
+    queryKey: ['project-accounting', projectId],
+    queryFn: () => getProjectAccounting(projectId),
+    staleTime: 60_000,
+  });
 
-  useEffect(() => { load(); }, [projectId]);
-
-  if (loading) return <div className="page-content"><p>Chargement comptabilité…</p></div>;
+  if (isLoading) return <div className="page-content"><p>Chargement comptabilité…</p></div>;
   if (!data) return <div className="page-content"><p className="form-error">Erreur de chargement.</p></div>;
 
   const ecartColor = data.ecart >= 0 ? '#10b981' : '#ef4444';
@@ -291,7 +290,7 @@ export default function ProjectAccountingPage() {
           onSave={async (d) => {
             if (supplierModal === 'new') await createSupplier(projectId, d);
             else await updateSupplier(projectId, (supplierModal as Supplier).id, d);
-            load();
+            queryClient.invalidateQueries({ queryKey: ['project-accounting', projectId] });
             setSupplierModal(null);
           }}
           onClose={() => setSupplierModal(null)}
@@ -307,7 +306,7 @@ export default function ProjectAccountingPage() {
           onSave={async (d) => {
             if (invoiceModal === 'new') await createInvoice(projectId, d);
             else await updateInvoice(projectId, (invoiceModal as Invoice).id, d);
-            load();
+            queryClient.invalidateQueries({ queryKey: ['project-accounting', projectId] });
             setInvoiceModal(null);
           }}
           onClose={() => setInvoiceModal(null)}
@@ -331,7 +330,7 @@ export default function ProjectAccountingPage() {
                 <button className="btn btn--danger" onClick={async () => {
                   if (deleteTarget.type === 'supplier') await deleteSupplier(projectId, deleteTarget.id);
                   else await deleteInvoice(projectId, deleteTarget.id);
-                  load();
+                  queryClient.invalidateQueries({ queryKey: ['project-accounting', projectId] });
                   setDeleteTarget(null);
                 }}>Supprimer</button>
               </div>

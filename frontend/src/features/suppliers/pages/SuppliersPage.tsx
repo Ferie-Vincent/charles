@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   getSuppliers, createSupplier, updateSupplier, deleteSupplier,
   SUPPLIER_CATEGORIES, type GlobalSupplier,
@@ -32,8 +33,7 @@ const CAT_BADGE: Record<string, string> = {
 };
 
 export default function SuppliersPage() {
-  const [suppliers, setSuppliers]   = useState<GlobalSupplier[]>([]);
-  const [loading, setLoading]       = useState(true);
+  const queryClient = useQueryClient();
   const [search, setSearch]         = useState('');
   const [catFilter, setCatFilter]   = useState('');
   const [modal, setModal]           = useState<Partial<GlobalSupplier> | null>(null);
@@ -41,14 +41,11 @@ export default function SuppliersPage() {
   const [deleteId, setDeleteId]     = useState<number | null>(null);
   const [deleteError, setDeleteError] = useState('');
 
-  const load = () => {
-    setLoading(true);
-    getSuppliers()
-      .then(setSuppliers)
-      .finally(() => setLoading(false));
-  };
-
-  useEffect(load, []);
+  const { data: suppliers = [], isLoading: loading } = useQuery({
+    queryKey: ['suppliers'],
+    queryFn: getSuppliers,
+    staleTime: 60_000,
+  });
 
   const filtered = suppliers.filter(s => {
     const matchQ   = !search   || s.name.toLowerCase().includes(search.toLowerCase()) || (s.contact_name ?? '').toLowerCase().includes(search.toLowerCase());
@@ -67,7 +64,7 @@ export default function SuppliersPage() {
       if (modal.id) await updateSupplier(modal.id, modal);
       else          await createSupplier(modal);
       setModal(null);
-      load();
+      queryClient.invalidateQueries({ queryKey: ['suppliers'] });
     } finally { setSaving(false); }
   };
 
@@ -77,7 +74,7 @@ export default function SuppliersPage() {
     try {
       await deleteSupplier(deleteId);
       setDeleteId(null);
-      load();
+      queryClient.invalidateQueries({ queryKey: ['suppliers'] });
     } catch {
       setDeleteError('Ce fournisseur a des factures associées — impossible de le supprimer.');
     }

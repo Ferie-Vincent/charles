@@ -1,24 +1,28 @@
-import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { getProject } from '../api/get-project';
-import type { Project } from '../types';
 import PageHeader from '../../../components/ui/PageHeader';
 import DailyLogForm from '../../daily-logs/components/DailyLogForm';
-import { getDailyLogs, type DailyLogMeta } from '../../daily-logs/api/get-daily-logs';
+import { getDailyLogs } from '../../daily-logs/api/get-daily-logs';
 
 export default function JournalPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [project, setProject] = useState<Project | null>(null);
-  const [meta, setMeta] = useState<DailyLogMeta | null>(null);
+  const numId = Number(id);
 
-  useEffect(() => {
-    if (id) {
-      const numId = Number(id);
-      getProject(numId).then(setProject);
-      getDailyLogs(numId).then(r => setMeta(r.meta));
-    }
-  }, [id]);
+  const { data: project } = useQuery({
+    queryKey: ['project', numId],
+    queryFn: () => getProject(numId),
+    enabled: !!id,
+    staleTime: 60_000,
+  });
+  const { data: logsData } = useQuery({
+    queryKey: ['daily-logs', numId],
+    queryFn: () => getDailyLogs(numId),
+    enabled: !!id,
+    staleTime: 60_000,
+  });
+  const meta = logsData?.meta ?? null;
 
   const today = new Date().toLocaleDateString('fr-FR', {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',

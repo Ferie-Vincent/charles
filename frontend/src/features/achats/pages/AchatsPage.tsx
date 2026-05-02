@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   getPurchaseOrders, createPurchaseOrder, deletePurchaseOrder,
   approvePurchaseOrder, rejectPurchaseOrder, receivePurchaseOrder,
@@ -6,7 +7,7 @@ import {
   BDC_STATUS_LABEL, BDC_STATUS_COLOR,
   type PurchaseOrder, type OrderItem, type DeliveryDocs,
 } from '../api/purchase-orders';
-import { getSuppliers, type GlobalSupplier } from '../../suppliers/api/suppliers';
+import { getSuppliers } from '../../suppliers/api/suppliers';
 import { useAuth } from '../../auth/stores/auth-store';
 import PageHeader from '../../../components/ui/PageHeader';
 
@@ -24,9 +25,7 @@ export default function AchatsPage() {
   const { user } = useAuth();
   const isApprover = ['direction', 'directeur-technique'].includes(user?.role?.name ?? '');
 
-  const [orders, setOrders]         = useState<PurchaseOrder[]>([]);
-  const [suppliers, setSuppliers]   = useState<GlobalSupplier[]>([]);
-  const [loading, setLoading]       = useState(true);
+  const queryClient = useQueryClient();
   const [statusFilter, setStatusFilter] = useState('');
   const [modal, setModal]           = useState<boolean>(false);
   const [form, setForm]             = useState<Partial<PurchaseOrder> & { items: OrderItem[] }>({ items: [{ ...EMPTY_ITEM }] });
@@ -41,14 +40,16 @@ export default function AchatsPage() {
   const blInputRef    = useRef<HTMLInputElement>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
 
-  const load = () => {
-    setLoading(true);
-    Promise.all([getPurchaseOrders(), getSuppliers()])
-      .then(([o, s]) => { setOrders(o); setSuppliers(s); })
-      .finally(() => setLoading(false));
-  };
-
-  useEffect(load, []);
+  const { data: orders = [], isLoading: loading } = useQuery({
+    queryKey: ['purchase-orders'],
+    queryFn: getPurchaseOrders,
+    staleTime: 60_000,
+  });
+  const { data: suppliers = [] } = useQuery({
+    queryKey: ['suppliers'],
+    queryFn: getSuppliers,
+    staleTime: 120_000,
+  });
 
   // Load delivery docs when detail panel opens for a received order
   useEffect(() => {
@@ -79,13 +80,13 @@ export default function AchatsPage() {
       await createPurchaseOrder({ ...form, total_amount: total });
       setModal(false);
       setForm({ items: [{ ...EMPTY_ITEM }] });
-      load();
+      queryClient.invalidateQueries({ queryKey: ['purchase-orders'] });
     } finally { setSaving(false); }
   };
 
   const handleApprove = async (id: number) => {
     await approvePurchaseOrder(id);
-    load();
+    queryClient.invalidateQueries({ queryKey: ['purchase-orders'] });
     if (detail?.id === id) setDetail(prev => prev ? { ...prev, status: 'approuve' } : null);
   };
 
@@ -93,7 +94,7 @@ export default function AchatsPage() {
     if (!rejectModal?.reason.trim()) return;
     await rejectPurchaseOrder(rejectModal.id, rejectModal.reason);
     setRejectModal(null);
-    load();
+    queryClient.invalidateQueries({ queryKey: ['purchase-orders'] });
   };
 
   const openReceive = (order: PurchaseOrder) => {
@@ -111,13 +112,13 @@ export default function AchatsPage() {
       if (receiveForm.notes.trim()) fd.append('reception_notes', receiveForm.notes);
       await receivePurchaseOrder(receiveModal.id, fd);
       setReceiveModal(null);
-      load();
+      queryClient.invalidateQueries({ queryKey: ['purchase-orders'] });
     } finally { setSaving(false); }
   };
 
   const handleDelete = async (id: number) => {
     await deletePurchaseOrder(id);
-    load();
+    queryClient.invalidateQueries({ queryKey: ['purchase-orders'] });
   };
 
   const filtered = statusFilter ? orders.filter(o => o.status === statusFilter) : orders;

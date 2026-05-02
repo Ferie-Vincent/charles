@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { getDashboard, type ActiveProject } from '../../dashboard/api/get-dashboard';
+import { getDashboard } from '../../dashboard/api/get-dashboard';
 
 const HEALTH_COLOR = { green: '#10b981', orange: '#f59e0b', red: '#ef4444' };
 const HEALTH_LABEL = { green: 'Sain', orange: 'Attention', critical: 'Critique' };
@@ -18,18 +18,18 @@ function fmtShort(d: Date): string {
 }
 
 export default function TimelinePage() {
-  const [projects, setProjects] = useState<ActiveProject[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    getDashboard().then(d => setProjects(d.active_projects)).finally(() => setLoading(false));
-  }, []);
+  const { data, isLoading } = useQuery({
+    queryKey: ['dashboard'],
+    queryFn: getDashboard,
+    staleTime: 60_000,
+  });
+  const projects = data?.active_projects ?? [];
 
   const dated = projects.filter(p => p.start_date && p.end_date).sort(
     (a, b) => new Date(a.end_date!).getTime() - new Date(b.end_date!).getTime()
   );
 
-  if (!dated.length && !loading) {
+  if (!dated.length && !isLoading) {
     return <div className="tl-empty">Aucun chantier actif avec dates contractuelles.</div>;
   }
 
@@ -89,7 +89,7 @@ export default function TimelinePage() {
         </div>
       </div>
 
-      {loading ? (
+      {isLoading ? (
         <div className="tl-loading">Chargement…</div>
       ) : (
         <div className="tl-card">

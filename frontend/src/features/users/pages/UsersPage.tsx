@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import PageHeader from '../../../components/ui/PageHeader';
 import UserModal from '../components/UserModal';
 import {
@@ -17,28 +18,25 @@ const ROLE_COLOR: Record<string, string> = {
 };
 
 export default function UsersPage() {
-  const [users, setUsers]       = useState<AppUser[]>([]);
-  const [loading, setLoading]   = useState(true);
+  const queryClient = useQueryClient();
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing]   = useState<AppUser | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<AppUser | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  function load() {
-    setLoading(true);
-    getUsers().then(setUsers).finally(() => setLoading(false));
-  }
-
-  useEffect(() => { load(); }, []);
+  const { data: users = [], isLoading: loading } = useQuery({
+    queryKey: ['users'],
+    queryFn: getUsers,
+    staleTime: 60_000,
+  });
 
   async function handleSave(payload: UserPayload & { password?: string }) {
     if (editing) {
-      const updated = await updateUser(editing.id, payload);
-      setUsers(u => u.map(x => x.id === updated.id ? updated : x));
+      await updateUser(editing.id, payload);
     } else {
-      const created = await createUser(payload as UserPayload & { password: string });
-      setUsers(u => [...u, created]);
+      await createUser(payload as UserPayload & { password: string });
     }
+    queryClient.invalidateQueries({ queryKey: ['users'] });
   }
 
   async function handleDelete() {
@@ -46,8 +44,8 @@ export default function UsersPage() {
     setDeleting(true);
     try {
       await deleteUser(deleteTarget.id);
-      setUsers(u => u.filter(x => x.id !== deleteTarget.id));
       setDeleteTarget(null);
+      queryClient.invalidateQueries({ queryKey: ['users'] });
     } finally {
       setDeleting(false);
     }

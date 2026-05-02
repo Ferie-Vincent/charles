@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   getStockItems, createStockItem, updateStockItem, deleteStockItem,
   getMovements, addMovement,
@@ -17,8 +18,7 @@ const CAT_COLOR: Record<string, string> = {
 };
 
 export default function StocksPage() {
-  const [items, setItems]         = useState<StockItem[]>([]);
-  const [loading, setLoading]     = useState(true);
+  const queryClient = useQueryClient();
   const [search, setSearch]       = useState('');
   const [catFilter, setCatFilter] = useState('');
   const [itemModal, setItemModal] = useState<Partial<StockItem> | null>(null);
@@ -28,12 +28,11 @@ export default function StocksPage() {
   const [movements, setMovements] = useState<StockMovement[]>([]);
   const [movForm, setMovForm]     = useState({ type: 'entree' as StockMovement['type'], quantity: 0, reason: '', movement_date: new Date().toISOString().slice(0, 10), notes: '' });
 
-  const load = () => {
-    setLoading(true);
-    getStockItems().then(setItems).finally(() => setLoading(false));
-  };
-
-  useEffect(load, []);
+  const { data: items = [], isLoading: loading } = useQuery({
+    queryKey: ['stock-items'],
+    queryFn: getStockItems,
+    staleTime: 60_000,
+  });
 
   const openMovements = async (item: StockItem) => {
     setMovModal(item);
@@ -47,7 +46,7 @@ export default function StocksPage() {
       if (itemModal.id) await updateStockItem(itemModal.id, itemModal);
       else              await createStockItem(itemModal);
       setItemModal(null);
-      load();
+      queryClient.invalidateQueries({ queryKey: ['stock-items'] });
     } finally { setSaving(false); }
   };
 
@@ -55,7 +54,7 @@ export default function StocksPage() {
     if (!deleteId) return;
     await deleteStockItem(deleteId);
     setDeleteId(null);
-    load();
+    queryClient.invalidateQueries({ queryKey: ['stock-items'] });
   };
 
   const handleAddMovement = async () => {
@@ -64,9 +63,9 @@ export default function StocksPage() {
     try {
       const res = await addMovement(movModal.id, movForm);
       setMovements(prev => [res.movement, ...prev]);
-      setItems(prev => prev.map(i => i.id === movModal.id ? { ...res.stock } : i));
       setMovModal(res.stock);
       setMovForm({ type: 'entree', quantity: 0, reason: '', movement_date: new Date().toISOString().slice(0, 10), notes: '' });
+      queryClient.invalidateQueries({ queryKey: ['stock-items'] });
     } finally { setSaving(false); }
   };
 

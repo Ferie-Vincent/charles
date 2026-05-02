@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
-import { getDashboard, type ActiveProject } from '../../dashboard/api/get-dashboard';
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { getDashboard } from '../../dashboard/api/get-dashboard';
 import ProjectMap from '../components/ProjectMap';
 
 type Filter = 'all' | 'green' | 'orange' | 'red';
@@ -12,15 +13,13 @@ const FILTER_OPTIONS: { value: Filter; label: string; color: string }[] = [
 ];
 
 export default function MapPage() {
-  const [projects, setProjects] = useState<ActiveProject[]>([]);
   const [filter, setFilter] = useState<Filter>('all');
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    getDashboard()
-      .then(data => setProjects(data.active_projects))
-      .finally(() => setLoading(false));
-  }, []);
+  const { data, isLoading } = useQuery({
+    queryKey: ['dashboard'],
+    queryFn: getDashboard,
+    staleTime: 60_000,
+  });
+  const projects = data?.active_projects ?? [];
 
   const counts = {
     green:  projects.filter(p => p.health.status === 'green').length,
@@ -57,7 +56,7 @@ export default function MapPage() {
       </div>
 
       <div className="map-card">
-        {loading ? (
+        {isLoading ? (
           <div className="map-loading">Chargement de la carte…</div>
         ) : (
           <ProjectMap projects={projects} filter={filter} />

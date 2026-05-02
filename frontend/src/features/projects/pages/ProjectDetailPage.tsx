@@ -1,11 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useParams, Link } from 'react-router-dom';
 import { getProject } from '../api/get-project';
-import type { Project } from '../types';
 import ActivityTimeline from '../components/ActivityTimeline';
 import LogExplorer from '../../daily-logs/components/LogExplorer';
-import { getDailyLogs, type DailyLogMeta } from '../../daily-logs/api/get-daily-logs';
-import type { DailyLog } from '../../daily-logs/types';
+import { getDailyLogs } from '../../daily-logs/api/get-daily-logs';
 import HealthScoreBadge from '../components/HealthScoreBadge';
 import SCurveChart from '../components/SCurveChart';
 import PhotoGallery from '../components/PhotoGallery';
@@ -63,29 +62,27 @@ function splitHeroName(name: string): { title: string; sub: string } {
 
 export default function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const [project, setProject] = useState<Project | null>(null);
-  const [logs, setLogs] = useState<DailyLog[]>([]);
-  const [logMeta, setLogMeta] = useState<DailyLogMeta | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const numId = Number(id);
   const [showMeetingModal, setShowMeetingModal] = useState(false);
   const [showSituationModal, setShowSituationModal] = useState(false);
 
-  useEffect(() => {
-    if (!id) return;
-    const numId = Number(id);
-    Promise.all([getProject(numId), getDailyLogs(numId)])
-      .then(([proj, logsRes]) => {
-        setProject(proj);
-        setLogs(logsRes.data);
-        setLogMeta(logsRes.meta);
-      })
-      .catch(() => setError('Chantier introuvable.'))
-      .finally(() => setLoading(false));
-  }, [id]);
+  const { data: project, isLoading, isError } = useQuery({
+    queryKey: ['project', numId],
+    queryFn: () => getProject(numId),
+    enabled: !!id,
+    staleTime: 60_000,
+  });
+  const { data: logsData } = useQuery({
+    queryKey: ['daily-logs', numId],
+    queryFn: () => getDailyLogs(numId),
+    enabled: !!id,
+    staleTime: 60_000,
+  });
+  const logs    = logsData?.data ?? [];
+  const logMeta = logsData?.meta ?? null;
 
-  if (loading) return <div className="page-content"><p>Chargement…</p></div>;
-  if (error || !project) return <div className="page-content"><p className="form-error">{error ?? 'Erreur.'}</p></div>;
+  if (isLoading) return <div className="page-content"><p>Chargement…</p></div>;
+  if (isError || !project) return <div className="page-content"><p className="form-error">Chantier introuvable.</p></div>;
 
   const avancement   = logMeta?.latest_progress ?? null;
   const incidents    = logMeta?.incident_count ?? 0;
