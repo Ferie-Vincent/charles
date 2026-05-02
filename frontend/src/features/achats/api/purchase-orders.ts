@@ -18,6 +18,10 @@ export interface PurchaseOrder {
   notes?: string;
   rejection_reason?: string;
   approved_at?: string;
+  received_at?: string;
+  delivery_note_path?: string;
+  delivery_photos?: string[];
+  reception_notes?: string;
   created_at: string;
   supplier?: { id: number; name: string };
   supplier_id?: number;
@@ -25,6 +29,13 @@ export interface PurchaseOrder {
   project_id?: number;
   requester?: { id: number; name: string };
   approver?: { id: number; name: string };
+}
+
+export interface DeliveryDocs {
+  delivery_note_url: string | null;
+  photo_urls: string[];
+  reception_notes: string | null;
+  received_at: string | null;
 }
 
 export const BDC_STATUS_LABEL: Record<string, string> = {
@@ -74,7 +85,14 @@ export async function rejectPurchaseOrder(id: number, reason: string): Promise<P
   return res.data;
 }
 
-export async function receivePurchaseOrder(id: number): Promise<PurchaseOrder> {
-  const res = await api.patch(`/purchase-orders/${id}/receive`);
+export async function receivePurchaseOrder(id: number, formData: FormData): Promise<PurchaseOrder> {
+  const res = await api.patch(`/purchase-orders/${id}/receive`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return res.data;
+}
+
+export async function getDeliveryDocs(id: number): Promise<DeliveryDocs> {
+  const res = await api.get(`/purchase-orders/${id}/delivery-docs`);
   return res.data;
 }

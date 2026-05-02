@@ -11,13 +11,16 @@ class PurchaseOrder extends Model
         'company_id', 'requested_by', 'supplier_id', 'project_id', 'approved_by',
         'reference', 'status', 'items', 'total_amount',
         'expected_delivery', 'approved_at', 'rejection_reason', 'notes',
+        'delivery_note_path', 'delivery_photos', 'reception_notes', 'received_at',
     ];
 
     protected $casts = [
         'items'             => 'array',
+        'delivery_photos'   => 'array',
         'total_amount'      => 'float',
         'expected_delivery' => 'date',
         'approved_at'       => 'datetime',
+        'received_at'       => 'datetime',
     ];
 
     public function company(): BelongsTo    { return $this->belongsTo(Company::class); }

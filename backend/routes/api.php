@@ -76,6 +76,7 @@ Route::middleware('auth')->group(function () {
     Route::patch('/purchase-orders/{purchaseOrder}/approve', [PurchaseOrderController::class, 'approve']);
     Route::patch('/purchase-orders/{purchaseOrder}/reject', [PurchaseOrderController::class, 'reject']);
     Route::patch('/purchase-orders/{purchaseOrder}/receive', [PurchaseOrderController::class, 'markReceived']);
+    Route::get('/purchase-orders/{purchaseOrder}/delivery-docs', [PurchaseOrderController::class, 'deliveryDocs']);
     Route::get('/suppliers', [GlobalSupplierController::class, 'index']);
     Route::post('/suppliers', [GlobalSupplierController::class, 'store']);
     Route::get('/suppliers/{supplier}', [GlobalSupplierController::class, 'show']);
