@@ -34,6 +34,7 @@ export default function DqePage() {
   const { data = [], isLoading } = useQuery({
     queryKey: ['portfolio-dqe'],
     queryFn: getPortfolioDqe,
+    staleTime: 0,
   });
 
   const filtered = filter === 'all' ? data : data.filter(v => v.status === filter);
