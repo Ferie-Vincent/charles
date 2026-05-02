@@ -76,4 +76,14 @@ class Project extends Model
     {
         return $this->hasMany(DqeVersion::class);
     }
+
+    public function suppliers(): HasMany
+    {
+        return $this->hasMany(Supplier::class);
+    }
+
+    public function invoices(): HasMany
+    {
+        return $this->hasMany(Invoice::class);
+    }
 }

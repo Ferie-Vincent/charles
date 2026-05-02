@@ -1,7 +1,10 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\PermissionsController;
+use App\Http\Controllers\ProjectAccountingController;
+use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\BudgetController;
 use App\Http\Controllers\ProjectReportController;
@@ -78,6 +81,15 @@ Route::middleware('auth')->group(function () {
     Route::patch('/projects/{project}/incidents/{incident}', [ProjectIncidentController::class, 'update']);
     Route::delete('/projects/{project}/incidents/{incident}', [ProjectIncidentController::class, 'destroy']);
     Route::get('/projects/{project}/incidents/{incident}/pdf', [ProjectIncidentController::class, 'pdf']);
+    Route::get('/projects/{project}/accounting', [ProjectAccountingController::class, 'show']);
+    Route::get('/projects/{project}/suppliers', [SupplierController::class, 'index']);
+    Route::post('/projects/{project}/suppliers', [SupplierController::class, 'store']);
+    Route::put('/projects/{project}/suppliers/{supplier}', [SupplierController::class, 'update']);
+    Route::delete('/projects/{project}/suppliers/{supplier}', [SupplierController::class, 'destroy']);
+    Route::get('/projects/{project}/invoices', [InvoiceController::class, 'index']);
+    Route::post('/projects/{project}/invoices', [InvoiceController::class, 'store']);
+    Route::put('/projects/{project}/invoices/{invoice}', [InvoiceController::class, 'update']);
+    Route::delete('/projects/{project}/invoices/{invoice}', [InvoiceController::class, 'destroy']);
     Route::get('/projects/{project}/budget', [BudgetController::class, 'index']);
     Route::post('/projects/{project}/budget/entries', [BudgetController::class, 'store']);
     Route::delete('/projects/{project}/budget/entries/{budgetEntry}', [BudgetController::class, 'destroy']);
