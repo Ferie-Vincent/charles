@@ -9,7 +9,7 @@ use Illuminate\Http\Request;
 
 class PermissionsController extends Controller
 {
-    private const FEATURES = ['map', 'timeline', 'dqe', 'execution', 'costs', 'qse', 'reporting'];
+    private const FEATURES = ['map', 'timeline', 'dqe', 'execution', 'costs', 'accounting', 'qse', 'reporting'];
 
     // Roles direction/directeur-technique always have full access — not configurable
     private const LOCKED_ROLES = ['direction', 'directeur-technique'];

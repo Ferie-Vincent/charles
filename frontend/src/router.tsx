@@ -19,6 +19,7 @@ import DqeEditorPage from './features/dqe/pages/DqeEditorPage';
 import UsersPage from './features/users/pages/UsersPage';
 import PermissionsPage from './features/permissions/pages/PermissionsPage';
 import ProjectAccountingPage from './features/accounting/pages/ProjectAccountingPage';
+import AccountingDashboardPage from './features/accounting/pages/AccountingDashboardPage';
 
 function Shell({ children }: { children: ReactNode }) {
   return <AppShell>{children}</AppShell>;
@@ -46,6 +47,7 @@ export const router = createBrowserRouter([
   { path: '/projects/:id/dqe/:versionId', element: <Guarded path="/dqe"><DqeEditorPage /></Guarded> },
   { path: '/execution',                element: <Guarded path="/execution"><EvaluationPage /></Guarded> },
   { path: '/costs',                    element: <Guarded path="/costs"><CostsPage /></Guarded> },
+  { path: '/accounting',              element: <Guarded path="/accounting"><AccountingDashboardPage /></Guarded> },
   { path: '/qse',                      element: <Guarded path="/qse"><QhsePage /></Guarded> },
   { path: '/reporting',                element: <Guarded path="/reporting"><ReportingPage /></Guarded> },
   { path: '/users',                    element: <Guarded path="/users"><UsersPage /></Guarded> },
