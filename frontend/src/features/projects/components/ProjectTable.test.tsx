@@ -18,6 +18,9 @@ describe('ProjectTable', () => {
             budget_amount: '85000000.00',
             start_date: null,
             end_date: null,
+            latitude: null,
+            longitude: null,
+            target_progress: null,
           },
         ]}
       />,

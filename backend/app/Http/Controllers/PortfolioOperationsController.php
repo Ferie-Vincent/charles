@@ -13,6 +13,8 @@ class PortfolioOperationsController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
+        abort_if($request->user()->role->name === 'chef-chantier', 403, 'Accès refusé.');
+
         $companyId = $request->user()->company_id;
         $svc       = new HealthScoreService();
 

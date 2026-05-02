@@ -24,6 +24,8 @@ class PurchaseOrderController extends Controller
 
     public function store(Request $request): JsonResponse
     {
+        abort_if($request->user()->role->name === 'lecture-seule', 403, 'Accès refusé.');
+
         $data = $request->validate([
             'supplier_id'       => 'nullable|exists:suppliers,id',
             'project_id'        => 'nullable|exists:projects,id',
@@ -217,7 +219,7 @@ class PurchaseOrderController extends Controller
         abort_unless(
             in_array($request->user()->role->name, self::APPROVER_ROLES),
             403,
-            'Seuls la Direction et le DT peuvent approuver les BDC.'
+            'Seul le DG ou le DT peut valider les BDC.'
         );
     }
 }

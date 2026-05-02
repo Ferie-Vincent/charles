@@ -68,12 +68,12 @@ function makeMarker(project: ActiveProject): L.Marker {
   const marker = L.marker([project.latitude!, project.longitude!], { icon: divIcon });
   marker.bindPopup(`
     <div class="map-popup">
-      <strong>${project.name}</strong>
-      <span>${project.code}</span>
-      <span>${project.location ?? ''}</span>
-      <a href="/projects/${project.id}" onclick="window.location.href='/projects/${project.id}';return false;">Voir le chantier →</a>
+      <div class="map-popup__name">${project.name}</div>
+      <div class="map-popup__code">${project.code}</div>
+      ${project.location ? `<div class="map-popup__loc">${project.location}</div>` : ''}
+      <a class="map-popup__link" href="/projects/${project.id}" onclick="window.location.href='/projects/${project.id}';return false;">Voir le chantier →</a>
     </div>
-  `);
+  `, { minWidth: 220, maxWidth: 300 });
   return marker;
 }
 

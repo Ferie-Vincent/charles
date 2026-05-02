@@ -9,7 +9,8 @@ class DailyLogPolicy
 {
     public function create(User $user, Project $project): bool
     {
-        return $user->company_id === $project->company_id;
+        return $user->company_id === $project->company_id
+            && $user->role->name !== 'lecture-seule';
     }
 
     public function viewAny(User $user, Project $project): bool

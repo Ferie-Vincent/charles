@@ -228,7 +228,7 @@ export default function ActivityDetailModal({ type, sourceId, onClose }: Props) 
 
   return (
     <div className="mr-modal-overlay" onClick={onClose}>
-      <div className="mr-modal" style={{ maxWidth: 520 }} onClick={e => e.stopPropagation()}>
+      <div className="mr-modal" style={{ maxWidth: 600 }} onClick={e => e.stopPropagation()}>
 
         {/* Header */}
         <div className="mr-modal__head">

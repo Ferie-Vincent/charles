@@ -50,9 +50,7 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
   const unreadCount = allCurrentIds.filter(id => !seenIds.has(id)).length;
 
   function handleNotifToggle() {
-    if (!notifOpen) {
-      setSeenIds(new Set(allCurrentIds));
-    }
+    if (!notifOpen) setSeenIds(new Set(allCurrentIds));
     setNotifOpen(v => !v);
     setUserMenuOpen(false);
   }

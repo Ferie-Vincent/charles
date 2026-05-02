@@ -39,6 +39,7 @@ class BudgetController extends Controller
     public function store(Request $request, Project $project): JsonResponse
     {
         $this->authorize('update', $project);
+        abort_unless($request->user()->role->name === 'comptable', 403, 'Seul le comptable peut enregistrer des entrées budgétaires.');
 
         $data = $request->validate([
             'type'       => 'required|in:previsionnel,engagement,paiement',
@@ -60,6 +61,7 @@ class BudgetController extends Controller
     public function destroy(Project $project, BudgetEntry $budgetEntry): Response
     {
         $this->authorize('update', $project);
+        abort_unless(auth()->user()->role->name === 'comptable', 403, 'Seul le comptable peut supprimer des entrées budgétaires.');
         $budgetEntry->delete();
         return response()->noContent();
     }

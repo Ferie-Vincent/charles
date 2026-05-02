@@ -6,12 +6,12 @@ import MobileBottomNav from './MobileBottomNav';
 import OfflineBanner from '../ui/OfflineBanner';
 
 export default function AppShell({ children }: { children: ReactNode }) {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth > 768);
 
   return (
     <>
       <OfflineBanner />
-      <div className="app-shell">
+      <div className={`app-shell${sidebarOpen ? '' : ' app-shell--sidebar-collapsed'}`}>
         <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
         {sidebarOpen && (
           <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)} />

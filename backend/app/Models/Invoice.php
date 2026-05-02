@@ -12,6 +12,9 @@ class Invoice extends Model
         'reference', 'category', 'amount_ht', 'amount_ttc',
         'status', 'invoice_date', 'due_date', 'paid_date', 'note',
         'attachment_path', 'attachment_name',
+        'validated_by', 'validated_at',
+        'paid_by', 'paid_at',
+        'payment_proof_path', 'payment_proof_name',
     ];
 
     protected $casts = [
@@ -20,6 +23,8 @@ class Invoice extends Model
         'invoice_date' => 'date',
         'due_date'     => 'date',
         'paid_date'    => 'date',
+        'validated_at' => 'datetime',
+        'paid_at'      => 'datetime',
     ];
 
     public function project(): BelongsTo
@@ -35,5 +40,15 @@ class Invoice extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function validator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'validated_by');
+    }
+
+    public function payer(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'paid_by');
     }
 }

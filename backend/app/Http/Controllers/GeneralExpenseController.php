@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 
 class GeneralExpenseController extends Controller
 {
-    private const APPROVER_ROLES = ['direction', 'directeur-technique'];
+    private const APPROVER_ROLES = ['comptable'];
 
     public function index(Request $request): JsonResponse
     {
@@ -117,6 +117,6 @@ class GeneralExpenseController extends Controller
 
     private function authorizeApprover(Request $request): void
     {
-        abort_unless(in_array($request->user()->role->name, self::APPROVER_ROLES), 403, 'Seuls la Direction et le DT peuvent approuver les dépenses.');
+        abort_unless(in_array($request->user()->role->name, self::APPROVER_ROLES), 403, 'Seul le comptable peut valider les dépenses.');
     }
 }

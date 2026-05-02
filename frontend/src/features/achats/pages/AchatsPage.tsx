@@ -24,7 +24,7 @@ interface ReceiveForm { deliveryNote: File | null; photos: File[]; notes: string
 
 export default function AchatsPage() {
   const { user } = useAuth();
-  const isApprover = ['direction', 'directeur-technique'].includes(user?.role?.name ?? '');
+  const isApprover = user?.role?.name === 'comptable';
 
   const queryClient = useQueryClient();
   const [statusFilter, setStatusFilter] = useState('');

@@ -103,6 +103,64 @@ Style : direct, concis, professionnel. Parle comme un expert qui connaît le ter
 PROMPT;
     }
 
+    public function solutions(Request $request): JsonResponse
+    {
+        $request->validate(['analysis' => 'required|string|max:5000']);
+
+        $groqKey      = config('services.groq.key');
+        $anthropicKey = config('services.anthropic.key');
+
+        if (! $groqKey && ! $anthropicKey) {
+            return response()->json(['error' => 'Aucune clé IA configurée.'], 503);
+        }
+
+        $roles  = 'Direction, Directeur Technique, Conducteur de Travaux, Chef de Chantier, Métreur-Économiste, Comptable';
+        $prompt = <<<PROMPT
+Tu es un directeur de travaux senior BTP. À partir du diagnostic de portefeuille ci-dessous, génère un plan d'action structuré.
+
+## Diagnostic
+{$request->analysis}
+
+## Instructions
+Génère exactement 5 à 7 actions concrètes et actionnables. Réponds UNIQUEMENT en JSON valide, sans texte avant ou après.
+
+Format attendu :
+{
+  "actions": [
+    {
+      "title": "Titre court de l'action (max 80 car.)",
+      "detail": "Description précise de ce qu'il faut faire et pourquoi (max 200 car.)",
+      "priority": "urgent|high|normal",
+      "role_target": "Un rôle parmi : {$roles}",
+      "project_code": "Code chantier concerné ou null si global"
+    }
+  ]
+}
+
+Règles : priority=urgent si délai < 48h ou risque sécurité, high si semaine, normal sinon. Sois précis et concis.
+PROMPT;
+
+        $result = $groqKey
+            ? $this->callGroq($groqKey, $prompt)
+            : $this->callAnthropic($anthropicKey, $prompt);
+
+        if (isset($result['error'])) {
+            return response()->json(['error' => $result['error']], 502);
+        }
+
+        $text = trim($result['text']);
+        // strip markdown code fences if model wraps JSON
+        $text = preg_replace('/^```(?:json)?\s*/i', '', $text);
+        $text = preg_replace('/\s*```$/', '', $text);
+
+        $decoded = json_decode($text, true);
+        if (! $decoded || ! isset($decoded['actions'])) {
+            return response()->json(['error' => 'Réponse IA invalide. Réessayez.'], 502);
+        }
+
+        return response()->json(['actions' => $decoded['actions']]);
+    }
+
     private function callGroq(string $key, string $prompt): array
     {
         $response = Http::timeout(45)

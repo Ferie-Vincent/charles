@@ -29,17 +29,7 @@ export default function LoginPage() {
       {/* Left panel — brand */}
       <div className="login-panel">
         <div className="login-panel__brand">
-          <div className="login-panel__logo">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"/>
-              <line x1="12" y1="22" x2="12" y2="15.5"/>
-              <polyline points="22 8.5 12 15.5 2 8.5"/>
-            </svg>
-          </div>
-          <div>
-            <div className="login-panel__name">Chantier Platform</div>
-            <div className="login-panel__tagline">Gestion BTP</div>
-          </div>
+          <img src="/heleman.png" alt="Helaman Expertise" className="login-panel__logo-img" />
         </div>
 
         <div className="login-panel__content">

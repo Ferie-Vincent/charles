@@ -7,7 +7,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      devOptions: { enabled: true },
+      devOptions: { enabled: false },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         runtimeCaching: [
@@ -25,11 +25,11 @@ export default defineConfig({
         ],
       },
       manifest: {
-        name: 'Chantier Platform BTP',
-        short_name: 'Chantier',
+        name: 'Helaman Expertise',
+        short_name: 'Helaman',
         description: 'Gestion de projets de construction — Côte d\'Ivoire',
-        theme_color: '#1e2433',
-        background_color: '#1e2433',
+        theme_color: '#0E1E52',
+        background_color: '#0E1E52',
         display: 'standalone',
         orientation: 'portrait-primary',
         scope: '/',

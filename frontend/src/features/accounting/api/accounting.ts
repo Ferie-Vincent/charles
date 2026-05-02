@@ -28,6 +28,15 @@ export interface Invoice {
   supplier_id?: number;
   attachment_path?: string;
   attachment_name?: string;
+  // workflow
+  validated_by?: number;
+  validated_at?: string;
+  validator?: { id: number; name: string };
+  paid_by?: number;
+  paid_at?: string;
+  payer?: { id: number; name: string };
+  payment_proof_path?: string;
+  payment_proof_name?: string;
 }
 
 export interface CategoryBreakdown {
@@ -109,4 +118,28 @@ export async function deleteInvoice(projectId: number, id: number): Promise<void
 
 export function invoiceAttachmentUrl(projectId: number, invoiceId: number): string {
   return `http://localhost:8000/api/projects/${projectId}/invoices/${invoiceId}/attachment`;
+}
+
+export function invoicePaymentProofUrl(projectId: number, invoiceId: number): string {
+  return `http://localhost:8000/api/projects/${projectId}/invoices/${invoiceId}/payment-proof`;
+}
+
+export async function validateInvoice(projectId: number, invoiceId: number): Promise<Invoice> {
+  const res = await api.post(`/projects/${projectId}/invoices/${invoiceId}/validate`);
+  return res.data;
+}
+
+export async function payInvoice(
+  projectId: number,
+  invoiceId: number,
+  data: { paid_date: string; payment_proof: File; note?: string },
+): Promise<Invoice> {
+  const fd = new FormData();
+  fd.append('paid_date', data.paid_date);
+  fd.append('payment_proof', data.payment_proof);
+  if (data.note) fd.append('note', data.note);
+  const res = await api.post(`/projects/${projectId}/invoices/${invoiceId}/pay`, fd, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return res.data;
 }
