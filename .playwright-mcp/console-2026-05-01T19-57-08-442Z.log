@@ -1,2 +1,0 @@
-[      -4ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:8000/api/projects/15/reports/12/download:0
-[  343298ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:8000/api/projects/15/reports/12/download:0

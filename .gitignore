@@ -12,4 +12,7 @@ backend/storage/framework/sessions/*
 backend/storage/framework/views/*
 backend/storage/logs/*
 frontend/.vite
+frontend/dev-dist/
 .worktrees/
+.playwright-mcp/
+_bmad-output/
