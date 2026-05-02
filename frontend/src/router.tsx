@@ -1,6 +1,7 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import type { ReactNode } from 'react';
 import AppShell from './components/layout/AppShell';
+import RoleGuard from './components/guards/RoleGuard';
 import LoginPage from './features/auth/pages/LoginPage';
 import DashboardPage from './features/dashboard/pages/DashboardPage';
 import ProjectsPage from './features/projects/pages/ProjectsPage';
@@ -21,21 +22,29 @@ function Shell({ children }: { children: ReactNode }) {
   return <AppShell>{children}</AppShell>;
 }
 
+function Guarded({ path, children }: { path: string; children: ReactNode }) {
+  return (
+    <Shell>
+      <RoleGuard path={path}>{children}</RoleGuard>
+    </Shell>
+  );
+}
+
 export const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
-  { path: '/', element: <Shell><DashboardPage /></Shell> },
-  { path: '/projects', element: <Shell><ProjectsPage /></Shell> },
-  { path: '/projects/new', element: <Shell><NewProjectPage /></Shell> },
-  { path: '/projects/:id', element: <Shell><ProjectDetailPage /></Shell> },
-  { path: '/projects/:id/journal', element: <Shell><JournalPage /></Shell> },
-  { path: '/map', element: <Shell><MapPage /></Shell> },
-  { path: '/timeline', element: <Shell><TimelinePage /></Shell> },
-  { path: '/execution', element: <Shell><EvaluationPage /></Shell> },
-  { path: '/qse', element: <Shell><QhsePage /></Shell> },
-  { path: '/costs', element: <Shell><CostsPage /></Shell> },
-  { path: '/reporting', element: <Shell><ReportingPage /></Shell> },
-  { path: '/dqe', element: <Shell><DqePage /></Shell> },
-  { path: '/projects/:id/dqe/:versionId', element: <Shell><DqeEditorPage /></Shell> },
-  { path: '/users', element: <Shell><UsersPage /></Shell> },
-  { path: '*', element: <Navigate to="/" replace /> },
+  { path: '/',                         element: <Shell><DashboardPage /></Shell> },
+  { path: '/projects',                 element: <Shell><ProjectsPage /></Shell> },
+  { path: '/projects/new',             element: <Shell><NewProjectPage /></Shell> },
+  { path: '/projects/:id',             element: <Shell><ProjectDetailPage /></Shell> },
+  { path: '/projects/:id/journal',     element: <Shell><JournalPage /></Shell> },
+  { path: '/map',                      element: <Guarded path="/map"><MapPage /></Guarded> },
+  { path: '/timeline',                 element: <Guarded path="/timeline"><TimelinePage /></Guarded> },
+  { path: '/dqe',                      element: <Guarded path="/dqe"><DqePage /></Guarded> },
+  { path: '/projects/:id/dqe/:versionId', element: <Guarded path="/dqe"><DqeEditorPage /></Guarded> },
+  { path: '/execution',                element: <Guarded path="/execution"><EvaluationPage /></Guarded> },
+  { path: '/costs',                    element: <Guarded path="/costs"><CostsPage /></Guarded> },
+  { path: '/qse',                      element: <Guarded path="/qse"><QhsePage /></Guarded> },
+  { path: '/reporting',                element: <Guarded path="/reporting"><ReportingPage /></Guarded> },
+  { path: '/users',                    element: <Guarded path="/users"><UsersPage /></Guarded> },
+  { path: '*',                         element: <Navigate to="/" replace /> },
 ]);
