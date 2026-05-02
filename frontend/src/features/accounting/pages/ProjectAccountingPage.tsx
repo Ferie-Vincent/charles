@@ -112,7 +112,7 @@ export default function ProjectAccountingPage() {
           {(['synthese', 'factures', 'fournisseurs'] as Tab[]).map(t => (
             <button
               key={t}
-              className={`dqe-filter-tab ${tab === t ? 'dqe-filter-tab--active' : ''}`}
+              className={`dqe-filter-btn ${tab === t ? 'dqe-filter-btn--active' : ''}`}
               onClick={() => setTab(t)}
             >
               {{ synthese: 'Synthèse', factures: 'Factures', fournisseurs: 'Fournisseurs' }[t]}
