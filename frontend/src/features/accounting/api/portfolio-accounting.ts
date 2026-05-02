@@ -37,6 +37,11 @@ export interface GeneralExpense {
   expense_date: string;
   paid_by?: string;
   notes?: string;
+  status: 'en_attente' | 'approuvee' | 'rejetee';
+  approver?: { id: number; name: string };
+  approved_at?: string;
+  rejection_reason?: string;
+  creator?: { id: number; name: string };
 }
 
 export interface AccountingTotals {
@@ -74,4 +79,14 @@ export async function updateExpense(id: number, data: Partial<GeneralExpense>): 
 
 export async function deleteExpense(id: number): Promise<void> {
   await api.delete(`/expenses/${id}`);
+}
+
+export async function approveExpense(id: number): Promise<GeneralExpense> {
+  const res = await api.patch(`/expenses/${id}/approve`);
+  return res.data;
+}
+
+export async function rejectExpense(id: number, reason: string): Promise<GeneralExpense> {
+  const res = await api.patch(`/expenses/${id}/reject`, { reason });
+  return res.data;
 }

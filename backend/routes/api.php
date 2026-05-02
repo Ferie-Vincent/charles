@@ -62,6 +62,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/expenses', [GeneralExpenseController::class, 'store']);
     Route::put('/expenses/{generalExpense}', [GeneralExpenseController::class, 'update']);
     Route::delete('/expenses/{generalExpense}', [GeneralExpenseController::class, 'destroy']);
+    Route::patch('/expenses/{generalExpense}/approve', [GeneralExpenseController::class, 'approve']);
+    Route::patch('/expenses/{generalExpense}/reject', [GeneralExpenseController::class, 'reject']);
     Route::get('/portfolio/evaluation', [PortfolioEvaluationController::class, 'index']);
     Route::get('/portfolio/qhse', [PortfolioQhseController::class, 'index']);
     Route::get('/portfolio/reports', [PortfolioReportingController::class, 'index']);

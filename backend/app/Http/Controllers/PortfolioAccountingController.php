@@ -65,6 +65,7 @@ class PortfolioAccountingController extends Controller
 
         // General expenses (hors projet)
         $expenses = GeneralExpense::where('company_id', $companyId)
+            ->with('creator:id,name', 'approver:id,name')
             ->orderByDesc('expense_date')
             ->get();
 
