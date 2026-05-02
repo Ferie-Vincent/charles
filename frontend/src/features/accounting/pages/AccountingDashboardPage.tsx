@@ -209,52 +209,8 @@ export default function AccountingDashboardPage() {
         </div>
       </div>
 
-      {/* Main body */}
+      {/* Main body — projects left (1fr), activity right (300px) */}
       <div className="acct-body">
-
-        {/* Activity feed */}
-        <div className="acct-panel">
-          <div className="acct-panel__head">
-            <h2 className="acct-panel__title">Activité récente</h2>
-            <span className="acct-panel__count">{recent_activity.length} opérations</span>
-          </div>
-          <div className="acct-feed">
-            {recent_activity.length === 0 && (
-              <p className="acct-empty">Aucune opération enregistrée</p>
-            )}
-            {recent_activity.map((item) => (
-              <div key={item.id} className="acct-feed__row">
-                <div className={`acct-feed__icon ${item.type === 'invoice' ? 'acct-feed__icon--inv' : 'acct-feed__icon--exp'}`}>
-                  {item.type === 'invoice' ? (
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                  ) : (
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-                  )}
-                </div>
-                <div className="acct-feed__info">
-                  <span className="acct-feed__ref">{item.reference ?? item.label}</span>
-                  <span className="acct-feed__meta">
-                    {item.project_name
-                      ? <Link to={`/projects/${item.project_id}/accounting`} className="acct-feed__link">{item.project_code}</Link>
-                      : <span className="acct-feed__hors">Hors projet</span>
-                    }
-                    · {EXPENSE_CATEGORIES[item.category] ?? item.category}
-                  </span>
-                </div>
-                <div className="acct-feed__right">
-                  <span className="acct-feed__amount">{fmt(item.amount)}</span>
-                  {item.status ? (
-                    <span className="acct-feed__badge" style={{ background: `${STATUS_COLOR[item.status]}18`, color: STATUS_COLOR[item.status] }}>
-                      {STATUS_LABEL[item.status] ?? item.status}
-                    </span>
-                  ) : (
-                    <span className="acct-feed__date">{fmtDate(item.date)}</span>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
 
         {/* Project cards */}
         <div className="acct-projects">
@@ -324,6 +280,51 @@ export default function AccountingDashboardPage() {
             })}
           </div>
         </div>
+
+        {/* Activity feed */}
+        <div className="acct-panel">
+          <div className="acct-panel__head">
+            <h2 className="acct-panel__title">Activité récente</h2>
+            <span className="acct-panel__count">{recent_activity.length} opérations</span>
+          </div>
+          <div className="acct-feed">
+            {recent_activity.length === 0 && (
+              <p className="acct-empty">Aucune opération enregistrée</p>
+            )}
+            {recent_activity.map((item) => (
+              <div key={item.id} className="acct-feed__row">
+                <div className={`acct-feed__icon ${item.type === 'invoice' ? 'acct-feed__icon--inv' : 'acct-feed__icon--exp'}`}>
+                  {item.type === 'invoice' ? (
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                  ) : (
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                  )}
+                </div>
+                <div className="acct-feed__info">
+                  <span className="acct-feed__ref">{item.reference ?? item.label}</span>
+                  <span className="acct-feed__meta">
+                    {item.project_name
+                      ? <Link to={`/projects/${item.project_id}/accounting`} className="acct-feed__link">{item.project_code}</Link>
+                      : <span className="acct-feed__hors">Hors projet</span>
+                    }
+                    · {EXPENSE_CATEGORIES[item.category] ?? item.category}
+                  </span>
+                </div>
+                <div className="acct-feed__right">
+                  <span className="acct-feed__amount">{fmt(item.amount)}</span>
+                  {item.status ? (
+                    <span className="acct-feed__badge" style={{ background: `${STATUS_COLOR[item.status]}18`, color: STATUS_COLOR[item.status] }}>
+                      {STATUS_LABEL[item.status] ?? item.status}
+                    </span>
+                  ) : (
+                    <span className="acct-feed__date">{fmtDate(item.date)}</span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
       </div>
 
       {/* General expenses table */}
