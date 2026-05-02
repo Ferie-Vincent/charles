@@ -19,10 +19,7 @@ class WhatsAppAlertService
             return false;
         }
 
-        // Normalize: ensure whatsapp: prefix
-        if (! str_starts_with($to, 'whatsapp:')) {
-            $to = 'whatsapp:' . $to;
-        }
+        $to = $this->normalizePhone($to);
 
         try {
             $client = new Client(['timeout' => 10]);
@@ -38,5 +35,34 @@ class WhatsAppAlertService
             Log::error('WhatsApp alert failed', ['error' => $e->getMessage()]);
             return false;
         }
+    }
+
+    private function normalizePhone(string $phone): string
+    {
+        // Strip whatsapp: prefix — we'll re-add it after normalization
+        $raw = preg_replace('/^whatsapp:/i', '', trim($phone));
+
+        // Already E.164
+        if (str_starts_with($raw, '+')) {
+            return 'whatsapp:' . $raw;
+        }
+
+        // 00225XXXXXXXXXX → +225XXXXXXXXXX
+        if (str_starts_with($raw, '00225')) {
+            return 'whatsapp:+' . substr($raw, 2);
+        }
+
+        // 225XXXXXXXXXX (missing +)
+        if (str_starts_with($raw, '225') && strlen($raw) >= 11) {
+            return 'whatsapp:+' . $raw;
+        }
+
+        // CI local 0XXXXXXXXX (10 digits, trunk prefix 0)
+        if (str_starts_with($raw, '0') && strlen($raw) === 10) {
+            return 'whatsapp:+225' . $raw;
+        }
+
+        // Fallback: prefix + and hope for the best
+        return 'whatsapp:+' . $raw;
     }
 }
