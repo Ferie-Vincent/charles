@@ -288,8 +288,8 @@ return (
 | `/reporting` | ReportingPage.tsx | ✅ | ❌ | **Needs KPIs** |
 | `/evaluation` | EvaluationPage.tsx | ✅ | ✅ | **Done** |
 | `/operations` | OperationsDashboardPage.tsx | ✅ | ❌ | **Needs KPIs** |
-| `/users` | UsersPage.tsx | ✅ | ❌ | **Needs KPIs** |
-| `/permissions` | PermissionsPage.tsx | ✅ | ❌ | **Needs KPIs** |
+| `/users` | UsersPage.tsx | ✅ | ✅ | **Done** |
+| `/permissions` | PermissionsPage.tsx | ✅ | ✅ | **Done** |
 | `/projects` | ProjectsPage.tsx | ✅ | ❌ | **Reference — card layout, not table** |
 | `/projects/*` | ProjectDetailPage.tsx | ❌ | ✅ | **Needs PageHeader** |
 | `/projects/*/journal` | JournalPage.tsx | ✅ | ❌ | **Needs KPIs** |
