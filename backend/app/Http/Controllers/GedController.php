@@ -36,7 +36,7 @@ class GedController extends Controller
     {
         $request->validate([
             'file'        => 'required|file|max:51200', // 50 MB
-            'type'        => 'required|in:plan,contrat,pv,rapport,facture,photo,autre',
+            'type'        => 'required|in:plan,contrat,pv,rapport,facture,photo,autre,ao,os,marche',
             'project_id'  => 'nullable|exists:projects,id',
             'name'        => 'nullable|string|max:255',
             'description' => 'nullable|string|max:500',
@@ -92,7 +92,7 @@ class GedController extends Controller
 
         $data = $request->validate([
             'name'        => 'sometimes|string|max:255',
-            'type'        => 'sometimes|in:plan,contrat,pv,rapport,facture,photo,autre',
+            'type'        => 'sometimes|in:plan,contrat,pv,rapport,facture,photo,autre,ao,os,marche',
             'project_id'  => 'nullable|exists:projects,id',
             'description' => 'nullable|string|max:500',
         ]);

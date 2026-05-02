@@ -6,7 +6,7 @@ export interface GedDocument {
   original_name: string;
   mime_type: string;
   size_bytes: number;
-  type: 'plan' | 'contrat' | 'pv' | 'rapport' | 'facture' | 'photo' | 'autre';
+  type: 'plan' | 'contrat' | 'pv' | 'rapport' | 'facture' | 'photo' | 'autre' | 'ao' | 'os' | 'marche';
   description?: string;
   created_at: string;
   project?: { id: number; name: string; code: string };
@@ -15,18 +15,37 @@ export interface GedDocument {
 }
 
 export const GED_TYPES: Record<string, string> = {
-  plan:     'Plan',
-  contrat:  'Contrat',
-  pv:       'PV',
-  rapport:  'Rapport',
-  facture:  'Facture',
-  photo:    'Photo',
-  autre:    'Autre',
+  ao:      'Appel d\'offres',
+  os:      'Ordre de service',
+  marche:  'Marché',
+  contrat: 'Contrat',
+  plan:    'Plan',
+  pv:      'PV',
+  rapport: 'Rapport',
+  facture: 'Facture',
+  photo:   'Photo',
+  autre:   'Autre',
+};
+
+export const GED_TYPE_COLOR: Record<string, { bg: string; color: string }> = {
+  ao:      { bg: '#fef3c7', color: '#92400e' },
+  os:      { bg: '#dbeafe', color: '#1e40af' },
+  marche:  { bg: '#ede9fe', color: '#5b21b6' },
+  contrat: { bg: '#d1fae5', color: '#065f46' },
+  plan:    { bg: '#e0f2fe', color: '#0369a1' },
+  pv:      { bg: '#f0fdf4', color: '#166534' },
+  rapport: { bg: '#faf5ff', color: '#6b21a8' },
+  facture: { bg: '#fff7ed', color: '#9a3412' },
+  photo:   { bg: '#fce7f3', color: '#9d174d' },
+  autre:   { bg: '#f1f5f9', color: '#475569' },
 };
 
 export const GED_TYPE_ICON: Record<string, string> = {
+  ao:      '📋',
+  os:      '📝',
+  marche:  '🤝',
   plan:    '📐',
-  contrat: '📋',
+  contrat: '📃',
   pv:      '✅',
   rapport: '📊',
   facture: '🧾',

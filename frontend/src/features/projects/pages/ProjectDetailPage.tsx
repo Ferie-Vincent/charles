@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { api } from '../../../lib/api';
 import { useQuery } from '@tanstack/react-query';
 import { useParams, Link } from 'react-router-dom';
 import { getProject } from '../api/get-project';
@@ -18,6 +19,7 @@ import MeetingReportModal from '../components/MeetingReportModal';
 import SituationTravauxModal from '../components/SituationTravauxModal';
 import WhatsAppTestButton from '../components/WhatsAppTestButton';
 import DqePanel from '../../dqe/components/DqePanel';
+import ProjectDocumentsPanel from '../../ged/components/ProjectDocumentsPanel';
 import { useAuth } from '../../auth/stores/auth-store';
 import { getRoleGroup } from '../../../lib/roles';
 import CollapsibleSection from '../../../components/ui/CollapsibleSection';
@@ -69,6 +71,23 @@ export default function ProjectDetailPage() {
   const numId = Number(id);
   const [showMeetingModal, setShowMeetingModal] = useState(false);
   const [showSituationModal, setShowSituationModal] = useState(false);
+  const [exportingPdf, setExportingPdf] = useState(false);
+
+  async function handleExportPdf() {
+    if (exportingPdf) return;
+    setExportingPdf(true);
+    try {
+      const res = await api.get(`/projects/${numId}/report/pdf`, { responseType: 'blob' });
+      const url = URL.createObjectURL(res.data);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `rapport-${numId}-${new Date().toISOString().slice(0, 10)}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } finally {
+      setExportingPdf(false);
+    }
+  }
   const { user } = useAuth();
   const group = getRoleGroup(user?.role?.name ?? '');
   const isDTDG = group !== 'terrain';
@@ -178,19 +197,19 @@ export default function ProjectDetailPage() {
                 </div>
               )}
               <HealthScoreBadge projectId={project.id} />
-              <a
-                href={`http://localhost:8000/api/projects/${project.id}/report/pdf`}
-                target="_blank"
-                rel="noreferrer"
+              <button
+                type="button"
                 className="proj-hero__report-btn"
+                onClick={handleExportPdf}
+                disabled={exportingPdf}
               >
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="13" height="13">
                   <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
                   <polyline points="14 2 14 8 20 8"/>
                   <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
                 </svg>
-                Exporter rapport
-              </a>
+                {exportingPdf ? 'Génération…' : 'Exporter rapport'}
+              </button>
               {isDTDG && (
                 <>
                   <button
@@ -288,6 +307,16 @@ export default function ProjectDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* ── Documents d'initialisation ── */}
+      <CollapsibleSection
+        title="Documents du chantier"
+        subtitle="Appel d'offres, ordre de service, marché, contrats et plans"
+        defaultOpen
+        icon={<div className="card-icon" style={{ background: '#ede9fe' }}><svg viewBox="0 0 24 24" fill="none" stroke="#7c3aed" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div>}
+      >
+        <ProjectDocumentsPanel projectId={project.id} />
+      </CollapsibleSection>
 
       {/* ── 1. Journal mensuel (calendrier) ── */}
       <CollapsibleSection
