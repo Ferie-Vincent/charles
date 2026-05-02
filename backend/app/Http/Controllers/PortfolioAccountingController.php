@@ -18,6 +18,7 @@ class PortfolioAccountingController extends Controller
             ->with(['budgetEntries', 'invoices.supplier', 'dqeVersions'])
             ->get();
 
+
         $projectData = $projects->map(function (Project $project) {
             $dqeTotal  = (float) $project->dqeVersions->where('status', 'validated')->sum('total_ht');
             $budgetRef = $dqeTotal > 0 ? $dqeTotal : (float) $project->budget_amount;
@@ -25,9 +26,13 @@ class PortfolioAccountingController extends Controller
             $engagement = (float) $project->budgetEntries->where('type', 'engagement')->sum('amount');
             $paiementBE = (float) $project->budgetEntries->where('type', 'paiement')->sum('amount');
 
-            $invoices   = $project->invoices;
-            $realise    = max($paiementBE, (float) $invoices->whereIn('status', ['validee', 'payee'])->sum('amount_ht'));
-            $engage     = max($engagement,  (float) $invoices->where('status', 'soumise')->sum('amount_ht'));
+            $invoices      = $project->invoices;
+            $invoicesPayee = (float) $invoices->whereIn('status', ['validee', 'payee'])->sum('amount_ht');
+            $invoicesSoumis = (float) $invoices->where('status', 'soumise')->sum('amount_ht');
+
+            // Sum both sources: BudgetEntries (besoins comptabilisés + saisies manuelles) + Invoices
+            $realise = $paiementBE + $invoicesPayee;
+            $engage  = $engagement + $invoicesSoumis;
 
             $rac  = max(0, $budgetRef - $engage - $realise);
             $cat  = $realise + $engage + $rac;
@@ -69,7 +74,7 @@ class PortfolioAccountingController extends Controller
             ->orderByDesc('expense_date')
             ->get();
 
-        // Unified activity feed (last 40 entries across invoices + expenses)
+        // Unified activity feed (last 40 entries across invoices + budget entries + expenses)
         $invoiceItems = $projectData->flatMap(function ($proj) {
             return collect($proj['invoices'])->map(fn($inv) => [
                 'id'           => 'inv-' . $inv->id,
@@ -83,6 +88,22 @@ class PortfolioAccountingController extends Controller
                 'project_id'   => $proj['id'],
                 'project_name' => $proj['name'],
                 'project_code' => $proj['code'],
+            ]);
+        });
+
+        $budgetEntryItems = $projects->flatMap(function ($project) {
+            return $project->budgetEntries->where('type', 'paiement')->map(fn($be) => [
+                'id'           => 'be-' . $be->id,
+                'type'         => 'budget_entry',
+                'date'         => $be->entry_date,
+                'reference'    => null,
+                'label'        => $be->label,
+                'amount'       => (float) $be->amount,
+                'status'       => $be->type,
+                'category'     => $be->category,
+                'project_id'   => $project->id,
+                'project_name' => $project->name,
+                'project_code' => $project->code,
             ]);
         });
 
@@ -100,7 +121,7 @@ class PortfolioAccountingController extends Controller
             'project_code' => null,
         ]);
 
-        $recentActivity = $invoiceItems->concat($expenseItems)
+        $recentActivity = $invoiceItems->concat($budgetEntryItems)->concat($expenseItems)
             ->sortByDesc('date')
             ->take(40)
             ->values();

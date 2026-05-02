@@ -26,9 +26,11 @@ const fmtDate = (d: string) =>
 
 const STATUS_LABEL: Record<string, string> = {
   brouillon: 'Brouillon', soumise: 'Soumise', validee: 'Validée', payee: 'Payée', disputee: 'Disputée',
+  paiement: 'Besoin comptabilisé',
 };
 const STATUS_COLOR: Record<string, string> = {
   brouillon: '#94a3b8', soumise: '#f59e0b', validee: '#3b7ddd', payee: '#10b981', disputee: '#ef4444',
+  paiement: '#8b5cf6',
 };
 const PROJECT_STATUS_COLOR: Record<string, string> = {
   en_cours: '#10b981', planifie: '#3b7ddd', termine: '#94a3b8', suspendu: '#f59e0b',
@@ -287,9 +289,11 @@ export default function AccountingDashboardPage() {
             )}
             {recent_activity.map((item) => (
               <div key={item.id} className="acct-feed__row">
-                <div className={`acct-feed__icon ${item.type === 'invoice' ? 'acct-feed__icon--inv' : 'acct-feed__icon--exp'}`}>
+                <div className={`acct-feed__icon ${item.type === 'invoice' ? 'acct-feed__icon--inv' : item.type === 'budget_entry' ? 'acct-feed__icon--be' : 'acct-feed__icon--exp'}`}>
                   {item.type === 'invoice' ? (
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                  ) : item.type === 'budget_entry' ? (
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
                   ) : (
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
                   )}
