@@ -21,4 +21,14 @@ class BudgetEntry extends Model
     {
         return $this->belongsTo(Project::class);
     }
+
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function demandeBesoin(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(DemandeBesoin::class, 'budget_entry_id');
+    }
 }

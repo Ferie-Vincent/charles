@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\BudgetEntry;
 use App\Models\GeneralExpense;
+use App\Models\Invoice;
 use App\Models\Project;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -78,6 +80,7 @@ class PortfolioAccountingController extends Controller
         $invoiceItems = $projectData->flatMap(function ($proj) {
             return collect($proj['invoices'])->map(fn($inv) => [
                 'id'           => 'inv-' . $inv->id,
+                'source_id'    => $inv->id,
                 'type'         => 'invoice',
                 'date'         => $inv->invoice_date?->toDateString() ?? $inv->created_at->toDateString(),
                 'reference'    => $inv->reference,
@@ -94,6 +97,7 @@ class PortfolioAccountingController extends Controller
         $budgetEntryItems = $projects->flatMap(function ($project) {
             return $project->budgetEntries->where('type', 'paiement')->map(fn($be) => [
                 'id'           => 'be-' . $be->id,
+                'source_id'    => $be->id,
                 'type'         => 'budget_entry',
                 'date'         => $be->entry_date,
                 'reference'    => null,
@@ -109,6 +113,7 @@ class PortfolioAccountingController extends Controller
 
         $expenseItems = $expenses->map(fn($exp) => [
             'id'           => 'exp-' . $exp->id,
+            'source_id'    => $exp->id,
             'type'         => 'expense',
             'date'         => $exp->expense_date->toDateString(),
             'reference'    => null,
@@ -135,5 +140,104 @@ class PortfolioAccountingController extends Controller
             'recent_activity' => $recentActivity,
             'expenses'        => $expenses->values(),
         ]);
+    }
+
+    public function activityDetail(Request $request, string $type, int $id): JsonResponse
+    {
+        $companyId = $request->user()->company_id;
+
+        if ($type === 'budget_entry') {
+            $entry = BudgetEntry::with([
+                'project:id,name,code',
+                'creator:id,name',
+                'demandeBesoin.requester:id,name',
+                'demandeBesoin.approver:id,name',
+                'demandeBesoin.preparer:id,name',
+                'demandeBesoin.recorder:id,name',
+            ])->whereHas('project', fn($q) => $q->where('company_id', $companyId))
+              ->findOrFail($id);
+
+            $demande = $entry->demandeBesoin;
+
+            return response()->json([
+                'type'           => 'budget_entry',
+                'id'             => $entry->id,
+                'label'          => $entry->label,
+                'amount'         => (float) $entry->amount,
+                'category'       => $entry->category,
+                'entry_date'     => $entry->entry_date,
+                'note'           => $entry->note,
+                'project'        => $entry->project,
+                'creator'        => $entry->creator,
+                'demande'        => $demande ? [
+                    'id'             => $demande->id,
+                    'title'          => $demande->title,
+                    'description'    => $demande->description,
+                    'urgency'        => $demande->urgency,
+                    'estimated_cost' => $demande->estimated_cost,
+                    'actual_cost'    => $demande->actual_cost,
+                    'status'         => $demande->status,
+                    'created_at'     => $demande->created_at,
+                    'approved_at'    => $demande->approved_at,
+                    'prepared_at'    => $demande->prepared_at,
+                    'delivered_at'   => $demande->delivered_at,
+                    'recorded_at'    => $demande->recorded_at,
+                    'requester'      => $demande->requester,
+                    'approver'       => $demande->approver,
+                    'preparer'       => $demande->preparer,
+                    'recorder'       => $demande->recorder,
+                ] : null,
+            ]);
+        }
+
+        if ($type === 'invoice') {
+            $invoice = Invoice::with([
+                'project:id,name,code',
+                'supplier:id,name',
+                'creator:id,name',
+            ])->whereHas('project', fn($q) => $q->where('company_id', $companyId))
+              ->findOrFail($id);
+
+            return response()->json([
+                'type'         => 'invoice',
+                'id'           => $invoice->id,
+                'reference'    => $invoice->reference,
+                'amount'       => (float) $invoice->amount_ht,
+                'amount_ttc'   => (float) $invoice->amount_ttc,
+                'category'     => $invoice->category,
+                'status'       => $invoice->status,
+                'invoice_date' => $invoice->invoice_date,
+                'due_date'     => $invoice->due_date,
+                'paid_date'    => $invoice->paid_date,
+                'note'         => $invoice->note,
+                'project'      => $invoice->project,
+                'supplier'     => $invoice->supplier,
+                'creator'      => $invoice->creator,
+            ]);
+        }
+
+        if ($type === 'expense') {
+            $expense = GeneralExpense::with(['creator:id,name', 'approver:id,name'])
+                ->where('company_id', $companyId)
+                ->findOrFail($id);
+
+            return response()->json([
+                'type'             => 'expense',
+                'id'               => $expense->id,
+                'label'            => $expense->label,
+                'amount'           => (float) $expense->amount,
+                'category'         => $expense->category,
+                'status'           => $expense->status,
+                'expense_date'     => $expense->expense_date,
+                'paid_by'          => $expense->paid_by,
+                'notes'            => $expense->notes,
+                'approved_at'      => $expense->approved_at,
+                'rejection_reason' => $expense->rejection_reason,
+                'creator'          => $expense->creator,
+                'approver'         => $expense->approver,
+            ]);
+        }
+
+        abort(404, 'Type inconnu');
     }
 }

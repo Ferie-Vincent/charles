@@ -5585,6 +5585,9 @@ code {
 .acct-feed__icon--inv { background: #3b7ddd18; color: #3b7ddd; }
 .acct-feed__icon--exp { background: #f59e0b18; color: #f59e0b; }
 .acct-feed__icon--be  { background: #8b5cf618; color: #8b5cf6; }
+.acct-feed__row--clickable { cursor: pointer; transition: background 150ms; }
+.acct-feed__row--clickable:hover { background: var(--bg-hover, #f8fafc); border-radius: var(--radius); }
+.acct-feed__row--clickable:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: var(--radius); }
 .acct-feed__info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .acct-feed__ref  { font-size: 0.85rem; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .acct-feed__meta { font-size: 0.75rem; color: var(--text-muted); }

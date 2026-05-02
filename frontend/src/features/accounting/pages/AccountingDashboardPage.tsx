@@ -10,9 +10,11 @@ import {
   approveExpense,
   rejectExpense,
   type GeneralExpense,
+  type ActivityItem,
 } from '../api/portfolio-accounting';
 import { useAuth } from '../../auth/stores/auth-store';
 import PageHeader from '../../../components/ui/PageHeader';
+import ActivityDetailModal from '../components/ActivityDetailModal';
 
 const fmt = (n: number) =>
   n >= 1_000_000
@@ -60,6 +62,7 @@ export default function AccountingDashboardPage() {
   const isApprover = user ? ['direction', 'directeur-technique'].includes(user.role.name) : false;
 
   const queryClient = useQueryClient();
+  const [detailItem, setDetailItem] = useState<{ type: string; sourceId: number } | null>(null);
   const [modal, setModal]       = useState<Partial<GeneralExpense> | null>(null);
   const [saving, setSaving]     = useState(false);
   const [deleteId, setDeleteId] = useState<number | null>(null);
@@ -288,7 +291,14 @@ export default function AccountingDashboardPage() {
               <p className="acct-empty">Aucune opération enregistrée</p>
             )}
             {recent_activity.map((item) => (
-              <div key={item.id} className="acct-feed__row">
+              <div
+                key={item.id}
+                className="acct-feed__row acct-feed__row--clickable"
+                onClick={() => setDetailItem({ type: item.type, sourceId: item.source_id })}
+                role="button"
+                tabIndex={0}
+                onKeyDown={e => e.key === 'Enter' && setDetailItem({ type: item.type, sourceId: item.source_id })}
+              >
                 <div className={`acct-feed__icon ${item.type === 'invoice' ? 'acct-feed__icon--inv' : item.type === 'budget_entry' ? 'acct-feed__icon--be' : 'acct-feed__icon--exp'}`}>
                   {item.type === 'invoice' ? (
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
@@ -531,6 +541,14 @@ export default function AccountingDashboardPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {detailItem && (
+        <ActivityDetailModal
+          type={detailItem.type}
+          sourceId={detailItem.sourceId}
+          onClose={() => setDetailItem(null)}
+        />
       )}
     </div>
   );
