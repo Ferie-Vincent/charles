@@ -3,7 +3,6 @@ import { useQuery } from '@tanstack/react-query';
 import {
   getPortfolioReports,
   type PortfolioReport,
-  type PortfolioReportStats,
 } from '../api/get-portfolio-reports';
 import { downloadReport } from '../../../lib/download-report';
 import PageHeader from '../../../components/ui/PageHeader';
@@ -34,90 +33,6 @@ function formatCreatedAt(isoStr: string): string {
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
-function KpiBar({ stats }: { stats: PortfolioReportStats }) {
-  return (
-    <div className="rp-kpi-bar">
-      <div className="rp-kpi-card">
-        <div className="rp-kpi-value">{stats.total_reports}</div>
-        <div className="rp-kpi-label">Total rapports</div>
-      </div>
-      <div className="rp-kpi-card rp-kpi-card--info">
-        <div className="rp-kpi-value">{stats.hebdo_count}</div>
-        <div className="rp-kpi-label">Rapports hebdo</div>
-      </div>
-      <div className="rp-kpi-card rp-kpi-card--purple">
-        <div className="rp-kpi-value">{stats.manuel_count}</div>
-        <div className="rp-kpi-label">Rapports manuels</div>
-      </div>
-      <div className="rp-kpi-card rp-kpi-card--success">
-        <div className="rp-kpi-value">{stats.projects_with_reports}</div>
-        <div className="rp-kpi-label">Chantiers couverts</div>
-      </div>
-    </div>
-  );
-}
-
-function KpiBarSkeleton() {
-  return (
-    <div className="rp-kpi-bar">
-      {[0, 1, 2, 3].map(i => (
-        <div key={i} className="rp-kpi-card">
-          <div className="rp-skeleton rp-skeleton--value" />
-          <div className="rp-skeleton rp-skeleton--label" />
-        </div>
-      ))}
-    </div>
-  );
-}
-
-type FilterType = 'tous' | 'hebdo' | 'manuel';
-
-function FilterBar({
-  search,
-  onSearch,
-  typeFilter,
-  onTypeFilter,
-}: {
-  search: string;
-  onSearch: (v: string) => void;
-  typeFilter: FilterType;
-  onTypeFilter: (v: FilterType) => void;
-}) {
-  return (
-    <div className="rp-filter-bar">
-      <div className="rp-search-wrap">
-        <svg className="rp-search-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth={1.8}>
-          <circle cx="8.5" cy="8.5" r="5.5" />
-          <path d="M15 15l-3.5-3.5" strokeLinecap="round" />
-        </svg>
-        <input
-          className="rp-search-input"
-          type="text"
-          placeholder="Rechercher par chantier ou fichier…"
-          value={search}
-          onChange={e => onSearch(e.target.value)}
-        />
-        {search && (
-          <button className="rp-search-clear" onClick={() => onSearch('')} aria-label="Effacer">
-            ✕
-          </button>
-        )}
-      </div>
-      <div className="rp-type-tabs">
-        {(['tous', 'hebdo', 'manuel'] as FilterType[]).map(t => (
-          <button
-            key={t}
-            className={`rp-type-tab${typeFilter === t ? ' rp-type-tab--active' : ''}`}
-            onClick={() => onTypeFilter(t)}
-          >
-            {t === 'tous' ? 'Tous' : t.charAt(0).toUpperCase() + t.slice(1)}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 function TypeBadge({ type }: { type: 'hebdo' | 'manuel' }) {
   return (
     <span className={`rp-type-badge rp-type-badge--${type}`}>
@@ -143,6 +58,8 @@ function SkeletonRows() {
 }
 
 const PAGE_SIZE = 20;
+
+type FilterType = 'tous' | 'hebdo' | 'manuel';
 
 // ── Page ─────────────────────────────────────────────────────────────────────
 
@@ -179,34 +96,147 @@ export default function ReportingPage() {
         subtitle="Historique des rapports PDF par chantier"
       />
 
-      {isLoading && <KpiBarSkeleton />}
-      {!isLoading && stats && <KpiBar stats={stats} />}
-
-      <FilterBar
-        search={search}
-        onSearch={v => { setSearch(v); setShowAll(false); }}
-        typeFilter={typeFilter}
-        onTypeFilter={v => { setTypeFilter(v); setShowAll(false); }}
-      />
-
-      <div className="rp-table-wrap">
-        {isError && (
-          <div className="rp-empty">
-            <p className="form-error">Erreur de chargement des rapports.</p>
+      {/* ── KPI strip ── */}
+      <div className="proj-kpi-row">
+        <div className="proj-kpi">
+          <div className="proj-kpi__icon proj-kpi__icon--blue">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+              <polyline points="10 9 9 9 8 9"/>
+            </svg>
           </div>
+          <div className="proj-kpi__body">
+            <div className="proj-kpi__value">
+              {isLoading ? '…' : (stats?.total_reports ?? 0)}
+            </div>
+            <div className="proj-kpi__label">Total rapports</div>
+          </div>
+        </div>
+
+        <div className="proj-kpi">
+          <div className="proj-kpi__icon proj-kpi__icon--teal">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+              <line x1="16" y1="2" x2="16" y2="6"/>
+              <line x1="8" y1="2" x2="8" y2="6"/>
+              <line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
+          </div>
+          <div className="proj-kpi__body">
+            <div className="proj-kpi__value">
+              {isLoading ? '…' : (stats?.hebdo_count ?? 0)}
+            </div>
+            <div className="proj-kpi__label">Rapports hebdo</div>
+          </div>
+        </div>
+
+        <div className="proj-kpi">
+          <div className="proj-kpi__icon proj-kpi__icon--orange">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="M12 20h9"/>
+              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+            </svg>
+          </div>
+          <div className="proj-kpi__body">
+            <div className="proj-kpi__value">
+              {isLoading ? '…' : (stats?.manuel_count ?? 0)}
+            </div>
+            <div className="proj-kpi__label">Rapports manuels</div>
+          </div>
+        </div>
+
+        <div className="proj-kpi">
+          <div className="proj-kpi__icon proj-kpi__icon--green">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+              <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+          </div>
+          <div className="proj-kpi__body">
+            <div className="proj-kpi__value">
+              {isLoading ? '…' : (stats?.projects_with_reports ?? 0)}
+            </div>
+            <div className="proj-kpi__label">Chantiers couverts</div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Table panel ── */}
+      <div style={{ background: 'var(--bg-panel)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
+
+        {/* Toolbar row */}
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center', padding: '14px 18px', borderBottom: '1px solid var(--border)', flexWrap: 'wrap' }}>
+
+          {/* Search */}
+          <div className="acct-search-wrap" style={{ flex: 1, minWidth: 200, maxWidth: 340 }}>
+            <svg className="acct-search-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth={1.8}>
+              <circle cx="8.5" cy="8.5" r="5.5" />
+              <path d="M15 15l-3.5-3.5" strokeLinecap="round" />
+            </svg>
+            <input
+              type="text"
+              className="acct-search-input"
+              placeholder="Rechercher par chantier ou fichier…"
+              value={search}
+              onChange={e => { setSearch(e.target.value); setShowAll(false); }}
+            />
+            {search && (
+              <button
+                className="acct-search-clear"
+                onClick={() => { setSearch(''); setShowAll(false); }}
+                aria-label="Effacer"
+              >
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
+            )}
+          </div>
+
+          {/* Filter tabs */}
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            {(['tous', 'hebdo', 'manuel'] as FilterType[]).map(t => {
+              const count =
+                t === 'tous' ? reports.length :
+                reports.filter(r => r.type === t).length;
+              const active = typeFilter === t;
+              return (
+                <button
+                  key={t}
+                  className={`bud-tab${active ? ' bud-tab--active' : ''}`}
+                  onClick={() => { setTypeFilter(t); setShowAll(false); }}
+                >
+                  {t === 'tous' ? 'Tous' : t.charAt(0).toUpperCase() + t.slice(1)}
+                  <span style={{ marginLeft: 5, fontSize: 10, fontWeight: 700, background: active ? 'rgba(255,255,255,0.2)' : 'var(--border)', color: active ? 'inherit' : 'var(--text-muted)', borderRadius: 4, padding: '1px 5px' }}>
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Table */}
+        {isError && (
+          <p style={{ padding: 24, color: 'var(--text-muted)' }}>
+            <span className="form-error">Erreur de chargement des rapports.</span>
+          </p>
         )}
 
         {!isError && (
-          <table className="rp-table">
+          <table className="data-table">
             <thead>
               <tr>
-                <th className="rp-th">Chantier</th>
-                <th className="rp-th">Rapport</th>
-                <th className="rp-th">Semaine</th>
-                <th className="rp-th">Type</th>
-                <th className="rp-th rp-th--right">Taille</th>
-                <th className="rp-th">Date de génération</th>
-                <th className="rp-th rp-th--center">Action</th>
+                <th>Chantier</th>
+                <th>Rapport</th>
+                <th>Semaine</th>
+                <th>Type</th>
+                <th style={{ textAlign: 'right' }}>Taille</th>
+                <th>Date de génération</th>
+                <th style={{ textAlign: 'center' }}>Action</th>
               </tr>
             </thead>
             <tbody>
@@ -214,7 +244,7 @@ export default function ReportingPage() {
 
               {!isLoading && filtered.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="rp-empty-cell">
+                  <td colSpan={7} className="acct-empty">
                     {search || typeFilter !== 'tous'
                       ? 'Aucun rapport ne correspond à votre recherche.'
                       : 'Aucun rapport disponible pour ce portefeuille.'}
@@ -223,29 +253,29 @@ export default function ReportingPage() {
               )}
 
               {!isLoading && visible.map((r: PortfolioReport) => (
-                <tr key={r.id} className="rp-tr">
-                  <td className="rp-td">
+                <tr key={r.id}>
+                  <td>
                     <div className="rp-project-cell">
                       <span className="rp-code-badge">{r.project_code}</span>
-                      <span className="rp-project-name">{r.project_name}</span>
+                      <span style={{ fontWeight: 600, color: 'var(--text-body)' }}>{r.project_name}</span>
                     </div>
                   </td>
-                  <td className="rp-td">
+                  <td>
                     <span className="rp-filename">{r.filename}</span>
                   </td>
-                  <td className="rp-td rp-td--muted">
+                  <td style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>
                     {formatWeekOf(r.week_of)}
                   </td>
-                  <td className="rp-td">
+                  <td>
                     <TypeBadge type={r.type} />
                   </td>
-                  <td className="rp-td rp-td--right rp-td--muted">
+                  <td style={{ textAlign: 'right', color: 'var(--text-muted)', fontSize: '0.82rem' }}>
                     {formatBytes(r.size_bytes)}
                   </td>
-                  <td className="rp-td rp-td--muted">
+                  <td style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>
                     {formatCreatedAt(r.created_at)}
                   </td>
-                  <td className="rp-td rp-td--center">
+                  <td style={{ textAlign: 'center' }}>
                     <button
                       className="rp-download-btn"
                       onClick={() => downloadReport(r.project_id, r.id, r.filename)}
