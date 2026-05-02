@@ -71,37 +71,36 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
 
   return (
     <header className="topbar">
-      {/* Hamburger */}
-      <button type="button" className="topbar-hamburger" aria-label="Menu" onClick={onMenuToggle}>
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-          <line x1="3" y1="6" x2="21" y2="6"/>
-          <line x1="3" y1="12" x2="21" y2="12"/>
-          <line x1="3" y1="18" x2="21" y2="18"/>
-        </svg>
-      </button>
+      <div className="topbar-left">
+        <button type="button" className="topbar-hamburger" aria-label="Menu" onClick={onMenuToggle}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+            <line x1="3" y1="6" x2="21" y2="6"/>
+            <line x1="3" y1="12" x2="21" y2="12"/>
+            <line x1="3" y1="18" x2="21" y2="18"/>
+          </svg>
+        </button>
 
-      {/* Search */}
-      <form className="topbar-search" onSubmit={handleSearch} role="search">
-        <svg className="topbar-search__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-        </svg>
-        <input
-          aria-label="Rechercher"
-          placeholder="Rechercher un chantier, DQE, intervenant…"
-          value={searchQuery}
-          onChange={e => setSearchQuery(e.target.value)}
-        />
-        {searchQuery && (
-          <button type="submit" className="topbar-search__submit" aria-label="Lancer la recherche">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="9 18 15 12 9 6"/>
-            </svg>
-          </button>
-        )}
-      </form>
+        <form className="topbar-search" onSubmit={handleSearch} role="search">
+          <svg className="topbar-search__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <input
+            aria-label="Rechercher"
+            placeholder="Rechercher un chantier, DQE, intervenant…"
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+          />
+          {searchQuery && (
+            <button type="submit" className="topbar-search__submit" aria-label="Lancer la recherche">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="9 18 15 12 9 6"/>
+              </svg>
+            </button>
+          )}
+        </form>
+      </div>
 
       <div className="topbar-actions">
-        {/* Notifications bell */}
         {canSeeOps && (
           <div className="topbar-notif-wrap" ref={notifRef}>
             <button
@@ -147,11 +146,11 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
                       >
                         <span className="topbar-notif-item__dot topbar-notif-item__dot--warning" />
                         <div className="topbar-notif-item__body">
-                          <div className="topbar-notif-item__title">BDC en attente · {bdc.reference}</div>
+                          <div className="topbar-notif-item__title">BDC en attente - {bdc.reference}</div>
                           <div className="topbar-notif-item__sub">
                             {bdc.supplier}
-                            {bdc.total_amount ? ` · ${fmtAmount(bdc.total_amount)}` : ''}
-                            {` · ${bdc.age_days}j`}
+                            {bdc.total_amount ? ` - ${fmtAmount(bdc.total_amount)}` : ''}
+                            {` - ${bdc.age_days}j`}
                           </div>
                         </div>
                       </button>
@@ -166,9 +165,9 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
                       >
                         <span className="topbar-notif-item__dot topbar-notif-item__dot--danger" />
                         <div className="topbar-notif-item__body">
-                          <div className="topbar-notif-item__title">Stock bas · {s.name}</div>
+                          <div className="topbar-notif-item__title">Stock bas - {s.name}</div>
                           <div className="topbar-notif-item__sub">
-                            {s.quantity} {s.unit} restant · min {s.threshold} {s.unit}
+                            {s.quantity} {s.unit} restant - min {s.threshold} {s.unit}
                           </div>
                         </div>
                       </button>
@@ -183,8 +182,8 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
                       >
                         <span className="topbar-notif-item__dot topbar-notif-item__dot--critical" />
                         <div className="topbar-notif-item__body">
-                          <div className="topbar-notif-item__title">Chantier critique · {p.code}</div>
-                          <div className="topbar-notif-item__sub">{p.name} · Score {p.health_score}/100</div>
+                          <div className="topbar-notif-item__title">Chantier critique - {p.code}</div>
+                          <div className="topbar-notif-item__sub">{p.name} - Score {p.health_score}/100</div>
                         </div>
                       </button>
                     ))}
@@ -197,7 +196,7 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
                       type="button"
                       onClick={() => { navigate('/operations'); setNotifOpen(false); }}
                     >
-                      Voir le tableau de bord opérationnel →
+                      Voir le tableau de bord operationnel
                     </button>
                   </div>
                 )}
@@ -208,7 +207,6 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
 
         <div className="topbar-divider" />
 
-        {/* User dropdown */}
         <div className="topbar-user-wrap" ref={userRef}>
           <button
             type="button"
@@ -242,6 +240,22 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
                 </div>
               </div>
               <div className="topbar-user-menu__divider" />
+<<<<<<< Updated upstream
+=======
+              <Link
+                to="/settings"
+                className="topbar-user-menu__item"
+                role="menuitem"
+                onClick={() => setUserMenuOpen(false)}
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="3"/>
+                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                </svg>
+                Parametres
+              </Link>
+              <div className="topbar-user-menu__divider" />
+>>>>>>> Stashed changes
               <button
                 type="button"
                 className="topbar-user-menu__item topbar-user-menu__item--danger"
@@ -253,7 +267,7 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
                   <polyline points="16 17 21 12 16 7"/>
                   <line x1="21" y1="12" x2="9" y2="12"/>
                 </svg>
-                Déconnexion
+                Deconnexion
               </button>
             </div>
           )}

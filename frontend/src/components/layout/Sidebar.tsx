@@ -6,7 +6,7 @@ import { usePermissions } from '../../lib/permissions-context';
 const navItems = [
   {
     to: '/operations',
-    label: 'Opérations',
+    label: 'Operations',
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>,
   },
   {
@@ -36,17 +36,17 @@ const navItems = [
   },
   {
     to: '/execution',
-    label: 'Évaluation',
+    label: 'Evaluation',
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>,
   },
   {
     to: '/costs',
-    label: 'Coûts',
+    label: 'Couts',
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>,
   },
   {
     to: '/accounting',
-    label: 'Comptabilité',
+    label: 'Comptabilite',
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>,
   },
   {
@@ -93,7 +93,7 @@ export default function Sidebar({ open, onClose }: { open?: boolean; onClose?: (
 
   const visibleItems = navItems.filter(item => {
     const feature = item.to.replace('/', '');
-    if (!feature) return true; // dashboard always visible
+    if (!feature) return true;
     if (group === 'direction') return true;
     return canAccess(feature, group);
   });
@@ -104,7 +104,7 @@ export default function Sidebar({ open, onClose }: { open?: boolean; onClose?: (
 
   return (
     <aside className={`sidebar${open ? ' sidebar--open' : ''}`}>
-      <button type="button" className="sidebar-close" onClick={onClose} aria-label="Fermer le menu">✕</button>
+      <button type="button" className="sidebar-close" onClick={onClose} aria-label="Fermer le menu">x</button>
       <div className="sidebar-brand">
         <div className="sidebar-brand__logo">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -170,7 +170,7 @@ export default function Sidebar({ open, onClose }: { open?: boolean; onClose?: (
           </li>
         </ul>
 
-        <div className="sidebar-user">
+        <NavLink to="/profile" className="sidebar-user sidebar-user--link">
           <div className="sidebar-user__avatar">{initials}</div>
           <div className="sidebar-user__info">
             <div className="sidebar-user__name">{user?.name ?? 'Utilisateur'}</div>
