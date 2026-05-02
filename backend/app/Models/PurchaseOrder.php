@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class PurchaseOrder extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'company_id', 'requested_by', 'supplier_id', 'project_id', 'approved_by',
         'reference', 'status', 'items', 'total_amount',
