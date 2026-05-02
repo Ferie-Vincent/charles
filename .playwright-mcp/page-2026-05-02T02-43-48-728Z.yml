@@ -1,0 +1,679 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e38]:
+    - complementary [ref=e39]:
+      - generic [ref=e40]:
+        - img [ref=e42]
+        - generic [ref=e45]:
+          - heading "Chantier" [level=2] [ref=e46]
+          - generic [ref=e47]: Platform BTP
+      - navigation [ref=e48]:
+        - generic [ref=e49]: Pilotage
+        - list [ref=e50]:
+          - listitem [ref=e51]:
+            - link "Dashboard" [ref=e52] [cursor=pointer]:
+              - /url: /
+              - img [ref=e53]
+              - text: Dashboard
+          - listitem [ref=e58]:
+            - link "Chantiers" [ref=e59] [cursor=pointer]:
+              - /url: /projects
+              - img [ref=e60]
+              - text: Chantiers
+          - listitem [ref=e63]:
+            - link "Carte" [ref=e64] [cursor=pointer]:
+              - /url: /map
+              - img [ref=e65]
+              - text: Carte
+          - listitem [ref=e67]:
+            - link "Calendrier" [ref=e68] [cursor=pointer]:
+              - /url: /timeline
+              - img [ref=e69]
+              - text: Calendrier
+          - listitem [ref=e71]:
+            - link "DQE" [ref=e72] [cursor=pointer]:
+              - /url: /dqe
+              - img [ref=e73]
+              - text: DQE
+          - listitem [ref=e76]:
+            - link "Évaluation" [ref=e77] [cursor=pointer]:
+              - /url: /execution
+              - img [ref=e78]
+              - text: Évaluation
+          - listitem [ref=e80]:
+            - link "Coûts" [ref=e81] [cursor=pointer]:
+              - /url: /costs
+              - img [ref=e82]
+              - text: Coûts
+          - listitem [ref=e84]:
+            - link "QHSE" [ref=e85] [cursor=pointer]:
+              - /url: /qse
+              - img [ref=e86]
+              - text: QHSE
+          - listitem [ref=e88]:
+            - link "Reporting" [ref=e89] [cursor=pointer]:
+              - /url: /reporting
+              - img [ref=e90]
+              - text: Reporting
+      - generic [ref=e91]:
+        - list [ref=e92]:
+          - listitem [ref=e93]:
+            - link "Utilisateurs" [ref=e94] [cursor=pointer]:
+              - /url: /users
+              - img [ref=e95]
+              - text: Utilisateurs
+          - listitem [ref=e100]:
+            - link "Paramètres" [ref=e101] [cursor=pointer]:
+              - /url: /settings
+              - img [ref=e102]
+              - text: Paramètres
+        - generic [ref=e105]:
+          - generic [ref=e106]: DC
+          - generic [ref=e107]:
+            - generic [ref=e108]: Direction Charles
+            - generic [ref=e109]: Direction
+    - generic [ref=e110]:
+      - banner [ref=e111]:
+        - generic [ref=e112]:
+          - img
+          - textbox "Rechercher" [ref=e113]:
+            - /placeholder: Rechercher un chantier, DQE, intervenant…
+        - generic [ref=e114]:
+          - button "DC Entreprise Charles Direction" [ref=e115] [cursor=pointer]:
+            - generic [ref=e116]: DC
+            - generic [ref=e117]:
+              - generic [ref=e118]: Entreprise Charles
+              - generic [ref=e119]: Direction
+            - img [ref=e120]
+          - button "Notifications" [ref=e123] [cursor=pointer]:
+            - img [ref=e124]
+          - link "Nouveau chantier" [ref=e127] [cursor=pointer]:
+            - /url: /projects/new
+            - img [ref=e128]
+            - text: Nouveau chantier
+          - button "Déconnexion" [ref=e129] [cursor=pointer]:
+            - img [ref=e130]
+      - main [ref=e133]:
+        - generic [ref=e134]:
+          - generic [ref=e135]:
+            - generic [ref=e136]:
+              - generic [ref=e137]: DIRECTION TRAVAUX · 2026
+              - heading "Portefeuille chantiers" [level=1] [ref=e138]
+              - paragraph [ref=e139]: Vue consolidée des chantiers actifs, budgets et alertes terrain.
+            - generic [ref=e141]: Données synchronisées · il y a 2 min
+          - generic [ref=e143]:
+            - generic [ref=e144]:
+              - generic [ref=e145]:
+                - img [ref=e147]
+                - generic [ref=e150]: ↑ +2
+              - generic [ref=e151]: "13"
+              - generic [ref=e152]: Chantiers actifs
+              - generic [ref=e153]: vs 17 au portefeuille
+            - generic [ref=e154]:
+              - generic [ref=e155]:
+                - img [ref=e157]
+                - generic [ref=e161]: ↑ +8.1 %
+              - generic [ref=e162]: 6,3 Mds FCFA
+              - generic [ref=e163]: Budget engagé
+              - generic [ref=e164]: 48% du portefeuille
+            - generic [ref=e165]:
+              - img [ref=e168]
+              - generic [ref=e171]: 13,2 Mds FCFA
+              - generic [ref=e172]: Budget portefeuille
+              - generic [ref=e173]: Année fiscale 2026
+            - generic [ref=e174]:
+              - generic [ref=e175]:
+                - img [ref=e177]
+                - generic [ref=e180]: ↑ +1
+              - generic [ref=e181]: "3"
+              - generic [ref=e182]: Chantiers livrés
+              - generic [ref=e183]: Ce trimestre
+            - generic [ref=e184]:
+              - generic [ref=e185]:
+                - img [ref=e187]
+                - generic [ref=e189]: ↑ +2
+              - generic [ref=e190]: "4"
+              - generic [ref=e191]: En retard
+              - generic [ref=e192]: Action requise
+          - generic [ref=e193]:
+            - generic [ref=e194]:
+              - generic [ref=e195]:
+                - img [ref=e197]
+                - generic [ref=e200]:
+                  - generic [ref=e201]: Analyse IA — Portefeuille
+                  - generic [ref=e202]: Synthèse exécutive générée par Groq
+              - button "Analyser le portefeuille" [ref=e204] [cursor=pointer]:
+                - img [ref=e205]
+                - text: Analyser le portefeuille
+            - generic [ref=e208]: Cliquez sur "Analyser le portefeuille" pour obtenir une synthèse IA de tous vos chantiers actifs.
+          - generic [ref=e209]:
+            - generic [ref=e210]:
+              - generic [ref=e211]:
+                - img [ref=e213]
+                - heading "Synthèse Portefeuille BTP" [level=3] [ref=e214]
+              - generic [ref=e215]:
+                - generic [ref=e217]:
+                  - generic [ref=e218]: Budget total portefeuille
+                  - generic [ref=e219]: 13,2 Mds FCFA
+                - generic [ref=e223]:
+                  - generic [ref=e224]: Budget actif engagé
+                  - generic [ref=e225]: 6,3 Mds FCFA
+                - generic [ref=e228]:
+                  - generic [ref=e229]: Taux d'engagement
+                  - generic [ref=e230]: 47.8 %
+                - generic [ref=e231]:
+                  - generic [ref=e232]:
+                    - generic [ref=e233]: "13"
+                    - generic [ref=e234]: Actifs
+                  - generic [ref=e235]:
+                    - generic [ref=e236]: "3"
+                    - generic [ref=e237]: Livrés
+                  - generic [ref=e238]:
+                    - generic [ref=e239]: "4"
+                    - generic [ref=e240]: En retard
+            - generic [ref=e241]:
+              - generic [ref=e242]:
+                - generic [ref=e243]:
+                  - img [ref=e244]
+                  - text: Alertes importantes
+                - generic [ref=e246]: "18"
+              - list [ref=e247]:
+                - listitem [ref=e248]:
+                  - generic [ref=e249]: ⏰
+                  - generic [ref=e250]:
+                    - generic [ref=e251]: CH-YOP-2024-002
+                    - generic [ref=e252]: Dépasse sa date de fin depuis 214 jours
+                  - link "→" [ref=e253] [cursor=pointer]:
+                    - /url: /projects/4
+                  - button "Masquer" [ref=e254] [cursor=pointer]: ×
+                - listitem [ref=e255]:
+                  - generic [ref=e256]: ⏰
+                  - generic [ref=e257]:
+                    - generic [ref=e258]: CH-BKE-2025-001
+                    - generic [ref=e259]: Dépasse sa date de fin depuis 155 jours
+                  - link "→" [ref=e260] [cursor=pointer]:
+                    - /url: /projects/6
+                  - button "Masquer" [ref=e261] [cursor=pointer]: ×
+                - listitem [ref=e262]:
+                  - generic [ref=e263]: ⏰
+                  - generic [ref=e264]:
+                    - generic [ref=e265]: CH-SAN-2025-002
+                    - generic [ref=e266]: Dépasse sa date de fin depuis 122 jours
+                  - link "→" [ref=e267] [cursor=pointer]:
+                    - /url: /projects/8
+                  - button "Masquer" [ref=e268] [cursor=pointer]: ×
+                - listitem [ref=e269]:
+                  - generic [ref=e270]: ⏰
+                  - generic [ref=e271]:
+                    - generic [ref=e272]: CH-ABJ-2025-008
+                    - generic [ref=e273]: Dépasse sa date de fin depuis 122 jours
+                  - link "→" [ref=e274] [cursor=pointer]:
+                    - /url: /projects/14
+                  - button "Masquer" [ref=e275] [cursor=pointer]: ×
+                - listitem [ref=e276]:
+                  - generic [ref=e277]: ⏰
+                  - generic [ref=e278]:
+                    - generic [ref=e279]: CH-KOR-2025-007
+                    - generic [ref=e280]: Dépasse sa date de fin depuis 108 jours
+                  - link "→" [ref=e281] [cursor=pointer]:
+                    - /url: /projects/13
+                  - button "Masquer" [ref=e282] [cursor=pointer]: ×
+                - listitem [ref=e283]:
+                  - generic [ref=e284]: ⏰
+                  - generic [ref=e285]:
+                    - generic [ref=e286]: CH-MKD-2025-004
+                    - generic [ref=e287]: Dépasse sa date de fin depuis 63 jours
+                  - link "→" [ref=e288] [cursor=pointer]:
+                    - /url: /projects/10
+                  - button "Masquer" [ref=e289] [cursor=pointer]: ×
+                - listitem [ref=e290]:
+                  - generic [ref=e291]: ⏰
+                  - generic [ref=e292]:
+                    - generic [ref=e293]: CH-YMK-2025-001
+                    - generic [ref=e294]: Dépasse sa date de fin depuis 49 jours
+                  - link "→" [ref=e295] [cursor=pointer]:
+                    - /url: /projects/7
+                  - button "Masquer" [ref=e296] [cursor=pointer]: ×
+                - listitem [ref=e297]:
+                  - generic [ref=e298]: ⏰
+                  - generic [ref=e299]:
+                    - generic [ref=e300]: CH-DLM-2025-005
+                    - generic [ref=e301]: Dépasse sa date de fin depuis 13 jours
+                  - link "→" [ref=e302] [cursor=pointer]:
+                    - /url: /projects/11
+                  - button "Masquer" [ref=e303] [cursor=pointer]: ×
+                - listitem [ref=e304]:
+                  - generic [ref=e305]: 📉
+                  - generic [ref=e306]:
+                    - generic [ref=e307]: CH-SOB-2025-009
+                    - generic [ref=e308]: "Retard planning : 92% de décalage (attendu 92%, réel 0%)"
+                  - link "→" [ref=e309] [cursor=pointer]:
+                    - /url: /projects/15
+                  - button "Masquer" [ref=e310] [cursor=pointer]: ×
+                - listitem [ref=e311]:
+                  - generic [ref=e312]: 📉
+                  - generic [ref=e313]:
+                    - generic [ref=e314]: CH-PLAT-2025-001
+                    - generic [ref=e315]: "Retard planning : 89% de décalage (attendu 89%, réel 0%)"
+                  - link "→" [ref=e316] [cursor=pointer]:
+                    - /url: /projects/5
+                  - button "Masquer" [ref=e317] [cursor=pointer]: ×
+                - listitem [ref=e318]:
+                  - generic [ref=e319]: 📉
+                  - generic [ref=e320]:
+                    - generic [ref=e321]: CH-ABO-2025-003
+                    - generic [ref=e322]: "Retard planning : 75% de décalage (attendu 75%, réel 0%)"
+                  - link "→" [ref=e323] [cursor=pointer]:
+                    - /url: /projects/9
+                  - button "Masquer" [ref=e324] [cursor=pointer]: ×
+                - listitem [ref=e325]:
+                  - generic [ref=e326]: 📉
+                  - generic [ref=e327]:
+                    - generic [ref=e328]: CH-GHO-2025-006
+                    - generic [ref=e329]: "Retard planning : 59% de décalage (attendu 59%, réel 0%)"
+                  - link "→" [ref=e330] [cursor=pointer]:
+                    - /url: /projects/12
+                  - button "Masquer" [ref=e331] [cursor=pointer]: ×
+                - listitem [ref=e332]:
+                  - generic [ref=e333]: 📉
+                  - generic [ref=e334]:
+                    - generic [ref=e335]: CH-MAN-2025-010
+                    - generic [ref=e336]: "Retard planning : 38% de décalage (attendu 38%, réel 0%)"
+                  - link "→" [ref=e337] [cursor=pointer]:
+                    - /url: /projects/16
+                  - button "Masquer" [ref=e338] [cursor=pointer]: ×
+                - listitem [ref=e339]:
+                  - generic [ref=e340]: 📋
+                  - generic [ref=e341]:
+                    - generic [ref=e342]: CH-SOB-2025-009
+                    - generic [ref=e343]: Aucun journal saisi depuis le démarrage (335j)
+                  - link "→" [ref=e344] [cursor=pointer]:
+                    - /url: /projects/15
+                  - button "Masquer" [ref=e345] [cursor=pointer]: ×
+                - listitem [ref=e346]:
+                  - generic [ref=e347]: 📋
+                  - generic [ref=e348]:
+                    - generic [ref=e349]: CH-PLAT-2025-001
+                    - generic [ref=e350]: Aucun journal saisi depuis le démarrage (477j)
+                  - link "→" [ref=e351] [cursor=pointer]:
+                    - /url: /projects/5
+                  - button "Masquer" [ref=e352] [cursor=pointer]: ×
+                - listitem [ref=e353]:
+                  - generic [ref=e354]: 📋
+                  - generic [ref=e355]:
+                    - generic [ref=e356]: CH-ABO-2025-003
+                    - generic [ref=e357]: Aucun journal saisi depuis le démarrage (362j)
+                  - link "→" [ref=e358] [cursor=pointer]:
+                    - /url: /projects/9
+                  - button "Masquer" [ref=e359] [cursor=pointer]: ×
+                - listitem [ref=e360]:
+                  - generic [ref=e361]: 📋
+                  - generic [ref=e362]:
+                    - generic [ref=e363]: CH-GHO-2025-006
+                    - generic [ref=e364]: Aucun journal saisi depuis le démarrage (427j)
+                  - link "→" [ref=e365] [cursor=pointer]:
+                    - /url: /projects/12
+                  - button "Masquer" [ref=e366] [cursor=pointer]: ×
+                - listitem [ref=e367]:
+                  - generic [ref=e368]: 📋
+                  - generic [ref=e369]:
+                    - generic [ref=e370]: CH-MAN-2025-010
+                    - generic [ref=e371]: Aucun journal saisi depuis le démarrage (274j)
+                  - link "→" [ref=e372] [cursor=pointer]:
+                    - /url: /projects/16
+                  - button "Masquer" [ref=e373] [cursor=pointer]: ×
+              - button "Tout masquer" [ref=e374] [cursor=pointer]
+            - generic [ref=e375]:
+              - generic [ref=e376]:
+                - img [ref=e378]
+                - heading "Indicateurs Clés BTP" [level=3] [ref=e381]
+              - generic [ref=e382]:
+                - generic [ref=e383]:
+                  - img [ref=e385]
+                  - generic [ref=e387]: Score santé moyen
+                  - generic [ref=e388]: 52 pts
+                - generic [ref=e389]:
+                  - img [ref=e391]
+                  - generic [ref=e394]: Chantiers suivis
+                  - generic [ref=e395]: "13"
+                - generic [ref=e396]:
+                  - generic [ref=e397]:
+                    - generic [ref=e398]: 🟢
+                    - generic [ref=e399]: Sains
+                    - generic [ref=e400]: "1"
+                  - generic [ref=e401]:
+                    - generic [ref=e402]: 🟠
+                    - generic [ref=e403]: Attention
+                    - generic [ref=e404]: "12"
+                  - generic [ref=e405]:
+                    - generic [ref=e406]: 🔴
+                    - generic [ref=e407]: Critique
+                    - generic [ref=e408]: "0"
+          - generic [ref=e409]:
+            - generic [ref=e410]:
+              - generic [ref=e411]:
+                - img [ref=e413]
+                - generic [ref=e416]:
+                  - heading "Répartition par statut" [level=3] [ref=e417]
+                  - paragraph [ref=e418]: 20 chantiers au portefeuille
+              - application [ref=e421]
+              - generic [ref=e434]:
+                - generic [ref=e435]:
+                  - generic [ref=e437]: Actifs
+                  - generic [ref=e438]: "13"
+                - generic [ref=e439]:
+                  - generic [ref=e441]: Terminés
+                  - generic [ref=e442]: "3"
+                - generic [ref=e443]:
+                  - generic [ref=e445]: Brouillons
+                  - generic [ref=e446]: "4"
+            - generic [ref=e447]:
+              - generic [ref=e448]:
+                - img [ref=e450]
+                - generic [ref=e451]:
+                  - heading "Top 8 budgets — chantiers actifs" [level=3] [ref=e452]
+                  - paragraph [ref=e453]: Classés par budget engagé
+              - application [ref=e456]:
+                - generic [ref=e488]:
+                  - generic [ref=e489]:
+                    - generic [ref=e491]: 0 M
+                    - generic [ref=e493]: 500 M
+                    - generic [ref=e495]: 1.0 Mds
+                    - generic [ref=e497]: 1.5 Mds
+                    - generic [ref=e499]: 2.0 Mds
+                  - generic [ref=e500]:
+                    - generic [ref=e502]: Résidence 20 villasstan…
+                    - generic [ref=e504]: Centre commercial 2nive…
+                    - generic [ref=e506]: Hôtel 3 étoiles R+5
+                    - generic [ref=e508]: Clinique médicale R+2
+                    - generic [ref=e510]: Réhabilitationrésidence…
+                    - generic [ref=e512]: Immeuble R+4 locatif
+                    - generic [ref=e514]: Entrepôt logistique 200…
+                    - generic [ref=e516]: Salle polyvalente 500pl…
+          - generic [ref=e517]:
+            - generic [ref=e518]:
+              - img [ref=e520]
+              - generic [ref=e522]:
+                - heading "Carte des chantiers actifs" [level=3] [ref=e523]
+                - paragraph [ref=e524]: Health score · Cliquer un marqueur pour ouvrir le chantier
+            - generic [ref=e525]:
+              - generic [ref=e526]:
+                - button "🗺️ Tous 13" [ref=e527] [cursor=pointer]:
+                  - text: 🗺️ Tous
+                  - generic [ref=e528]: "13"
+                - button "🟢 Sain 1" [ref=e529] [cursor=pointer]:
+                  - text: 🟢 Sain
+                  - generic [ref=e530]: "1"
+                - button "🟠 Attention 12" [ref=e531] [cursor=pointer]:
+                  - text: 🟠 Attention
+                  - generic [ref=e532]: "12"
+                - button "🔴 Critique 0" [ref=e533] [cursor=pointer]:
+                  - text: 🔴 Critique
+                  - generic [ref=e534]: "0"
+              - generic [ref=e535]:
+                - generic:
+                  - generic:
+                    - button " 75" [ref=e536] [cursor=pointer]:
+                      - generic [ref=e537]:
+                        - generic [ref=e538]: 
+                        - generic [ref=e539]: "75"
+                    - button " 50" [ref=e540] [cursor=pointer]:
+                      - generic [ref=e541]:
+                        - generic [ref=e542]: 
+                        - generic [ref=e543]: "50"
+                    - button " 50" [ref=e544] [cursor=pointer]:
+                      - generic [ref=e545]:
+                        - generic [ref=e546]: 
+                        - generic [ref=e547]: "50"
+                    - button " 50" [ref=e548] [cursor=pointer]:
+                      - generic [ref=e549]:
+                        - generic [ref=e550]: 
+                        - generic [ref=e551]: "50"
+                    - button " 50" [ref=e552] [cursor=pointer]:
+                      - generic [ref=e553]:
+                        - generic [ref=e554]: 
+                        - generic [ref=e555]: "50"
+                    - button " 50" [ref=e556] [cursor=pointer]:
+                      - generic [ref=e557]:
+                        - generic [ref=e558]: 
+                        - generic [ref=e559]: "50"
+                    - button " 50" [ref=e560] [cursor=pointer]:
+                      - generic [ref=e561]:
+                        - generic [ref=e562]: 
+                        - generic [ref=e563]: "50"
+                    - button " 50" [ref=e564] [cursor=pointer]:
+                      - generic [ref=e565]:
+                        - generic [ref=e566]: 
+                        - generic [ref=e567]: "50"
+                    - button " 50" [ref=e568] [cursor=pointer]:
+                      - generic [ref=e569]:
+                        - generic [ref=e570]: 
+                        - generic [ref=e571]: "50"
+                    - button " 50" [ref=e572] [cursor=pointer]:
+                      - generic [ref=e573]:
+                        - generic [ref=e574]: 
+                        - generic [ref=e575]: "50"
+                    - button " 50" [ref=e576] [cursor=pointer]:
+                      - generic [ref=e577]:
+                        - generic [ref=e578]: 
+                        - generic [ref=e579]: "50"
+                    - button " 50" [ref=e580] [cursor=pointer]:
+                      - generic [ref=e581]:
+                        - generic [ref=e582]: 
+                        - generic [ref=e583]: "50"
+                    - button " 50" [ref=e584] [cursor=pointer]:
+                      - generic [ref=e585]:
+                        - generic [ref=e586]: 
+                        - generic [ref=e587]: "50"
+                - generic:
+                  - generic [ref=e588]:
+                    - button "Zoom in" [ref=e589] [cursor=pointer]: +
+                    - button "Zoom out" [ref=e590] [cursor=pointer]: −
+                  - generic [ref=e591]:
+                    - link "Leaflet" [ref=e592] [cursor=pointer]:
+                      - /url: https://leafletjs.com
+                      - img [ref=e593]
+                      - text: Leaflet
+                    - text: "| © OpenStreetMap"
+              - generic [ref=e597]:
+                - generic [ref=e598]: 🟢 Sain ≥ 75
+                - generic [ref=e599]: 🟠 Attention 50–74
+                - generic [ref=e600]: 🔴 Critique < 50
+                - generic [ref=e601]: ·
+                - generic [ref=e602]: 13 chantiers affichés
+          - generic [ref=e603]:
+            - generic [ref=e604]:
+              - img [ref=e606]
+              - heading "Activité récente" [level=3] [ref=e609]
+            - generic [ref=e610]:
+              - generic [ref=e612]:
+                - generic [ref=e613]:
+                  - generic [ref=e614]: Note
+                  - link "CH-ABO-2025-003" [ref=e615] [cursor=pointer]:
+                    - /url: /projects/9
+                  - generic [ref=e616]: 28 mai 2025
+                - paragraph [ref=e617]: "CR hebdomadaire : terrassement 60 % — bon avancement malgré pluies"
+                - generic [ref=e618]: — Bamba Conducteur Travaux
+              - generic [ref=e620]:
+                - generic [ref=e621]:
+                  - generic [ref=e622]: Visite
+                  - link "CH-ABO-2025-003" [ref=e623] [cursor=pointer]:
+                    - /url: /projects/9
+                  - generic [ref=e624]: 20 mai 2025
+                - paragraph [ref=e625]: Démarrage travaux — installation de chantier opérationnelle
+                - generic [ref=e626]: — Ouattara Chef Chantier Yopougon
+              - generic [ref=e628]:
+                - generic [ref=e629]:
+                  - generic [ref=e630]: Équipe
+                  - link "CH-ABO-2025-003" [ref=e631] [cursor=pointer]:
+                    - /url: /projects/9
+                  - generic [ref=e632]: 07 mai 2025
+                - paragraph [ref=e633]: DT, conducteur et chef affectés
+                - generic [ref=e634]: — Konan Directeur Technique
+              - generic [ref=e636]:
+                - generic [ref=e637]:
+                  - generic [ref=e638]: Statut
+                  - link "CH-ABO-2025-003" [ref=e639] [cursor=pointer]:
+                    - /url: /projects/9
+                  - generic [ref=e640]: 05 mai 2025
+                - paragraph [ref=e641]: Chantier ouvert — clinique médicale Abobo
+                - generic [ref=e642]: — Direction Charles
+              - generic [ref=e644]:
+                - generic [ref=e645]:
+                  - generic [ref=e646]: Budget
+                  - link "CH-SAN-2025-002" [ref=e647] [cursor=pointer]:
+                    - /url: /projects/8
+                  - generic [ref=e648]: 28 avr. 2025
+                - paragraph [ref=e649]: Surcoût fondations spéciales (+12 M FCFA) — avenant en cours
+                - generic [ref=e650]: — Diallo Métreur
+              - generic [ref=e652]:
+                - generic [ref=e653]:
+                  - generic [ref=e654]: Note
+                  - link "CH-PLAT-2025-001" [ref=e655] [cursor=pointer]:
+                    - /url: /projects/5
+                  - generic [ref=e656]: 28 avr. 2025
+                - paragraph [ref=e657]: "CR mensuel avril : avancement 12 %, délai tenu, météo favorable"
+                - generic [ref=e658]: — Bamba Conducteur Travaux
+              - generic [ref=e660]:
+                - generic [ref=e661]:
+                  - generic [ref=e662]: Visite
+                  - link "CH-BKE-2025-001" [ref=e663] [cursor=pointer]:
+                    - /url: /projects/6
+                  - generic [ref=e664]: 25 avr. 2025
+                - paragraph [ref=e665]: Murs RDC achevés — charpente métallique livraison prévue S20
+                - generic [ref=e666]: — Ouattara Chef Chantier Yopougon
+              - generic [ref=e668]:
+                - generic [ref=e669]:
+                  - generic [ref=e670]: Visite
+                  - link "CH-SAN-2025-002" [ref=e671] [cursor=pointer]:
+                    - /url: /projects/8
+                  - generic [ref=e672]: 15 avr. 2025
+                - paragraph [ref=e673]: Terrassement zone portuaire — sol argileux, adaptation fondations
+                - generic [ref=e674]: — Ouattara Chef Chantier Yopougon
+              - generic [ref=e676]:
+                - generic [ref=e677]:
+                  - generic [ref=e678]: Visite
+                  - link "CH-PLAT-2025-001" [ref=e679] [cursor=pointer]:
+                    - /url: /projects/5
+                  - generic [ref=e680]: 15 avr. 2025
+                - paragraph [ref=e681]: Fondations achevées — début élévation RDC semaine 16
+                - generic [ref=e682]: — Coulibaly Chef Chantier Angré
+              - generic [ref=e684]:
+                - generic [ref=e685]:
+                  - generic [ref=e686]: Note
+                  - link "CH-BKE-2025-001" [ref=e687] [cursor=pointer]:
+                    - /url: /projects/6
+                  - generic [ref=e688]: 10 avr. 2025
+                - paragraph [ref=e689]: "CR mensuel : avancement 30 %, maçonnerie élévation démarrée"
+                - generic [ref=e690]: — Bamba Conducteur Travaux
+          - generic [ref=e691]:
+            - generic [ref=e692]:
+              - img [ref=e694]
+              - generic [ref=e696]:
+                - heading "Vue chronologique — dates de fin" [level=3] [ref=e697]
+                - paragraph [ref=e698]: Tous les chantiers actifs triés par échéance
+            - generic [ref=e699]:
+              - link "En retard 75 pts Immeuble R+4 locatif – Yopougon Selmer Abidjan, Yopougon 214 j de retard" [ref=e700] [cursor=pointer]:
+                - /url: /projects/4
+                - generic [ref=e701]:
+                  - generic [ref=e702]: En retard
+                  - generic [ref=e704]: 75 pts
+                - generic [ref=e705]: Immeuble R+4 locatif – Yopougon Selmer
+                - generic [ref=e706]: Abidjan, Yopougon
+                - generic [ref=e707]: 214 j de retard
+              - link "En retard 50 pts École primaire 6 classes – Bouaké Nord Bouaké, Quartier Nord 155 j de retard" [ref=e708] [cursor=pointer]:
+                - /url: /projects/6
+                - generic [ref=e709]:
+                  - generic [ref=e710]: En retard
+                  - generic [ref=e712]: 50 pts
+                - generic [ref=e713]: École primaire 6 classes – Bouaké Nord
+                - generic [ref=e714]: Bouaké, Quartier Nord
+                - generic [ref=e715]: 155 j de retard
+              - link "En retard 50 pts Entrepôt logistique 2 000 m² – San Pédro San Pédro, Zone Portuaire 122 j de retard" [ref=e716] [cursor=pointer]:
+                - /url: /projects/8
+                - generic [ref=e717]:
+                  - generic [ref=e718]: En retard
+                  - generic [ref=e720]: 50 pts
+                - generic [ref=e721]: Entrepôt logistique 2 000 m² – San Pédro
+                - generic [ref=e722]: San Pédro, Zone Portuaire
+                - generic [ref=e723]: 122 j de retard
+              - link "En retard 50 pts Station-service et laverie – Adjamé Abidjan, Adjamé 122 j de retard" [ref=e724] [cursor=pointer]:
+                - /url: /projects/14
+                - generic [ref=e725]:
+                  - generic [ref=e726]: En retard
+                  - generic [ref=e728]: 50 pts
+                - generic [ref=e729]: Station-service et laverie – Adjamé
+                - generic [ref=e730]: Abidjan, Adjamé
+                - generic [ref=e731]: 122 j de retard
+              - link "En retard 50 pts Centre de santé rural – Korhogo Korhogo, Zone Périphérique 108 j de retard" [ref=e732] [cursor=pointer]:
+                - /url: /projects/13
+                - generic [ref=e733]:
+                  - generic [ref=e734]: En retard
+                  - generic [ref=e736]: 50 pts
+                - generic [ref=e737]: Centre de santé rural – Korhogo
+                - generic [ref=e738]: Korhogo, Zone Périphérique
+                - generic [ref=e739]: 108 j de retard
+              - link "En retard 50 pts Villa triplex piscine – Marcory Résidentiel Abidjan, Marcory 63 j de retard" [ref=e740] [cursor=pointer]:
+                - /url: /projects/10
+                - generic [ref=e741]:
+                  - generic [ref=e742]: En retard
+                  - generic [ref=e744]: 50 pts
+                - generic [ref=e745]: Villa triplex piscine – Marcory Résidentiel
+                - generic [ref=e746]: Abidjan, Marcory
+                - generic [ref=e747]: 63 j de retard
+              - link "En retard 50 pts Réhabilitation résidence ministérielle – Yamoussoukro Yamoussoukro, Quartier Administratif 49 j de retard" [ref=e748] [cursor=pointer]:
+                - /url: /projects/7
+                - generic [ref=e749]:
+                  - generic [ref=e750]: En retard
+                  - generic [ref=e752]: 50 pts
+                - generic [ref=e753]: Réhabilitation résidence ministérielle – Yamoussoukro
+                - generic [ref=e754]: Yamoussoukro, Quartier Administratif
+                - generic [ref=e755]: 49 j de retard
+              - link "En retard 50 pts Lycée technique 12 salles – Daloa Daloa, Centre-Ville 13 j de retard" [ref=e756] [cursor=pointer]:
+                - /url: /projects/11
+                - generic [ref=e757]:
+                  - generic [ref=e758]: En retard
+                  - generic [ref=e760]: 50 pts
+                - generic [ref=e761]: Lycée technique 12 salles – Daloa
+                - generic [ref=e762]: Daloa, Centre-Ville
+                - generic [ref=e763]: 13 j de retard
+              - link "Échéance proche 50 pts Salle polyvalente 500 places Soubré 29 j restants" [ref=e764] [cursor=pointer]:
+                - /url: /projects/15
+                - generic [ref=e765]:
+                  - generic [ref=e766]: Échéance proche
+                  - generic [ref=e768]: 50 pts
+                - generic [ref=e769]: Salle polyvalente 500 places
+                - generic [ref=e770]: Soubré
+                - generic [ref=e771]: 29 j restants
+              - link "Échéance proche 50 pts Centre commercial 2 niveaux – Plateau Abidjan, Plateau 59 j restants" [ref=e772] [cursor=pointer]:
+                - /url: /projects/5
+                - generic [ref=e773]:
+                  - generic [ref=e774]: Échéance proche
+                  - generic [ref=e776]: 50 pts
+                - generic [ref=e777]: Centre commercial 2 niveaux – Plateau
+                - generic [ref=e778]: Abidjan, Plateau
+                - generic [ref=e779]: 59 j restants
+              - link "En cours 50 pts Clinique médicale R+2 – Abobo Abidjan, Abobo 121 j restants" [ref=e780] [cursor=pointer]:
+                - /url: /projects/9
+                - generic [ref=e781]:
+                  - generic [ref=e782]: En cours
+                  - generic [ref=e784]: 50 pts
+                - generic [ref=e785]: Clinique médicale R+2 – Abobo
+                - generic [ref=e786]: Abidjan, Abobo
+                - generic [ref=e787]: 121 j restants
+              - link "Planifié 50 pts Résidence 20 villas standing – Grand-Bassam Grand-Bassam, Quartier Résidentiel 302 j restants" [ref=e788] [cursor=pointer]:
+                - /url: /projects/12
+                - generic [ref=e789]:
+                  - generic [ref=e790]: Planifié
+                  - generic [ref=e792]: 50 pts
+                - generic [ref=e793]: Résidence 20 villas standing – Grand-Bassam
+                - generic [ref=e794]: Grand-Bassam, Quartier Résidentiel
+                - generic [ref=e795]: 302 j restants
+              - link "Planifié 50 pts Hôtel 3 étoiles R+5 – Man Man, Centre 455 j restants" [ref=e796] [cursor=pointer]:
+                - /url: /projects/16
+                - generic [ref=e797]:
+                  - generic [ref=e798]: Planifié
+                  - generic [ref=e800]: 50 pts
+                - generic [ref=e801]: Hôtel 3 étoiles R+5 – Man
+                - generic [ref=e802]: Man, Centre
+                - generic [ref=e803]: 455 j restants
+  - generic [ref=e804]: Résidence 20 villas stan…

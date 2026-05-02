@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { listProjects } from '../api/list-projects';
 import type { Project } from '../types';
@@ -8,16 +8,13 @@ import { useAuth } from '../../auth/stores/auth-store';
 import { getRoleGroup } from '../../../lib/roles';
 
 export default function ProjectsPage() {
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState(true);
   const { user } = useAuth();
   const canCreate = getRoleGroup(user?.role?.name ?? '') === 'direction';
-
-  useEffect(() => {
-    listProjects()
-      .then(setProjects)
-      .finally(() => setLoading(false));
-  }, []);
+  const { data: projects = [], isLoading } = useQuery<Project[]>({
+    queryKey: ['projects'],
+    queryFn: listProjects,
+    staleTime: 60_000,
+  });
 
   return (
     <div>
@@ -25,7 +22,7 @@ export default function ProjectsPage() {
         title="Chantiers"
         action={canCreate ? <Link to="/projects/new" className="btn-primary">+ Nouveau chantier</Link> : undefined}
       />
-      {loading ? <p>Chargement…</p> : <ProjectTable projects={projects} />}
+      {isLoading ? <p>Chargement…</p> : <ProjectTable projects={projects} />}
     </div>
   );
 }

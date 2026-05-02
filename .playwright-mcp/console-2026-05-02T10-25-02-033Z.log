@@ -1,0 +1,16 @@
+[     246ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:5174/node_modules/.vite/deps/react-dom_client.js?v=c3081d99:14337
+[     365ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:8000/api/portfolio/accounting:0
+[     369ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:8000/api/portfolio/accounting:0
+[    4730ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:5174/node_modules/.vite/deps/react-dom_client.js?v=c3081d99:14337
+[    4757ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:8000/api/portfolio/accounting:0
+[    4758ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:8000/api/portfolio/accounting:0
+[    5486ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:5174/node_modules/.vite/deps/react-dom_client.js?v=c3081d99:14337
+[    5508ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:8000/api/portfolio/accounting:0
+[    5509ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:8000/api/portfolio/accounting:0
+[    6145ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:5174/node_modules/.vite/deps/react-dom_client.js?v=c3081d99:14337
+[    6170ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:8000/api/portfolio/accounting:0
+[    6170ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:8000/api/portfolio/accounting:0
+[   91340ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:5174/node_modules/.vite/deps/react-dom_client.js?v=c3081d99:14337
+[   91369ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:8000/api/portfolio/accounting:0
+[   91370ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:8000/api/portfolio/accounting:0
+[  184879ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:8000/api/portfolio/accounting:0

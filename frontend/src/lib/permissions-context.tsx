@@ -36,20 +36,18 @@ export function PermissionsProvider({ children }: { children: ReactNode }) {
   const [loaded, setLoaded]       = useState(false);
 
   async function load() {
-    try {
-      // Always load own permissions (works for all roles)
-      const myRes = await api.get('/my-permissions');
-      setMyFeatures(myRes.data.features ?? {});
+    const [myRes, matrixRes] = await Promise.allSettled([
+      api.get('/my-permissions'),
+      api.get('/permissions'),
+    ]);
 
-      // Load full matrix only for direction (for the Permissions admin page)
-      const res = await api.get('/permissions');
-      setMatrix(res.data.matrix);
-      setFeatures(res.data.features);
-    } catch {
-      // non-direction users can't load full matrix — myFeatures already set above
-    } finally {
-      setLoaded(true);
+    if (myRes.status === 'fulfilled') setMyFeatures(myRes.value.data.features ?? {});
+    if (matrixRes.status === 'fulfilled') {
+      setMatrix(matrixRes.value.data.matrix);
+      setFeatures(matrixRes.value.data.features);
     }
+
+    setLoaded(true);
   }
 
   useEffect(() => { load(); }, []);

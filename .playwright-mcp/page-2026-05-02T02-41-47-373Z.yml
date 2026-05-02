@@ -1,0 +1,490 @@
+- generic [ref=e39]:
+  - complementary [ref=e40]:
+    - generic [ref=e41]:
+      - img [ref=e43]
+      - generic [ref=e46]:
+        - heading "Chantier" [level=2] [ref=e47]
+        - generic [ref=e48]: Platform BTP
+    - navigation [ref=e49]:
+      - generic [ref=e50]: Pilotage
+      - list [ref=e51]:
+        - listitem [ref=e52]:
+          - link "Dashboard" [ref=e53] [cursor=pointer]:
+            - /url: /
+            - img [ref=e54]
+            - text: Dashboard
+        - listitem [ref=e59]:
+          - link "Chantiers" [ref=e60] [cursor=pointer]:
+            - /url: /projects
+            - img [ref=e61]
+            - text: Chantiers
+        - listitem [ref=e64]:
+          - link "Carte" [ref=e65] [cursor=pointer]:
+            - /url: /map
+            - img [ref=e66]
+            - text: Carte
+        - listitem [ref=e68]:
+          - link "Calendrier" [ref=e69] [cursor=pointer]:
+            - /url: /timeline
+            - img [ref=e70]
+            - text: Calendrier
+        - listitem [ref=e72]:
+          - link "QHSE" [ref=e73] [cursor=pointer]:
+            - /url: /qse
+            - img [ref=e74]
+            - text: QHSE
+    - generic [ref=e76]:
+      - list [ref=e77]:
+        - listitem [ref=e78]:
+          - link "Paramètres" [ref=e79] [cursor=pointer]:
+            - /url: /settings
+            - img [ref=e80]
+            - text: Paramètres
+      - generic [ref=e83]:
+        - generic [ref=e84]: BC
+        - generic [ref=e85]:
+          - generic [ref=e86]: Bamba Conducteur Travaux
+          - generic [ref=e87]: Conducteur de travaux
+  - generic [ref=e88]:
+    - banner [ref=e89]:
+      - generic [ref=e90]:
+        - img
+        - textbox "Rechercher" [ref=e91]:
+          - /placeholder: Rechercher un chantier, DQE, intervenant…
+      - generic [ref=e92]:
+        - button "BC Entreprise Charles Conducteur de travaux" [ref=e93] [cursor=pointer]:
+          - generic [ref=e94]: BC
+          - generic [ref=e95]:
+            - generic [ref=e96]: Entreprise Charles
+            - generic [ref=e97]: Conducteur de travaux
+          - img [ref=e98]
+        - button "Notifications" [ref=e101] [cursor=pointer]:
+          - img [ref=e102]
+        - link "Nouveau chantier" [ref=e105] [cursor=pointer]:
+          - /url: /projects/new
+          - img [ref=e106]
+          - text: Nouveau chantier
+        - button "Déconnexion" [ref=e107] [cursor=pointer]:
+          - img [ref=e108]
+    - main [ref=e111]:
+      - generic [ref=e112]:
+        - generic [ref=e113]:
+          - generic [ref=e114]:
+            - generic [ref=e115]: TERRAIN · 2026
+            - heading "Mes chantiers" [level=1] [ref=e116]
+            - paragraph [ref=e117]: Alertes actives, positions et accès rapide au journal du jour.
+          - generic [ref=e119]: Données synchronisées · il y a 2 min
+        - generic [ref=e121]:
+          - generic [ref=e122]:
+            - generic [ref=e123]:
+              - img [ref=e125]
+              - generic [ref=e128]: ↑ +2
+            - generic [ref=e129]: "13"
+            - generic [ref=e130]: Chantiers actifs
+            - generic [ref=e131]: vs 17 au portefeuille
+          - generic [ref=e132]:
+            - generic [ref=e133]:
+              - img [ref=e135]
+              - generic [ref=e139]: ↑ +8.1 %
+            - generic [ref=e140]: 6,3 Mds FCFA
+            - generic [ref=e141]: Budget engagé
+            - generic [ref=e142]: 48% du portefeuille
+          - generic [ref=e143]:
+            - img [ref=e146]
+            - generic [ref=e149]: 13,2 Mds FCFA
+            - generic [ref=e150]: Budget portefeuille
+            - generic [ref=e151]: Année fiscale 2026
+          - generic [ref=e152]:
+            - generic [ref=e153]:
+              - img [ref=e155]
+              - generic [ref=e158]: ↑ +1
+            - generic [ref=e159]: "3"
+            - generic [ref=e160]: Chantiers livrés
+            - generic [ref=e161]: Ce trimestre
+          - generic [ref=e162]:
+            - generic [ref=e163]:
+              - img [ref=e165]
+              - generic [ref=e167]: ↑ +2
+            - generic [ref=e168]: "4"
+            - generic [ref=e169]: En retard
+            - generic [ref=e170]: Action requise
+        - generic [ref=e171]:
+          - generic [ref=e172]:
+            - generic [ref=e173]:
+              - img [ref=e174]
+              - text: Alertes importantes
+            - generic [ref=e176]: "18"
+          - list [ref=e177]:
+            - listitem [ref=e178]:
+              - generic [ref=e179]: ⏰
+              - generic [ref=e180]:
+                - generic [ref=e181]: CH-YOP-2024-002
+                - generic [ref=e182]: Dépasse sa date de fin depuis 214 jours
+              - link "→" [ref=e183] [cursor=pointer]:
+                - /url: /projects/4
+              - button "Masquer" [ref=e184] [cursor=pointer]: ×
+            - listitem [ref=e185]:
+              - generic [ref=e186]: ⏰
+              - generic [ref=e187]:
+                - generic [ref=e188]: CH-BKE-2025-001
+                - generic [ref=e189]: Dépasse sa date de fin depuis 155 jours
+              - link "→" [ref=e190] [cursor=pointer]:
+                - /url: /projects/6
+              - button "Masquer" [ref=e191] [cursor=pointer]: ×
+            - listitem [ref=e192]:
+              - generic [ref=e193]: ⏰
+              - generic [ref=e194]:
+                - generic [ref=e195]: CH-SAN-2025-002
+                - generic [ref=e196]: Dépasse sa date de fin depuis 122 jours
+              - link "→" [ref=e197] [cursor=pointer]:
+                - /url: /projects/8
+              - button "Masquer" [ref=e198] [cursor=pointer]: ×
+            - listitem [ref=e199]:
+              - generic [ref=e200]: ⏰
+              - generic [ref=e201]:
+                - generic [ref=e202]: CH-ABJ-2025-008
+                - generic [ref=e203]: Dépasse sa date de fin depuis 122 jours
+              - link "→" [ref=e204] [cursor=pointer]:
+                - /url: /projects/14
+              - button "Masquer" [ref=e205] [cursor=pointer]: ×
+            - listitem [ref=e206]:
+              - generic [ref=e207]: ⏰
+              - generic [ref=e208]:
+                - generic [ref=e209]: CH-KOR-2025-007
+                - generic [ref=e210]: Dépasse sa date de fin depuis 108 jours
+              - link "→" [ref=e211] [cursor=pointer]:
+                - /url: /projects/13
+              - button "Masquer" [ref=e212] [cursor=pointer]: ×
+            - listitem [ref=e213]:
+              - generic [ref=e214]: ⏰
+              - generic [ref=e215]:
+                - generic [ref=e216]: CH-MKD-2025-004
+                - generic [ref=e217]: Dépasse sa date de fin depuis 63 jours
+              - link "→" [ref=e218] [cursor=pointer]:
+                - /url: /projects/10
+              - button "Masquer" [ref=e219] [cursor=pointer]: ×
+            - listitem [ref=e220]:
+              - generic [ref=e221]: ⏰
+              - generic [ref=e222]:
+                - generic [ref=e223]: CH-YMK-2025-001
+                - generic [ref=e224]: Dépasse sa date de fin depuis 49 jours
+              - link "→" [ref=e225] [cursor=pointer]:
+                - /url: /projects/7
+              - button "Masquer" [ref=e226] [cursor=pointer]: ×
+            - listitem [ref=e227]:
+              - generic [ref=e228]: ⏰
+              - generic [ref=e229]:
+                - generic [ref=e230]: CH-DLM-2025-005
+                - generic [ref=e231]: Dépasse sa date de fin depuis 13 jours
+              - link "→" [ref=e232] [cursor=pointer]:
+                - /url: /projects/11
+              - button "Masquer" [ref=e233] [cursor=pointer]: ×
+            - listitem [ref=e234]:
+              - generic [ref=e235]: 📉
+              - generic [ref=e236]:
+                - generic [ref=e237]: CH-SOB-2025-009
+                - generic [ref=e238]: "Retard planning : 92% de décalage (attendu 92%, réel 0%)"
+              - link "→" [ref=e239] [cursor=pointer]:
+                - /url: /projects/15
+              - button "Masquer" [ref=e240] [cursor=pointer]: ×
+            - listitem [ref=e241]:
+              - generic [ref=e242]: 📉
+              - generic [ref=e243]:
+                - generic [ref=e244]: CH-PLAT-2025-001
+                - generic [ref=e245]: "Retard planning : 89% de décalage (attendu 89%, réel 0%)"
+              - link "→" [ref=e246] [cursor=pointer]:
+                - /url: /projects/5
+              - button "Masquer" [ref=e247] [cursor=pointer]: ×
+            - listitem [ref=e248]:
+              - generic [ref=e249]: 📉
+              - generic [ref=e250]:
+                - generic [ref=e251]: CH-ABO-2025-003
+                - generic [ref=e252]: "Retard planning : 75% de décalage (attendu 75%, réel 0%)"
+              - link "→" [ref=e253] [cursor=pointer]:
+                - /url: /projects/9
+              - button "Masquer" [ref=e254] [cursor=pointer]: ×
+            - listitem [ref=e255]:
+              - generic [ref=e256]: 📉
+              - generic [ref=e257]:
+                - generic [ref=e258]: CH-GHO-2025-006
+                - generic [ref=e259]: "Retard planning : 59% de décalage (attendu 59%, réel 0%)"
+              - link "→" [ref=e260] [cursor=pointer]:
+                - /url: /projects/12
+              - button "Masquer" [ref=e261] [cursor=pointer]: ×
+            - listitem [ref=e262]:
+              - generic [ref=e263]: 📉
+              - generic [ref=e264]:
+                - generic [ref=e265]: CH-MAN-2025-010
+                - generic [ref=e266]: "Retard planning : 38% de décalage (attendu 38%, réel 0%)"
+              - link "→" [ref=e267] [cursor=pointer]:
+                - /url: /projects/16
+              - button "Masquer" [ref=e268] [cursor=pointer]: ×
+            - listitem [ref=e269]:
+              - generic [ref=e270]: 📋
+              - generic [ref=e271]:
+                - generic [ref=e272]: CH-SOB-2025-009
+                - generic [ref=e273]: Aucun journal saisi depuis le démarrage (335j)
+              - link "→" [ref=e274] [cursor=pointer]:
+                - /url: /projects/15
+              - button "Masquer" [ref=e275] [cursor=pointer]: ×
+            - listitem [ref=e276]:
+              - generic [ref=e277]: 📋
+              - generic [ref=e278]:
+                - generic [ref=e279]: CH-PLAT-2025-001
+                - generic [ref=e280]: Aucun journal saisi depuis le démarrage (477j)
+              - link "→" [ref=e281] [cursor=pointer]:
+                - /url: /projects/5
+              - button "Masquer" [ref=e282] [cursor=pointer]: ×
+            - listitem [ref=e283]:
+              - generic [ref=e284]: 📋
+              - generic [ref=e285]:
+                - generic [ref=e286]: CH-ABO-2025-003
+                - generic [ref=e287]: Aucun journal saisi depuis le démarrage (362j)
+              - link "→" [ref=e288] [cursor=pointer]:
+                - /url: /projects/9
+              - button "Masquer" [ref=e289] [cursor=pointer]: ×
+            - listitem [ref=e290]:
+              - generic [ref=e291]: 📋
+              - generic [ref=e292]:
+                - generic [ref=e293]: CH-GHO-2025-006
+                - generic [ref=e294]: Aucun journal saisi depuis le démarrage (427j)
+              - link "→" [ref=e295] [cursor=pointer]:
+                - /url: /projects/12
+              - button "Masquer" [ref=e296] [cursor=pointer]: ×
+            - listitem [ref=e297]:
+              - generic [ref=e298]: 📋
+              - generic [ref=e299]:
+                - generic [ref=e300]: CH-MAN-2025-010
+                - generic [ref=e301]: Aucun journal saisi depuis le démarrage (274j)
+              - link "→" [ref=e302] [cursor=pointer]:
+                - /url: /projects/16
+              - button "Masquer" [ref=e303] [cursor=pointer]: ×
+          - button "Tout masquer" [ref=e304] [cursor=pointer]
+        - generic [ref=e305]:
+          - generic [ref=e306]:
+            - img [ref=e308]
+            - generic [ref=e311]:
+              - heading "Chantiers actifs" [level=3] [ref=e312]
+              - paragraph [ref=e313]: Journal du jour — 2 mai
+          - generic [ref=e314]:
+            - generic [ref=e315]:
+              - generic [ref=e316]:
+                - generic [ref=e317]: CH-YOP-2024-002
+                - generic [ref=e318]: Immeuble R+4 locatif – Yopougon Selmer
+              - generic [ref=e319]:
+                - generic [ref=e320]: 75/100
+                - link "Saisir journal" [ref=e321] [cursor=pointer]:
+                  - /url: /projects/4/journal
+                  - img [ref=e322]
+                  - text: Saisir journal
+            - generic [ref=e325]:
+              - generic [ref=e326]:
+                - generic [ref=e327]: CH-BKE-2025-001
+                - generic [ref=e328]: École primaire 6 classes – Bouaké Nord
+              - generic [ref=e329]:
+                - generic [ref=e330]: 50/100
+                - link "Saisir journal" [ref=e331] [cursor=pointer]:
+                  - /url: /projects/6/journal
+                  - img [ref=e332]
+                  - text: Saisir journal
+            - generic [ref=e335]:
+              - generic [ref=e336]:
+                - generic [ref=e337]: CH-SAN-2025-002
+                - generic [ref=e338]: Entrepôt logistique 2 000 m² – San Pédro
+              - generic [ref=e339]:
+                - generic [ref=e340]: 50/100
+                - link "Saisir journal" [ref=e341] [cursor=pointer]:
+                  - /url: /projects/8/journal
+                  - img [ref=e342]
+                  - text: Saisir journal
+            - generic [ref=e345]:
+              - generic [ref=e346]:
+                - generic [ref=e347]: CH-ABJ-2025-008
+                - generic [ref=e348]: Station-service et laverie – Adjamé
+              - generic [ref=e349]:
+                - generic [ref=e350]: 50/100
+                - link "Saisir journal" [ref=e351] [cursor=pointer]:
+                  - /url: /projects/14/journal
+                  - img [ref=e352]
+                  - text: Saisir journal
+            - generic [ref=e355]:
+              - generic [ref=e356]:
+                - generic [ref=e357]: CH-KOR-2025-007
+                - generic [ref=e358]: Centre de santé rural – Korhogo
+              - generic [ref=e359]:
+                - generic [ref=e360]: 50/100
+                - link "Saisir journal" [ref=e361] [cursor=pointer]:
+                  - /url: /projects/13/journal
+                  - img [ref=e362]
+                  - text: Saisir journal
+            - generic [ref=e365]:
+              - generic [ref=e366]:
+                - generic [ref=e367]: CH-MKD-2025-004
+                - generic [ref=e368]: Villa triplex piscine – Marcory Résidentiel
+              - generic [ref=e369]:
+                - generic [ref=e370]: 50/100
+                - link "Saisir journal" [ref=e371] [cursor=pointer]:
+                  - /url: /projects/10/journal
+                  - img [ref=e372]
+                  - text: Saisir journal
+            - generic [ref=e375]:
+              - generic [ref=e376]:
+                - generic [ref=e377]: CH-YMK-2025-001
+                - generic [ref=e378]: Réhabilitation résidence ministérielle – Yamoussoukro
+              - generic [ref=e379]:
+                - generic [ref=e380]: 50/100
+                - link "Saisir journal" [ref=e381] [cursor=pointer]:
+                  - /url: /projects/7/journal
+                  - img [ref=e382]
+                  - text: Saisir journal
+            - generic [ref=e385]:
+              - generic [ref=e386]:
+                - generic [ref=e387]: CH-DLM-2025-005
+                - generic [ref=e388]: Lycée technique 12 salles – Daloa
+              - generic [ref=e389]:
+                - generic [ref=e390]: 50/100
+                - link "Saisir journal" [ref=e391] [cursor=pointer]:
+                  - /url: /projects/11/journal
+                  - img [ref=e392]
+                  - text: Saisir journal
+            - generic [ref=e395]:
+              - generic [ref=e396]:
+                - generic [ref=e397]: CH-SOB-2025-009
+                - generic [ref=e398]: Salle polyvalente 500 places – Soubré
+              - generic [ref=e399]:
+                - generic [ref=e400]: 50/100
+                - link "Saisir journal" [ref=e401] [cursor=pointer]:
+                  - /url: /projects/15/journal
+                  - img [ref=e402]
+                  - text: Saisir journal
+            - generic [ref=e405]:
+              - generic [ref=e406]:
+                - generic [ref=e407]: CH-PLAT-2025-001
+                - generic [ref=e408]: Centre commercial 2 niveaux – Plateau
+              - generic [ref=e409]:
+                - generic [ref=e410]: 50/100
+                - link "Saisir journal" [ref=e411] [cursor=pointer]:
+                  - /url: /projects/5/journal
+                  - img [ref=e412]
+                  - text: Saisir journal
+            - generic [ref=e415]:
+              - generic [ref=e416]:
+                - generic [ref=e417]: CH-ABO-2025-003
+                - generic [ref=e418]: Clinique médicale R+2 – Abobo
+              - generic [ref=e419]:
+                - generic [ref=e420]: 50/100
+                - link "Saisir journal" [ref=e421] [cursor=pointer]:
+                  - /url: /projects/9/journal
+                  - img [ref=e422]
+                  - text: Saisir journal
+            - generic [ref=e425]:
+              - generic [ref=e426]:
+                - generic [ref=e427]: CH-GHO-2025-006
+                - generic [ref=e428]: Résidence 20 villas standing – Grand-Bassam
+              - generic [ref=e429]:
+                - generic [ref=e430]: 50/100
+                - link "Saisir journal" [ref=e431] [cursor=pointer]:
+                  - /url: /projects/12/journal
+                  - img [ref=e432]
+                  - text: Saisir journal
+            - generic [ref=e435]:
+              - generic [ref=e436]:
+                - generic [ref=e437]: CH-MAN-2025-010
+                - generic [ref=e438]: Hôtel 3 étoiles R+5 – Man
+              - generic [ref=e439]:
+                - generic [ref=e440]: 50/100
+                - link "Saisir journal" [ref=e441] [cursor=pointer]:
+                  - /url: /projects/16/journal
+                  - img [ref=e442]
+                  - text: Saisir journal
+        - generic [ref=e445]:
+          - generic [ref=e446]:
+            - img [ref=e448]
+            - generic [ref=e450]:
+              - heading "Carte des chantiers actifs" [level=3] [ref=e451]
+              - paragraph [ref=e452]: Health score · Cliquer un marqueur pour ouvrir le chantier
+          - generic [ref=e453]:
+            - generic [ref=e454]:
+              - button "🗺️ Tous 13" [ref=e455] [cursor=pointer]:
+                - text: 🗺️ Tous
+                - generic [ref=e456]: "13"
+              - button "🟢 Sain 1" [ref=e457] [cursor=pointer]:
+                - text: 🟢 Sain
+                - generic [ref=e458]: "1"
+              - button "🟠 Attention 12" [ref=e459] [cursor=pointer]:
+                - text: 🟠 Attention
+                - generic [ref=e460]: "12"
+              - button "🔴 Critique 0" [ref=e461] [cursor=pointer]:
+                - text: 🔴 Critique
+                - generic [ref=e462]: "0"
+            - generic [ref=e463]:
+              - generic:
+                - generic:
+                  - button " 75" [ref=e464] [cursor=pointer]:
+                    - generic [ref=e465]:
+                      - generic [ref=e466]: 
+                      - generic [ref=e467]: "75"
+                  - button " 50" [ref=e468] [cursor=pointer]:
+                    - generic [ref=e469]:
+                      - generic [ref=e470]: 
+                      - generic [ref=e471]: "50"
+                  - button " 50" [ref=e472] [cursor=pointer]:
+                    - generic [ref=e473]:
+                      - generic [ref=e474]: 
+                      - generic [ref=e475]: "50"
+                  - button " 50" [ref=e476] [cursor=pointer]:
+                    - generic [ref=e477]:
+                      - generic [ref=e478]: 
+                      - generic [ref=e479]: "50"
+                  - button " 50" [ref=e480] [cursor=pointer]:
+                    - generic [ref=e481]:
+                      - generic [ref=e482]: 
+                      - generic [ref=e483]: "50"
+                  - button " 50" [ref=e484] [cursor=pointer]:
+                    - generic [ref=e485]:
+                      - generic [ref=e486]: 
+                      - generic [ref=e487]: "50"
+                  - button " 50" [ref=e488] [cursor=pointer]:
+                    - generic [ref=e489]:
+                      - generic [ref=e490]: 
+                      - generic [ref=e491]: "50"
+                  - button " 50" [ref=e492] [cursor=pointer]:
+                    - generic [ref=e493]:
+                      - generic [ref=e494]: 
+                      - generic [ref=e495]: "50"
+                  - button " 50" [ref=e496] [cursor=pointer]:
+                    - generic [ref=e497]:
+                      - generic [ref=e498]: 
+                      - generic [ref=e499]: "50"
+                  - button " 50" [ref=e500] [cursor=pointer]:
+                    - generic [ref=e501]:
+                      - generic [ref=e502]: 
+                      - generic [ref=e503]: "50"
+                  - button " 50" [ref=e504] [cursor=pointer]:
+                    - generic [ref=e505]:
+                      - generic [ref=e506]: 
+                      - generic [ref=e507]: "50"
+                  - button " 50" [ref=e508] [cursor=pointer]:
+                    - generic [ref=e509]:
+                      - generic [ref=e510]: 
+                      - generic [ref=e511]: "50"
+                  - button " 50" [ref=e512] [cursor=pointer]:
+                    - generic [ref=e513]:
+                      - generic [ref=e514]: 
+                      - generic [ref=e515]: "50"
+              - generic:
+                - generic [ref=e516]:
+                  - button "Zoom in" [ref=e517] [cursor=pointer]: +
+                  - button "Zoom out" [ref=e518] [cursor=pointer]: −
+                - generic [ref=e519]:
+                  - link "Leaflet" [ref=e520] [cursor=pointer]:
+                    - /url: https://leafletjs.com
+                    - img [ref=e521]
+                    - text: Leaflet
+                  - text: "| © OpenStreetMap"
+            - generic [ref=e525]:
+              - generic [ref=e526]: 🟢 Sain ≥ 75
+              - generic [ref=e527]: 🟠 Attention 50–74
+              - generic [ref=e528]: 🔴 Critique < 50
+              - generic [ref=e529]: ·
+              - generic [ref=e530]: 13 chantiers affichés

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { getDashboard, type DashboardData } from '../api/get-dashboard';
 import { useAuth } from '../../auth/stores/auth-store';
@@ -168,16 +168,15 @@ function TerrainProjectList({ projects }: { projects: DashboardData['active_proj
 }
 
 export default function DashboardPage() {
-  const [data, setData] = useState<DashboardData | null>(null);
-  const [loading, setLoading] = useState(true);
   const { user } = useAuth();
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ['dashboard'],
+    queryFn: getDashboard,
+    staleTime: 60_000,
+  });
 
-  useEffect(() => {
-    getDashboard().then(setData).finally(() => setLoading(false));
-  }, []);
-
-  if (loading) return <div className="page-content"><p>Chargement…</p></div>;
-  if (!data) return <div className="page-content"><p className="form-error">Erreur de chargement.</p></div>;
+  if (isLoading) return <div className="page-content"><p>Chargement…</p></div>;
+  if (isError || !data) return <div className="page-content"><p className="form-error">Erreur de chargement.</p></div>;
 
   const { stats, active_projects, recent_activities, alerts } = data;
   const roleGroup = getRoleGroup(user?.role?.name ?? '');

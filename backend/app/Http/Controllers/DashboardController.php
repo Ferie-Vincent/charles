@@ -14,9 +14,11 @@ class DashboardController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $user      = $request->user();
+        $user      = $request->user()->load('role');
         $companyId = $user->company_id;
-        $query     = Project::query()->where('company_id', $companyId);
+        $query     = Project::query()
+            ->select(['id','company_id','name','code','status','budget_amount','start_date','end_date','location','latitude','longitude'])
+            ->where('company_id', $companyId);
 
         if (in_array($user->role->name, ['chef-chantier', 'conducteur-travaux'])) {
             $query->whereHas('members', fn ($q) => $q->where('user_id', $user->id));

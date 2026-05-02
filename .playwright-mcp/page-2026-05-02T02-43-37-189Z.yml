@@ -1,0 +1,34 @@
+- generic [ref=e3]:
+  - generic [ref=e4]:
+    - generic [ref=e5]:
+      - img [ref=e7]
+      - generic [ref=e10]:
+        - generic [ref=e11]: Chantier Platform
+        - generic [ref=e12]: Gestion BTP
+    - generic [ref=e13]:
+      - heading "Pilotez vos chantiers en temps réel" [level=1] [ref=e14]:
+        - text: Pilotez vos
+        - text: chantiers
+        - emphasis [ref=e15]: en temps réel
+      - paragraph [ref=e16]: Suivi avancement, DQE automatisé, contrôle budgétaire et reporting QSE — tout depuis une seule plateforme.
+    - generic [ref=e17]:
+      - generic [ref=e18]:
+        - generic [ref=e19]: 100%
+        - generic [ref=e20]: Données sécurisées
+      - generic [ref=e21]:
+        - generic [ref=e22]: "7"
+        - generic [ref=e23]: Modules intégrés
+      - generic [ref=e24]:
+        - generic [ref=e25]: FCFA
+        - generic [ref=e26]: Multi-devises
+  - generic [ref=e27]:
+    - heading "Connexion" [level=1] [ref=e28]
+    - paragraph [ref=e29]: Accédez à votre espace de gestion
+    - generic [ref=e30]:
+      - generic [ref=e31]:
+        - generic [ref=e32]: Email
+        - textbox "Email" [ref=e33]
+      - generic [ref=e34]:
+        - generic [ref=e35]: Password
+        - textbox "Password" [ref=e36]
+      - button "Sign in" [ref=e37] [cursor=pointer]
