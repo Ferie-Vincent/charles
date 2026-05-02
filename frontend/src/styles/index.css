@@ -2390,37 +2390,69 @@ code {
   overflow: hidden;
 }
 .lcal-cell--empty { background: transparent; border-color: transparent; min-height: 72px; }
-.lcal-cell--empty-day { background: var(--bg-app); opacity: 0.5; cursor: default; }
+.lcal-cell--empty-day { background: var(--bg-app); opacity: 0.4; cursor: default; border-color: transparent; }
+
+/* Logged day: dark card */
 .lcal-cell--logged {
   cursor: pointer;
-  border-color: var(--accent);
-  background: linear-gradient(135deg, #2f60b008 0%, #2f60b003 100%);
+  border-color: transparent;
+  background: #0f172a;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.18);
 }
-.lcal-cell--logged:hover { border-color: var(--accent); box-shadow: 0 2px 8px rgba(47,96,176,0.15); }
+.lcal-cell--logged:hover {
+  background: #1e293b;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.28);
+  transform: translateY(-1px);
+}
 .lcal-cell--logged:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.lcal-cell--today { box-shadow: 0 0 0 2px var(--accent); }
-.lcal-cell--incident { border-color: #ef4444 !important; background: linear-gradient(135deg, #ef444408 0%, #ef444403 100%) !important; }
-.lcal-cell--incident:hover { box-shadow: 0 2px 8px rgba(239,68,68,0.15); }
 
+/* Today ring: accent border on dark cell */
+.lcal-cell--today { box-shadow: 0 0 0 2px var(--accent), 0 2px 6px rgba(0,0,0,0.18); }
+.lcal-cell--logged.lcal-cell--today { box-shadow: 0 0 0 2px #60a5fa, 0 4px 12px rgba(0,0,0,0.24); }
+
+/* Incident: red tint on dark cell */
+.lcal-cell--incident.lcal-cell--logged { background: #1a0a0a !important; box-shadow: 0 0 0 1.5px #ef4444, 0 2px 6px rgba(239,68,68,0.2) !important; }
+.lcal-cell--incident.lcal-cell--logged:hover { box-shadow: 0 0 0 1.5px #ef4444, 0 4px 14px rgba(239,68,68,0.3) !important; }
+
+/* Day number */
 .lcal-cell__day {
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   font-weight: 700;
   color: var(--text-muted);
   line-height: 1;
   align-self: flex-start;
 }
-.lcal-cell--today .lcal-cell__day { color: var(--accent); }
+.lcal-cell--logged .lcal-cell__day { color: rgba(255,255,255,0.45); }
+.lcal-cell--today:not(.lcal-cell--logged) .lcal-cell__day { color: var(--accent); }
+.lcal-cell--logged.lcal-cell--today .lcal-cell__day { color: #93c5fd; }
 
-.lcal-cell__weather { display: flex; align-items: center; justify-content: center; }
+.lcal-cell__weather { display: flex; align-items: center; justify-content: center; margin: 1px 0; }
 
+/* Workers count — prominent on dark cells */
 .lcal-cell__workers {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   gap: 2px;
-  font-size: 0.68rem;
-  font-weight: 600;
+  line-height: 1;
+}
+.lcal-cell__workers-count {
+  font-size: 1rem;
+  font-weight: 800;
   color: var(--text-muted);
   line-height: 1;
+}
+.lcal-cell__workers-label {
+  font-size: 0.6rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  line-height: 1.2;
+}
+.lcal-cell--logged .lcal-cell__workers-count {
+  color: #fff;
+  font-size: 1.05rem;
+}
+.lcal-cell--logged .lcal-cell__workers-label {
+  color: rgba(255,255,255,0.5);
 }
 
 .lcal-cell__pct {
@@ -2429,16 +2461,17 @@ code {
   color: var(--accent);
   line-height: 1;
 }
+.lcal-cell--logged .lcal-cell__pct { color: #60a5fa; font-size: 0.72rem; }
 
 .lcal-cell__incident-dot {
   position: absolute;
   top: 5px;
   right: 5px;
-  width: 6px;
-  height: 6px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   background: #ef4444;
-  box-shadow: 0 0 0 2px var(--bg-panel);
+  box-shadow: 0 0 0 2px #1a0a0a;
 }
 
 .lcal-cell__today-ring {

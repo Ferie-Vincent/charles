@@ -327,11 +327,8 @@ export default function LogCalendar({ logs, meta, projectId }: Props) {
                     <WeatherIcon weather={log.weather} size={18} />
                   </div>
                   <div className="lcal-cell__workers">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="10" height="10">
-                      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
-                      <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                    </svg>
-                    {log.workers_count}
+                    <span className="lcal-cell__workers-count">{log.workers_count}</span>
+                    <span className="lcal-cell__workers-label">ouv.</span>
                   </div>
                   <div className="lcal-cell__pct">{log.progress_percent}%</div>
                   {log.has_incident && <div className="lcal-cell__incident-dot" title={log.incident_type ?? 'Incident'} />}
@@ -349,15 +346,15 @@ export default function LogCalendar({ logs, meta, projectId }: Props) {
       {/* Legend */}
       <div className="lcal-legend">
         <span className="lcal-legend__item">
-          <span className="lcal-legend__dot" style={{ background: 'var(--accent)' }}/>
+          <span style={{ display: 'inline-block', width: 12, height: 12, borderRadius: 4, background: '#0f172a', marginRight: 4 }}/>
           Jour saisi
         </span>
         <span className="lcal-legend__item">
-          <span className="lcal-legend__dot" style={{ background: '#ef4444' }}/>
+          <span style={{ display: 'inline-block', width: 12, height: 12, borderRadius: 4, background: '#1a0a0a', border: '1.5px solid #ef4444', marginRight: 4 }}/>
           Incident
         </span>
         <span className="lcal-legend__item">
-          <span style={{ display: 'inline-block', width: 12, height: 12, borderRadius: '50%', border: '2px solid var(--accent)', marginRight: 4 }}/>
+          <span style={{ display: 'inline-block', width: 12, height: 12, borderRadius: '50%', border: '2px solid #60a5fa', marginRight: 4 }}/>
           Aujourd'hui
         </span>
       </div>
