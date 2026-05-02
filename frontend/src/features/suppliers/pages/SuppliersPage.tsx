@@ -3,6 +3,7 @@ import {
   getSuppliers, createSupplier, updateSupplier, deleteSupplier,
   SUPPLIER_CATEGORIES, type GlobalSupplier,
 } from '../api/suppliers';
+import PageHeader from '../../../components/ui/PageHeader';
 
 const fmt = (n: number) =>
   n >= 1_000_000 ? `${(n / 1_000_000).toFixed(1)} M` :
@@ -20,6 +21,14 @@ const CAT_COLOR: Record<string, string> = {
   services:         '#8b5cf6',
   'sous-traitance': '#10b981',
   location:         '#f97316',
+};
+
+const CAT_BADGE: Record<string, string> = {
+  travaux:          'badge',
+  fournitures:      'badge badge-draft',
+  services:         'badge',
+  'sous-traitance': 'badge badge-active',
+  location:         'badge',
 };
 
 export default function SuppliersPage() {
@@ -47,8 +56,9 @@ export default function SuppliersPage() {
     return matchQ && matchCat;
   });
 
-  const totalFacturé = suppliers.reduce((s, sup) => s + (sup.invoices_sum_amount_ht ?? 0), 0);
+  const totalFacturé  = suppliers.reduce((s, sup) => s + (sup.invoices_sum_amount_ht ?? 0), 0);
   const totalContrats = suppliers.reduce((s, sup) => s + (sup.contract_amount ?? 0), 0);
+  const actifs        = suppliers.filter(s => (s.invoices_count ?? 0) > 0).length;
 
   const handleSave = async () => {
     if (!modal || !modal.name) return;
@@ -74,81 +84,112 @@ export default function SuppliersPage() {
   };
 
   return (
-    <div className="supp-page">
-      {/* Header */}
-      <div className="supp-header">
-        <div>
-          <p className="supp-header__label">MOYENS GÉNÉRAUX</p>
-          <h1 className="supp-header__title">Base Fournisseurs</h1>
-          <p className="supp-header__sub">Annuaire centralisé — partagé par tous les chantiers</p>
-        </div>
-        <button className="btn btn--primary" onClick={() => setModal({ ...EMPTY })}>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="14" height="14"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          Nouveau fournisseur
-        </button>
-      </div>
-
-      {/* KPIs */}
-      <div className="supp-kpi-row">
-        <div className="supp-kpi">
-          <span className="supp-kpi__val">{suppliers.length}</span>
-          <span className="supp-kpi__lbl">Fournisseurs</span>
-        </div>
-        <div className="supp-kpi">
-          <span className="supp-kpi__val">{suppliers.filter(s => (s.invoices_count ?? 0) > 0).length}</span>
-          <span className="supp-kpi__lbl">Actifs (avec factures)</span>
-        </div>
-        <div className="supp-kpi">
-          <span className="supp-kpi__val">{fmt(totalFacturé)} FCFA</span>
-          <span className="supp-kpi__lbl">Total facturé</span>
-        </div>
-        <div className="supp-kpi">
-          <span className="supp-kpi__val">{fmt(totalContrats)} FCFA</span>
-          <span className="supp-kpi__lbl">Total montants contrats</span>
-        </div>
-      </div>
-
-      {/* Filters */}
-      <div className="supp-filters">
-        <div className="acct-search-wrap" style={{ flex: 1, maxWidth: 360 }}>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="14" height="14" className="acct-search-icon">
-            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-          </svg>
-          <input
-            type="text"
-            className="acct-search-input"
-            placeholder="Rechercher un fournisseur…"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-          />
-          {search && (
-            <button className="acct-search-clear" onClick={() => setSearch('')}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="12" height="12"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-            </button>
-          )}
-        </div>
-        <div className="supp-cat-filters">
-          <button className={`dqe-filter-btn ${!catFilter ? 'dqe-filter-btn--active' : ''}`} onClick={() => setCatFilter('')}>
-            Tous <span className="dqe-filter-count">{suppliers.length}</span>
+    <div>
+      <PageHeader
+        title="Base Fournisseurs"
+        subtitle="Annuaire centralisé — partagé par tous les chantiers"
+        action={
+          <button className="btn-primary" onClick={() => setModal({ ...EMPTY })}>
+            + Nouveau fournisseur
           </button>
-          {Object.entries(SUPPLIER_CATEGORIES).map(([k, v]) => {
-            const count = suppliers.filter(s => s.category === k).length;
-            if (!count) return null;
-            return (
-              <button key={k} className={`dqe-filter-btn ${catFilter === k ? 'dqe-filter-btn--active' : ''}`} onClick={() => setCatFilter(k === catFilter ? '' : k)}>
-                {v} <span className="dqe-filter-count">{count}</span>
-              </button>
-            );
-          })}
+        }
+      />
+
+      {/* KPI strip */}
+      <div className="proj-kpi-row">
+        <div className="proj-kpi">
+          <div className="proj-kpi__icon proj-kpi__icon--blue">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+          </div>
+          <div className="proj-kpi__body">
+            <div className="proj-kpi__value">{suppliers.length}</div>
+            <div className="proj-kpi__label">Fournisseurs</div>
+          </div>
+        </div>
+
+        <div className="proj-kpi">
+          <div className="proj-kpi__icon proj-kpi__icon--green">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+          </div>
+          <div className="proj-kpi__body">
+            <div className="proj-kpi__value">{actifs}</div>
+            <div className="proj-kpi__label">Actifs (avec factures)</div>
+          </div>
+        </div>
+
+        <div className="proj-kpi">
+          <div className="proj-kpi__icon proj-kpi__icon--orange">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+            </svg>
+          </div>
+          <div className="proj-kpi__body">
+            <div className="proj-kpi__value" style={{ fontSize: 15 }}>{fmt(totalFacturé)} FCFA</div>
+            <div className="proj-kpi__label">Total facturé</div>
+          </div>
+        </div>
+
+        <div className="proj-kpi">
+          <div className="proj-kpi__icon proj-kpi__icon--teal">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+            </svg>
+          </div>
+          <div className="proj-kpi__body">
+            <div className="proj-kpi__value" style={{ fontSize: 15 }}>{fmt(totalContrats)} FCFA</div>
+            <div className="proj-kpi__label">Total montants contrats</div>
+          </div>
         </div>
       </div>
 
-      {/* Table */}
-      {loading ? (
-        <p style={{ padding: '24px', color: 'var(--text-muted)' }}>Chargement…</p>
-      ) : (
-        <div className="acct-table-wrap">
-          <table className="acct-table supp-table">
+      {/* Table card */}
+      <div style={{ background: 'var(--bg-panel)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
+
+        {/* Toolbar */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderBottom: '1px solid var(--border)', flexWrap: 'wrap' }}>
+          <div className="acct-search-wrap" style={{ flex: '0 0 280px' }}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14" className="acct-search-icon">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input
+              type="text"
+              className="acct-search-input"
+              placeholder="Rechercher un fournisseur…"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+            />
+            {search && (
+              <button className="acct-search-clear" onClick={() => setSearch('')}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" width="12" height="12"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            )}
+          </div>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            <button className={`bud-tab${!catFilter ? ' bud-tab--active' : ''}`} onClick={() => setCatFilter('')}>
+              Tous <span style={{ marginLeft: 5, fontSize: 10, fontWeight: 700, background: !catFilter ? 'rgba(255,255,255,0.2)' : 'var(--border)', color: !catFilter ? 'inherit' : 'var(--text-muted)', borderRadius: 4, padding: '1px 5px' }}>{suppliers.length}</span>
+            </button>
+            {Object.entries(SUPPLIER_CATEGORIES).map(([k, v]) => {
+              const count = suppliers.filter(s => s.category === k).length;
+              if (!count) return null;
+              return (
+                <button key={k} className={`bud-tab${catFilter === k ? ' bud-tab--active' : ''}`} onClick={() => setCatFilter(k === catFilter ? '' : k)}>
+                  {v} <span style={{ marginLeft: 5, fontSize: 10, fontWeight: 700, background: catFilter === k ? 'rgba(255,255,255,0.2)' : 'var(--border)', color: catFilter === k ? 'inherit' : 'var(--text-muted)', borderRadius: 4, padding: '1px 5px' }}>{count}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {loading ? (
+          <p style={{ padding: '2rem', color: 'var(--text-muted)', textAlign: 'center' }}>Chargement…</p>
+        ) : (
+          <table className="data-table supp-table">
             <thead>
               <tr>
                 <th>Fournisseur</th>
@@ -156,15 +197,15 @@ export default function SuppliersPage() {
                 <th>Contact</th>
                 <th>Téléphone</th>
                 <th>Email</th>
-                <th>Montant contrat</th>
-                <th>Factures</th>
-                <th>Total facturé</th>
+                <th style={{ textAlign: 'right' }}>Montant contrat</th>
+                <th style={{ textAlign: 'right' }}>Factures</th>
+                <th style={{ textAlign: 'right' }}>Total facturé</th>
                 <th></th>
               </tr>
             </thead>
             <tbody>
               {filtered.length === 0 && (
-                <tr><td colSpan={9} className="acct-empty">
+                <tr><td colSpan={9} style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
                   {search || catFilter ? 'Aucun fournisseur pour ce filtre' : 'Aucun fournisseur — créez-en un'}
                 </td></tr>
               )}
@@ -173,41 +214,47 @@ export default function SuppliersPage() {
                 return (
                   <tr key={s.id}>
                     <td>
-                      <span className="supp-name">{s.name}</span>
-                      {s.notes && <p className="supp-notes">{s.notes}</p>}
+                      <span style={{ fontWeight: 600 }}>{s.name}</span>
+                      {s.notes && <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: '2px 0 0', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.notes}</p>}
                     </td>
                     <td>
-                      <span className="acct-status-badge" style={{ background: `${cc}12`, color: cc, borderColor: `${cc}35` }}>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 6, background: `${cc}12`, color: cc, border: `1px solid ${cc}35` }}>
                         {SUPPLIER_CATEGORIES[s.category] ?? s.category}
                       </span>
                     </td>
                     <td>{s.contact_name || '—'}</td>
-                    <td>{s.phone || '—'}</td>
+                    <td style={{ whiteSpace: 'nowrap' }}>{s.phone || '—'}</td>
                     <td>
                       {s.email
-                        ? <a href={`mailto:${s.email}`} className="supp-email">{s.email}</a>
+                        ? <a href={`mailto:${s.email}`} style={{ color: 'var(--accent)', textDecoration: 'none', fontSize: 13 }}>{s.email}</a>
                         : '—'
                       }
                     </td>
-                    <td>{s.contract_amount ? `${fmt(s.contract_amount)} FCFA` : '—'}</td>
-                    <td>
-                      <span className={`supp-inv-count ${(s.invoices_count ?? 0) > 0 ? 'supp-inv-count--active' : ''}`}>
+                    <td style={{ textAlign: 'right' }}>{s.contract_amount ? `${fmt(s.contract_amount)} FCFA` : '—'}</td>
+                    <td style={{ textAlign: 'right' }}>
+                      <span style={{
+                        display: 'inline-block',
+                        minWidth: 24,
+                        padding: '2px 7px',
+                        borderRadius: 6,
+                        fontSize: 12,
+                        fontWeight: 700,
+                        background: (s.invoices_count ?? 0) > 0 ? 'color-mix(in srgb, var(--accent) 15%, transparent)' : 'var(--border)',
+                        color: (s.invoices_count ?? 0) > 0 ? 'var(--accent)' : 'var(--text-muted)',
+                      }}>
                         {s.invoices_count ?? 0}
                       </span>
                     </td>
-                    <td>
-                      {(s.invoices_sum_amount_ht ?? 0) > 0
-                        ? <strong>{fmt(s.invoices_sum_amount_ht!)} FCFA</strong>
-                        : '—'
-                      }
+                    <td style={{ textAlign: 'right', fontWeight: 600 }}>
+                      {(s.invoices_sum_amount_ht ?? 0) > 0 ? `${fmt(s.invoices_sum_amount_ht!)} FCFA` : '—'}
                     </td>
                     <td>
-                      <div style={{ display: 'flex', gap: '6px' }}>
+                      <div style={{ display: 'flex', gap: 6 }}>
                         <button className="btn-icon btn-icon--edit" onClick={() => setModal({ ...s })}>
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="13" height="13"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="13" height="13"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                         </button>
                         <button className="btn-icon btn-icon--delete" onClick={() => { setDeleteId(s.id); setDeleteError(''); }}>
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="13" height="13"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="13" height="13"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
                         </button>
                       </div>
                     </td>
@@ -216,8 +263,8 @@ export default function SuppliersPage() {
               })}
             </tbody>
           </table>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Supplier modal */}
       {modal !== null && (
