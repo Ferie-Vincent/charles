@@ -29,6 +29,8 @@ use App\Http\Controllers\PortfolioAnalysisController;
 use App\Http\Controllers\PortfolioAccountingController;
 use App\Http\Controllers\GeneralExpenseController;
 use App\Http\Controllers\GlobalSupplierController;
+use App\Http\Controllers\StockController;
+use App\Http\Controllers\PurchaseOrderController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/health', function () {
@@ -59,6 +61,21 @@ Route::middleware('auth')->group(function () {
     Route::delete('/users/{user}', [UserController::class, 'destroy']);
     Route::get('/portfolio/costs', [PortfolioCostsController::class, 'index']);
     Route::get('/portfolio/accounting', [PortfolioAccountingController::class, 'index']);
+    // Stock items & movements
+    Route::get('/stock-items', [StockController::class, 'index']);
+    Route::post('/stock-items', [StockController::class, 'store']);
+    Route::put('/stock-items/{stockItem}', [StockController::class, 'update']);
+    Route::delete('/stock-items/{stockItem}', [StockController::class, 'destroy']);
+    Route::get('/stock-items/{stockItem}/movements', [StockController::class, 'movements']);
+    Route::post('/stock-items/{stockItem}/movements', [StockController::class, 'addMovement']);
+    // Purchase orders
+    Route::get('/purchase-orders', [PurchaseOrderController::class, 'index']);
+    Route::post('/purchase-orders', [PurchaseOrderController::class, 'store']);
+    Route::put('/purchase-orders/{purchaseOrder}', [PurchaseOrderController::class, 'update']);
+    Route::delete('/purchase-orders/{purchaseOrder}', [PurchaseOrderController::class, 'destroy']);
+    Route::patch('/purchase-orders/{purchaseOrder}/approve', [PurchaseOrderController::class, 'approve']);
+    Route::patch('/purchase-orders/{purchaseOrder}/reject', [PurchaseOrderController::class, 'reject']);
+    Route::patch('/purchase-orders/{purchaseOrder}/receive', [PurchaseOrderController::class, 'markReceived']);
     Route::get('/suppliers', [GlobalSupplierController::class, 'index']);
     Route::post('/suppliers', [GlobalSupplierController::class, 'store']);
     Route::get('/suppliers/{supplier}', [GlobalSupplierController::class, 'show']);

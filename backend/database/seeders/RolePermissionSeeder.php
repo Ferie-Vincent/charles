@@ -20,6 +20,8 @@ class RolePermissionSeeder extends Seeder
             'accounting' => false,
             'qse'        => true,
             'reporting'  => false,
+            'achats'     => false,
+            'stocks'     => false,
         ],
         'gestion' => [
             'map'        => false,
@@ -30,6 +32,20 @@ class RolePermissionSeeder extends Seeder
             'accounting' => true,
             'qse'        => false,
             'reporting'  => true,
+            'achats'     => false,
+            'stocks'     => false,
+        ],
+        'logistique' => [
+            'map'        => false,
+            'timeline'   => false,
+            'dqe'        => false,
+            'execution'  => false,
+            'costs'      => false,
+            'accounting' => false,
+            'qse'        => false,
+            'reporting'  => false,
+            'achats'     => true,
+            'stocks'     => true,
         ],
         'lecture' => [
             'map'        => true,
@@ -40,13 +56,16 @@ class RolePermissionSeeder extends Seeder
             'accounting' => false,
             'qse'        => false,
             'reporting'  => false,
+            'achats'     => false,
+            'stocks'     => false,
         ],
     ];
 
     private const ROLE_GROUPS = [
-        'terrain' => ['conducteur-travaux', 'chef-chantier'],
-        'gestion' => ['metreur-economiste', 'comptable'],
-        'lecture' => ['lecture-seule'],
+        'terrain'    => ['conducteur-travaux', 'chef-chantier'],
+        'gestion'    => ['metreur-economiste', 'comptable'],
+        'logistique' => ['moyens-generaux'],
+        'lecture'    => ['lecture-seule'],
     ];
 
     public function run(): void

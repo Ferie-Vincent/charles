@@ -5850,3 +5850,85 @@ code {
   color: var(--text-muted);
 }
 .supp-inv-count--active { background: color-mix(in srgb, var(--accent) 15%, transparent); color: var(--accent); }
+
+/* ── Stocks Page ── */
+.stocks-page { padding: 28px 32px; max-width: 1400px; margin: 0 auto; }
+.stocks-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+.stocks-header h1 { font-size: 1.35rem; font-weight: 700; color: var(--text-body); }
+.stocks-kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 24px; }
+.stocks-kpi { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px 20px; display: flex; flex-direction: column; gap: 4px; }
+.stocks-kpi--alert { border-color: color-mix(in srgb, #ef4444 40%, transparent); background: color-mix(in srgb, #ef4444 6%, var(--surface)); }
+.stocks-kpi--warn  { border-color: color-mix(in srgb, #f59e0b 40%, transparent); background: color-mix(in srgb, #f59e0b 6%, var(--surface)); }
+.stocks-kpi--ok    { border-color: color-mix(in srgb, #10b981 40%, transparent); background: color-mix(in srgb, #10b981 6%, var(--surface)); }
+.stocks-kpi__val { font-size: 1.3rem; font-weight: 700; color: var(--text-body); }
+.stocks-kpi__lbl { font-size: 0.76rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: .04em; font-weight: 600; }
+.stocks-filters { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
+.stocks-cat-filters { display: flex; gap: 6px; flex-wrap: wrap; }
+.stocks-alert-banner { background: color-mix(in srgb, #ef4444 8%, var(--surface)); border: 1px solid color-mix(in srgb, #ef4444 30%, transparent); border-radius: 10px; padding: 12px 16px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; font-size: 0.875rem; font-weight: 500; color: #ef4444; }
+.stocks-badge { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 0.74rem; font-weight: 700; letter-spacing: 0.03em; }
+.stocks-badge--rupture { background: color-mix(in srgb, #ef4444 15%, transparent); color: #ef4444; }
+.stocks-badge--critique { background: color-mix(in srgb, #f59e0b 15%, transparent); color: #f59e0b; }
+.stocks-badge--ok { background: color-mix(in srgb, #10b981 12%, transparent); color: #10b981; }
+.stocks-qty--rupture { color: #ef4444; font-weight: 700; }
+.stocks-qty--critique { color: #f59e0b; font-weight: 700; }
+.stocks-qty--ok { color: #10b981; font-weight: 600; }
+
+/* Stocks movement panel */
+.stocks-mov-panel { display: flex; flex-direction: column; gap: 24px; }
+.stocks-mov-form { background: var(--surface-alt, #f8fafc); border: 1px solid var(--border); border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.stocks-mov-form h4 { font-size: 0.85rem; font-weight: 700; color: var(--text-body); text-transform: uppercase; letter-spacing: 0.04em; margin: 0; }
+.stocks-mov-list { display: flex; flex-direction: column; gap: 6px; }
+.stocks-mov-list h4 { font-size: 0.85rem; font-weight: 700; color: var(--text-body); text-transform: uppercase; letter-spacing: 0.04em; margin: 0 0 4px; }
+/* stocks-mov-row = each movement history row */
+.stocks-mov-row { display: flex; align-items: center; gap: 10px; padding: 9px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; }
+.stocks-mov-type { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 6px; font-size: 0.82rem; font-weight: 800; flex-shrink: 0; }
+.stocks-mov-type--in  { background: color-mix(in srgb, #10b981 15%, transparent); color: #10b981; }
+.stocks-mov-type--out { background: color-mix(in srgb, #ef4444 12%, transparent); color: #ef4444; }
+.stocks-mov-type--adj { background: color-mix(in srgb, #3b7ddd 12%, transparent); color: #3b7ddd; }
+.stocks-mov-info { flex: 1; display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.stocks-mov-reason { font-size: 0.845rem; color: var(--text-body); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.stocks-mov-meta { font-size: 0.76rem; color: var(--text-muted); }
+.stocks-mov-qty { font-size: 0.875rem; font-weight: 700; flex-shrink: 0; }
+.stocks-mov-qty--in  { color: #10b981; }
+.stocks-mov-qty--out { color: #ef4444; }
+
+/* ── Achats / BDC Page ── */
+.achats-page { padding: 28px 32px; max-width: 1400px; margin: 0 auto; }
+.achats-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+.achats-header h1 { font-size: 1.35rem; font-weight: 700; color: var(--text-body); }
+.achats-kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 24px; }
+.achats-kpi { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px 20px; display: flex; flex-direction: column; gap: 4px; }
+.achats-kpi__val { font-size: 1.3rem; font-weight: 700; color: var(--text-body); }
+.achats-kpi__lbl { font-size: 0.76rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: .04em; font-weight: 600; }
+.achats-filters { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
+.achats-status-filters { display: flex; gap: 6px; flex-wrap: wrap; }
+.achats-pending-banner { background: color-mix(in srgb, #f59e0b 8%, var(--surface)); border: 1px solid color-mix(in srgb, #f59e0b 35%, transparent); border-radius: 10px; padding: 12px 16px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; font-size: 0.875rem; font-weight: 500; color: #f59e0b; }
+.bdc-ref { font-weight: 700; color: var(--text-body); font-size: 0.875rem; font-family: monospace; letter-spacing: 0.03em; }
+.bdc-status-badge { display: inline-block; padding: 2px 9px; border-radius: 6px; font-size: 0.74rem; font-weight: 700; letter-spacing: 0.03em; }
+
+/* BDC line items — div-grid layout (not <table>) */
+.bdc-items-table { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+/* header row: Description / Qté / Unité / Prix unit. / Total / (del) */
+.bdc-items-head { display: grid; grid-template-columns: 3fr 1fr 1fr 1.2fr 1.2fr 32px; gap: 0; padding: 7px 10px; background: var(--surface-alt, #f8fafc); border-bottom: 1px solid var(--border); font-size: 0.72rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+/* item row */
+.bdc-items-row { display: grid; grid-template-columns: 3fr 1fr 1fr 1.2fr 1.2fr 32px; gap: 6px; padding: 6px 10px; align-items: center; border-bottom: 1px solid var(--border); }
+.bdc-items-row:last-child { border-bottom: none; }
+.bdc-items-row .form-input { padding: 5px 8px; font-size: 0.82rem; }
+.bdc-item-total { font-weight: 600; color: var(--accent); font-size: 0.875rem; text-align: right; }
+/* totals footer */
+.bdc-items-total { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: var(--surface-alt, #f8fafc); border-top: 1px solid var(--border); font-size: 0.875rem; color: var(--text-muted); font-weight: 500; }
+.bdc-items-total strong { font-size: 1rem; font-weight: 700; color: var(--text-body); }
+.bdc-add-line { margin-top: 8px; }
+.bdc-ref-btn { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 6px; background: color-mix(in srgb, var(--accent) 10%, transparent); color: var(--accent); font-size: 0.78rem; font-weight: 600; cursor: pointer; border: 1px dashed color-mix(in srgb, var(--accent) 40%, transparent); transition: background .15s; }
+.bdc-ref-btn:hover { background: color-mix(in srgb, var(--accent) 18%, transparent); }
+
+/* BDC detail view in modal */
+.bdc-detail-section { margin-bottom: 16px; }
+.bdc-detail-section h4 { font-size: 0.78rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; margin: 0 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+.bdc-detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 24px; }
+.bdc-detail-item { display: flex; flex-direction: column; gap: 2px; }
+.bdc-detail-item .lbl { font-size: 0.73rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.03em; font-weight: 600; }
+.bdc-detail-item .val { font-size: 0.875rem; color: var(--text-body); font-weight: 500; }
+.bdc-total-line { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: color-mix(in srgb, var(--accent) 6%, var(--surface)); border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent); border-radius: 8px; margin-top: 8px; }
+.bdc-total-line .lbl { font-size: 0.82rem; font-weight: 600; color: var(--text-muted); }
+.bdc-total-line .val { font-size: 1.1rem; font-weight: 800; color: var(--accent); }
