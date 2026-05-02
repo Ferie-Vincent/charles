@@ -87,7 +87,7 @@ export default function StocksPage() {
       <PageHeader
         title="Gestion des Stocks"
         subtitle="Inventaire temps réel — alertes seuil automatiques"
-        actions={
+        action={
           <button className="btn-primary" onClick={() => setItemModal({ ...EMPTY_ITEM })}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="14" height="14"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             Nouvel article
@@ -98,31 +98,50 @@ export default function StocksPage() {
       {/* KPIs */}
       <div className="proj-kpi-row">
         <div className="proj-kpi">
-          <span className="proj-kpi__icon">📦</span>
-          <div>
-            <p className="proj-kpi__val">{items.length}</p>
-            <p className="proj-kpi__lbl">Articles en stock</p>
+          <div className="proj-kpi__icon proj-kpi__icon--blue">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+            </svg>
+          </div>
+          <div className="proj-kpi__body">
+            <div className="proj-kpi__value">{items.length}</div>
+            <div className="proj-kpi__label">Articles en stock</div>
           </div>
         </div>
+
         <div className="proj-kpi">
-          <span className="proj-kpi__icon" style={{ color: '#ef4444' }}>⚠</span>
-          <div>
-            <p className="proj-kpi__val" style={{ color: criticalItems.length > 0 ? '#ef4444' : 'var(--text-body)' }}>{criticalItems.length}</p>
-            <p className="proj-kpi__lbl">Critiques (sous seuil)</p>
+          <div className="proj-kpi__icon proj-kpi__icon--orange">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+          </div>
+          <div className="proj-kpi__body">
+            <div className="proj-kpi__value" style={{ color: criticalItems.length > 0 ? '#ef4444' : undefined }}>{criticalItems.length}</div>
+            <div className="proj-kpi__label">Critiques (sous seuil)</div>
           </div>
         </div>
+
         <div className="proj-kpi">
-          <span className="proj-kpi__icon" style={{ color: '#ef4444' }}>✕</span>
-          <div>
-            <p className="proj-kpi__val" style={{ color: rupture > 0 ? '#ef4444' : 'var(--text-body)' }}>{rupture}</p>
-            <p className="proj-kpi__lbl">En rupture</p>
+          <div className="proj-kpi__icon proj-kpi__icon--red" style={{ background: '#ef444420', color: '#ef4444' }}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </div>
+          <div className="proj-kpi__body">
+            <div className="proj-kpi__value" style={{ color: rupture > 0 ? '#ef4444' : undefined }}>{rupture}</div>
+            <div className="proj-kpi__label">En rupture</div>
           </div>
         </div>
+
         <div className="proj-kpi">
-          <span className="proj-kpi__icon" style={{ color: '#10b981' }}>✓</span>
-          <div>
-            <p className="proj-kpi__val" style={{ color: '#10b981' }}>{ok}</p>
-            <p className="proj-kpi__lbl">Niveaux OK</p>
+          <div className="proj-kpi__icon proj-kpi__icon--green">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+          </div>
+          <div className="proj-kpi__body">
+            <div className="proj-kpi__value" style={{ color: '#10b981' }}>{ok}</div>
+            <div className="proj-kpi__label">Niveaux OK</div>
           </div>
         </div>
       </div>
