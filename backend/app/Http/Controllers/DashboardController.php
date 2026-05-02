@@ -14,11 +14,15 @@ class DashboardController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $companyId = $request->user()->company_id;
+        $user      = $request->user();
+        $companyId = $user->company_id;
+        $query     = Project::query()->where('company_id', $companyId);
 
-        $projects = Project::query()
-            ->where('company_id', $companyId)
-            ->get();
+        if (in_array($user->role->name, ['chef-chantier', 'conducteur-travaux'])) {
+            $query->whereHas('members', fn ($q) => $q->where('user_id', $user->id));
+        }
+
+        $projects = $query->get();
 
         $byStatus = $projects->groupBy('status');
 

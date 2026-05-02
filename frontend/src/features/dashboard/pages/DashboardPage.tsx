@@ -127,7 +127,7 @@ function TerrainProjectList({ projects }: { projects: DashboardData['active_proj
   const HEALTH_COLOR: Record<string, string> = { green: '#10b981', orange: '#f59e0b', red: '#ef4444' };
 
   return (
-    <div className="card card--full" style={{ marginBottom: '1.5rem' }}>
+    <div className="card card--full" style={{ marginTop: '1.5rem', marginBottom: '1.5rem' }}>
       <div className="card-head">
         <div className="card-icon card-icon--green">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16">
