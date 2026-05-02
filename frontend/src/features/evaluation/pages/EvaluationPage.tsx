@@ -60,8 +60,8 @@ function ProgressBar({ value, target }: { value: number; target: number }) {
   );
 }
 
-function KpiBar({ projects }: { projects: ProjectEvaluation[] }) {
-  const total   = projects.length;
+function KpiStrip({ projects }: { projects: ProjectEvaluation[] }) {
+  const total    = projects.length;
   const avgScore = total > 0
     ? Math.round(projects.reduce((s, p) => s + p.health_score, 0) / total)
     : 0;
@@ -69,42 +69,72 @@ function KpiBar({ projects }: { projects: ProjectEvaluation[] }) {
   const critical = projects.filter(p => p.health_score < 50).length;
 
   return (
-    <div className="ev-kpi-bar">
-      <div className="ev-kpi-card">
-        <div className="ev-kpi-value">{total}</div>
-        <div className="ev-kpi-label">Total projets</div>
-      </div>
-      <div className="ev-kpi-card">
-        <div className="ev-kpi-value" style={{ color: avgScore >= 75 ? 'var(--color-success)' : avgScore >= 50 ? 'var(--color-warning)' : 'var(--color-danger)' }}>
-          {avgScore}
+    <div className="proj-kpi-row">
+      {/* Total projets */}
+      <div className="proj-kpi">
+        <div className="proj-kpi__icon proj-kpi__icon--blue">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+            <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+          </svg>
         </div>
-        <div className="ev-kpi-label">Score moyen</div>
+        <div className="proj-kpi__body">
+          <div className="proj-kpi__value">{total}</div>
+          <div className="proj-kpi__label">Total projets</div>
+        </div>
       </div>
-      <div className="ev-kpi-card">
-        <div className="ev-kpi-value" style={{ color: 'var(--color-success)' }}>{good}</div>
-        <div className="ev-kpi-label">Bonne santé (≥ 75)</div>
+
+      {/* Score moyen */}
+      <div className="proj-kpi">
+        <div className="proj-kpi__icon proj-kpi__icon--teal">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
+            <polyline points="17 6 23 6 23 12"/>
+          </svg>
+        </div>
+        <div className="proj-kpi__body">
+          <div
+            className="proj-kpi__value"
+            style={{ color: avgScore >= 75 ? 'var(--color-success)' : avgScore >= 50 ? 'var(--color-warning)' : avgScore > 0 ? 'var(--color-danger)' : undefined }}
+          >
+            {avgScore}
+          </div>
+          <div className="proj-kpi__label">Score moyen / 100</div>
+        </div>
       </div>
-      <div className="ev-kpi-card">
-        <div className="ev-kpi-value" style={{ color: 'var(--color-danger)' }}>{critical}</div>
-        <div className="ev-kpi-label">Critiques ({"< 50"})</div>
+
+      {/* Bonne santé */}
+      <div className="proj-kpi">
+        <div className="proj-kpi__icon proj-kpi__icon--green">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+            <polyline points="22 4 12 14.01 9 11.01"/>
+          </svg>
+        </div>
+        <div className="proj-kpi__body">
+          <div className="proj-kpi__value">{good}</div>
+          <div className="proj-kpi__label">Bonne santé (≥ 75)</div>
+        </div>
+      </div>
+
+      {/* Critiques */}
+      <div className="proj-kpi">
+        <div className="proj-kpi__icon proj-kpi__icon--red">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+        </div>
+        <div className="proj-kpi__body">
+          <div className="proj-kpi__value" style={{ color: critical > 0 ? 'var(--color-danger)' : undefined }}>{critical}</div>
+          <div className="proj-kpi__label">Critiques (&lt; 50)</div>
+        </div>
       </div>
     </div>
   );
 }
 
-function SkeletonRows() {
-  return (
-    <>
-      {Array.from({ length: 5 }).map((_, i) => (
-        <tr key={i} className="ev-table-row ev-table-row--skeleton">
-          {Array.from({ length: 9 }).map((_, j) => (
-            <td key={j}><span className="ev-skeleton" /></td>
-          ))}
-        </tr>
-      ))}
-    </>
-  );
-}
 
 export default function EvaluationPage() {
   const { data: projects, isLoading, isError } = useQuery({
@@ -120,91 +150,93 @@ export default function EvaluationPage() {
         subtitle="Scores de santé, avancement et indicateurs par projet"
       />
 
-      {isLoading && <KpiBar projects={[]} />}
-      {!isLoading && !isError && projects && <KpiBar projects={projects} />}
+      {isLoading && <KpiStrip projects={[]} />}
+      {!isLoading && !isError && projects && <KpiStrip projects={projects} />}
 
-      <div className="ev-table-wrap">
+      <div style={{ background: 'var(--bg-panel)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
         {isError && (
-          <div className="ev-empty">
+          <div style={{ padding: '2rem', textAlign: 'center' }}>
             <p className="form-error">Erreur de chargement des données.</p>
           </div>
         )}
 
         {!isError && (
-          <table className="ev-table">
-            <thead>
-              <tr>
-                <th className="ev-th">Chantier</th>
-                <th className="ev-th">Statut</th>
-                <th className="ev-th">Avancement</th>
-                <th className="ev-th ev-th--center">Health Score</th>
-                <th className="ev-th ev-th--center">Planning</th>
-                <th className="ev-th ev-th--center">Régularité</th>
-                <th className="ev-th ev-th--center">Sécurité</th>
-                <th className="ev-th ev-th--center">Nb logs</th>
-                <th className="ev-th ev-th--center">Incidents</th>
-              </tr>
-            </thead>
-            <tbody>
-              {isLoading && <SkeletonRows />}
-
-              {!isLoading && projects && projects.length === 0 && (
+          isLoading ? (
+            <p style={{ padding: '2rem', color: 'var(--text-muted)', textAlign: 'center' }}>Chargement…</p>
+          ) : (
+            <table className="data-table">
+              <thead>
                 <tr>
-                  <td colSpan={9} className="ev-empty-cell">
-                    Aucun projet trouvé.
-                  </td>
+                  <th>Chantier</th>
+                  <th>Statut</th>
+                  <th>Avancement</th>
+                  <th style={{ textAlign: 'center' }}>Health Score</th>
+                  <th style={{ textAlign: 'center' }}>Planning</th>
+                  <th style={{ textAlign: 'center' }}>Régularité</th>
+                  <th style={{ textAlign: 'center' }}>Sécurité</th>
+                  <th style={{ textAlign: 'center' }}>Nb logs</th>
+                  <th style={{ textAlign: 'center' }}>Incidents</th>
                 </tr>
-              )}
+              </thead>
+              <tbody>
+                {projects && projects.length === 0 && (
+                  <tr>
+                    <td colSpan={9} style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                      Aucun projet trouvé.
+                    </td>
+                  </tr>
+                )}
 
-              {!isLoading && projects && projects.map(p => (
-                <tr key={p.id} className="ev-table-row">
-                  <td className="ev-td">
-                    <div className="ev-project-cell">
-                      <span className="ev-code-badge">{p.code}</span>
-                      <span className="ev-project-name">{p.name}</span>
-                    </div>
-                  </td>
-                  <td className="ev-td">
-                    <span className={`ev-status ev-status--${p.status}`}>
-                      {STATUS_LABEL[p.status] ?? p.status}
-                    </span>
-                  </td>
-                  <td className="ev-td ev-td--progress">
-                    <ProgressBar value={p.progress_percent} target={p.target_progress} />
-                  </td>
-                  <td className="ev-td ev-td--center">
-                    <HealthBadge score={p.health_score} label={p.health_label} />
-                  </td>
-                  <td className="ev-td ev-td--center ev-score-cell">
-                    <span style={{ color: p.planning_score >= 20 ? 'var(--color-success)' : p.planning_score >= 10 ? 'var(--color-warning)' : 'var(--color-danger)' }}>
-                      {p.planning_score}
-                    </span>
-                    <span className="ev-score-max">/25</span>
-                  </td>
-                  <td className="ev-td ev-td--center ev-score-cell">
-                    <span style={{ color: p.regularity_score >= 20 ? 'var(--color-success)' : p.regularity_score >= 10 ? 'var(--color-warning)' : 'var(--color-danger)' }}>
-                      {p.regularity_score}
-                    </span>
-                    <span className="ev-score-max">/25</span>
-                  </td>
-                  <td className="ev-td ev-td--center ev-score-cell">
-                    <span style={{ color: p.safety_score >= 20 ? 'var(--color-success)' : p.safety_score >= 10 ? 'var(--color-warning)' : 'var(--color-danger)' }}>
-                      {p.safety_score}
-                    </span>
-                    <span className="ev-score-max">/25</span>
-                  </td>
-                  <td className="ev-td ev-td--center">
-                    <span className="ev-count">{p.total_logs}</span>
-                  </td>
-                  <td className="ev-td ev-td--center">
-                    <span className={`ev-count ${p.incident_count > 0 ? 'ev-count--danger' : ''}`}>
-                      {p.incident_count}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                {projects && projects.map(p => (
+                  <tr key={p.id}>
+                    <td>
+                      <div className="ev-project-cell">
+                        <span className="ev-code-badge">{p.code}</span>
+                        <span className="ev-project-name">{p.name}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <span className={`ev-status ev-status--${p.status}`}>
+                        {STATUS_LABEL[p.status] ?? p.status}
+                      </span>
+                    </td>
+                    <td className="ev-td--progress">
+                      <ProgressBar value={p.progress_percent} target={p.target_progress} />
+                    </td>
+                    <td style={{ textAlign: 'center' }}>
+                      <HealthBadge score={p.health_score} label={p.health_label} />
+                    </td>
+                    <td style={{ textAlign: 'center' }} className="ev-score-cell">
+                      <span style={{ color: p.planning_score >= 20 ? 'var(--color-success)' : p.planning_score >= 10 ? 'var(--color-warning)' : 'var(--color-danger)' }}>
+                        {p.planning_score}
+                      </span>
+                      <span className="ev-score-max">/25</span>
+                    </td>
+                    <td style={{ textAlign: 'center' }} className="ev-score-cell">
+                      <span style={{ color: p.regularity_score >= 20 ? 'var(--color-success)' : p.regularity_score >= 10 ? 'var(--color-warning)' : 'var(--color-danger)' }}>
+                        {p.regularity_score}
+                      </span>
+                      <span className="ev-score-max">/25</span>
+                    </td>
+                    <td style={{ textAlign: 'center' }} className="ev-score-cell">
+                      <span style={{ color: p.safety_score >= 20 ? 'var(--color-success)' : p.safety_score >= 10 ? 'var(--color-warning)' : 'var(--color-danger)' }}>
+                        {p.safety_score}
+                      </span>
+                      <span className="ev-score-max">/25</span>
+                    </td>
+                    <td style={{ textAlign: 'center' }}>
+                      <span className="ev-count">{p.total_logs}</span>
+                    </td>
+                    <td style={{ textAlign: 'center' }}>
+                      <span className={`ev-count ${p.incident_count > 0 ? 'ev-count--danger' : ''}`}>
+                        {p.incident_count}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )
         )}
       </div>
     </div>
