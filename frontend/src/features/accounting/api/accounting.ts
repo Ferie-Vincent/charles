@@ -26,6 +26,8 @@ export interface Invoice {
   note?: string;
   supplier?: { id: number; name: string };
   supplier_id?: number;
+  attachment_path?: string;
+  attachment_name?: string;
 }
 
 export interface CategoryBreakdown {
@@ -75,16 +77,36 @@ export async function deleteSupplier(projectId: number, id: number): Promise<voi
   await api.delete(`/projects/${projectId}/suppliers/${id}`);
 }
 
-export async function createInvoice(projectId: number, data: Partial<Invoice>): Promise<Invoice> {
-  const res = await api.post(`/projects/${projectId}/invoices`, data);
+function toFormData(data: Partial<Invoice> & { attachment?: File | null }): FormData | Partial<Invoice> {
+  if (!data.attachment) return data;
+  const fd = new FormData();
+  Object.entries(data).forEach(([k, v]) => {
+    if (k === 'attachment' && v instanceof File) fd.append('attachment', v);
+    else if (v !== undefined && v !== null && k !== 'supplier') fd.append(k, String(v));
+  });
+  return fd;
+}
+
+export async function createInvoice(projectId: number, data: Partial<Invoice> & { attachment?: File | null }): Promise<Invoice> {
+  const body = toFormData(data);
+  const res = await api.post(`/projects/${projectId}/invoices`, body, {
+    headers: body instanceof FormData ? { 'Content-Type': 'multipart/form-data' } : {},
+  });
   return res.data;
 }
 
-export async function updateInvoice(projectId: number, id: number, data: Partial<Invoice>): Promise<Invoice> {
-  const res = await api.put(`/projects/${projectId}/invoices/${id}`, data);
+export async function updateInvoice(projectId: number, id: number, data: Partial<Invoice> & { attachment?: File | null }): Promise<Invoice> {
+  const body = toFormData(data);
+  const res = await api.put(`/projects/${projectId}/invoices/${id}`, body, {
+    headers: body instanceof FormData ? { 'Content-Type': 'multipart/form-data' } : {},
+  });
   return res.data;
 }
 
 export async function deleteInvoice(projectId: number, id: number): Promise<void> {
   await api.delete(`/projects/${projectId}/invoices/${id}`);
+}
+
+export function invoiceAttachmentUrl(projectId: number, invoiceId: number): string {
+  return `http://localhost:8000/api/projects/${projectId}/invoices/${invoiceId}/attachment`;
 }

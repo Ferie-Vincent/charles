@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import {
   getProjectAccounting, createSupplier, updateSupplier, deleteSupplier,
-  createInvoice, updateInvoice, deleteInvoice,
+  createInvoice, updateInvoice, deleteInvoice, invoiceAttachmentUrl,
   type ProjectAccounting, type Supplier, type Invoice,
 } from '../api/accounting';
 import PageHeader from '../../../components/ui/PageHeader';
@@ -173,6 +173,7 @@ export default function ProjectAccountingPage() {
                   <th style={{ textAlign: 'right' }}>Montant HT</th>
                   <th>Date</th>
                   <th>Statut</th>
+                  <th>PJ</th>
                   <th style={{ textAlign: 'right' }}>Actions</th>
                 </tr>
               </thead>
@@ -192,6 +193,24 @@ export default function ProjectAccountingPage() {
                         </span>
                       </td>
                       <td>
+                        {inv.attachment_path ? (
+                          <a
+                            href={invoiceAttachmentUrl(projectId, inv.id)}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inv-attachment-badge"
+                            title={inv.attachment_name ?? 'Voir pièce jointe'}
+                          >
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="13" height="13"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                            {inv.attachment_name && inv.attachment_name.length > 12
+                              ? inv.attachment_name.slice(0, 12) + '…'
+                              : (inv.attachment_name ?? 'Fichier')}
+                          </a>
+                        ) : (
+                          <span style={{ color: 'var(--text-muted)', fontSize: 12 }}>—</span>
+                        )}
+                      </td>
+                      <td>
                         <div className="table-actions">
                           <button className="btn-icon btn-icon--edit" onClick={() => setInvoiceModal(inv)}>
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="14" height="14"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
@@ -205,7 +224,7 @@ export default function ProjectAccountingPage() {
                   );
                 })}
                 {data.invoices.length === 0 && (
-                  <tr><td colSpan={7} style={{ textAlign: 'center', color: 'var(--color-text-muted)', padding: '2rem' }}>Aucune facture</td></tr>
+                  <tr><td colSpan={8} style={{ textAlign: 'center', color: 'var(--color-text-muted)', padding: '2rem' }}>Aucune facture</td></tr>
                 )}
               </tbody>
             </table>
@@ -397,11 +416,11 @@ function SupplierModal({ supplier, projectId: _, onSave, onClose }: {
 }
 
 /* ── Invoice Modal ──────────────────────────────── */
-function InvoiceModal({ invoice, suppliers, projectId: _, onSave, onClose }: {
+function InvoiceModal({ invoice, suppliers, projectId, onSave, onClose }: {
   invoice: Invoice | null;
   suppliers: Supplier[];
   projectId: number;
-  onSave: (d: Partial<Invoice>) => Promise<void>;
+  onSave: (d: Partial<Invoice> & { attachment?: File | null }) => Promise<void>;
   onClose: () => void;
 }) {
   const [form, setForm] = useState({
@@ -416,7 +435,16 @@ function InvoiceModal({ invoice, suppliers, projectId: _, onSave, onClose }: {
     supplier_id:  invoice?.supplier_id ?? '',
     note:         invoice?.note ?? '',
   });
+  const [attachment, setAttachment] = useState<File | null>(null);
+  const [dragOver, setDragOver]     = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
   const [saving, setSaving] = useState(false);
+
+  function handleFile(f: File | null) {
+    if (!f) return;
+    const ok = ['application/pdf', 'image/jpeg', 'image/png'].includes(f.type) && f.size <= 10 * 1024 * 1024;
+    if (ok) setAttachment(f);
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -427,13 +455,14 @@ function InvoiceModal({ invoice, suppliers, projectId: _, onSave, onClose }: {
       due_date:    form.due_date || null,
       paid_date:   form.paid_date || null,
       amount_ttc:  form.amount_ttc || null,
+      attachment:  attachment,
     };
     try { await onSave(payload); } finally { setSaving(false); }
   }
 
   return (
     <div className="mr-modal-overlay" onClick={onClose}>
-      <div className="mr-modal" style={{ maxWidth: 560 }} onClick={e => e.stopPropagation()}>
+      <div className="mr-modal" style={{ maxWidth: 580 }} onClick={e => e.stopPropagation()}>
         <div className="mr-modal__head">
           <h2 className="mr-modal__title">{invoice ? 'Modifier facture' : 'Nouvelle facture'}</h2>
           <button className="mr-modal__close" onClick={onClose}>✕</button>
@@ -494,6 +523,47 @@ function InvoiceModal({ invoice, suppliers, projectId: _, onSave, onClose }: {
             <label className="form-label">Note</label>
             <input className="form-input" value={form.note} onChange={e => setForm(f => ({ ...f, note: e.target.value }))} />
           </div>
+
+          {/* File upload zone */}
+          <div className="form-field">
+            <label className="form-label">Pièce jointe (PDF, JPG, PNG — max 10 Mo)</label>
+            <div
+              className={`inv-dropzone ${dragOver ? 'inv-dropzone--over' : ''} ${attachment ? 'inv-dropzone--has-file' : ''}`}
+              onClick={() => fileRef.current?.click()}
+              onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+              onDragLeave={() => setDragOver(false)}
+              onDrop={e => { e.preventDefault(); setDragOver(false); handleFile(e.dataTransfer.files[0] ?? null); }}
+            >
+              <input
+                ref={fileRef}
+                type="file"
+                accept=".pdf,.jpg,.jpeg,.png"
+                style={{ display: 'none' }}
+                onChange={e => handleFile(e.target.files?.[0] ?? null)}
+              />
+              {attachment ? (
+                <div className="inv-dropzone__file">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="18" height="18"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                  <span>{attachment.name}</span>
+                  <button type="button" className="inv-dropzone__remove" onClick={e => { e.stopPropagation(); setAttachment(null); }}>✕</button>
+                </div>
+              ) : invoice?.attachment_name ? (
+                <div className="inv-dropzone__existing">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                  <a href={invoiceAttachmentUrl(projectId, invoice.id)} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()}>
+                    {invoice.attachment_name}
+                  </a>
+                  <span style={{ color: 'var(--text-muted)', fontSize: 11 }}>— Cliquer pour remplacer</span>
+                </div>
+              ) : (
+                <div className="inv-dropzone__empty">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="20" height="20"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                  <span>Glisser-déposer ou cliquer pour joindre un reçu</span>
+                </div>
+              )}
+            </div>
+          </div>
+
           <div className="mr-modal__actions">
             <button type="button" className="btn btn--secondary" onClick={onClose}>Annuler</button>
             <button type="submit" className="btn btn--primary" disabled={saving}>{saving ? 'Enregistrement…' : 'Enregistrer'}</button>

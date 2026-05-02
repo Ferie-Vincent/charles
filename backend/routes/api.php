@@ -97,6 +97,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/projects/{project}/invoices', [InvoiceController::class, 'store']);
     Route::put('/projects/{project}/invoices/{invoice}', [InvoiceController::class, 'update']);
     Route::delete('/projects/{project}/invoices/{invoice}', [InvoiceController::class, 'destroy']);
+    Route::get('/projects/{project}/invoices/{invoice}/attachment', [InvoiceController::class, 'downloadAttachment']);
     Route::get('/projects/{project}/budget', [BudgetController::class, 'index']);
     Route::post('/projects/{project}/budget/entries', [BudgetController::class, 'store']);
     Route::delete('/projects/{project}/budget/entries/{budgetEntry}', [BudgetController::class, 'destroy']);
