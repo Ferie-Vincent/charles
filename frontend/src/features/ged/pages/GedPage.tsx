@@ -7,6 +7,7 @@ import {
 import { listProjects } from '../../projects/api/list-projects';
 import type { Project } from '../../projects/types';
 import { useAuth } from '../../auth/stores/auth-store';
+import PageHeader from '../../../components/ui/PageHeader';
 
 const fmtDate = (d: string) => new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
 
@@ -28,6 +29,8 @@ function getMimeIcon(mime: string): string {
   if (mime.includes('zip') || mime.includes('rar'))       return '🗜️';
   return '📄';
 }
+
+const DOC_TYPES = Object.keys(GED_TYPES) as GedDocument['type'][];
 
 export default function GedPage() {
   const { user } = useAuth();
@@ -91,121 +94,225 @@ export default function GedPage() {
   const canDelete = (doc: GedDocument) =>
     isDirection || doc.uploader?.id === user?.id;
 
-  // KPIs
+  // KPIs — computed from full unfiltered docs list
   const totalSize = docs.reduce((s, d) => s + d.size_bytes, 0);
-  const byType = Object.entries(GED_TYPES).map(([k]) => ({ type: k, count: docs.filter(d => d.type === k).length })).filter(x => x.count > 0);
+  const coveredProjects = new Set(docs.map(d => d.project_id).filter(Boolean)).size;
+  const thisMonth = new Date();
+  const addedThisMonth = docs.filter(d => {
+    const c = new Date(d.created_at);
+    return c.getMonth() === thisMonth.getMonth() && c.getFullYear() === thisMonth.getFullYear();
+  }).length;
+
+  // Type counts for filter tabs
+  const typeCounts = DOC_TYPES.reduce<Record<string, number>>((acc, t) => {
+    acc[t] = docs.filter(d => d.type === t).length;
+    return acc;
+  }, {});
 
   return (
-    <div className="ged-page">
-
-      <div className="ged-header">
-        <div>
-          <p className="ged-header__label">GESTION DOCUMENTAIRE</p>
-          <h1 className="ged-header__title">Documents Chantier</h1>
-          <p className="ged-header__sub">Plans · Contrats · PV · Rapports · Factures</p>
-        </div>
-        <button className="btn btn--primary" onClick={() => setModal(true)}>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="14" height="14"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          Ajouter un document
-        </button>
-      </div>
-
-      {/* KPI row */}
-      <div className="ged-kpi-row">
-        <div className="ged-kpi">
-          <span className="ged-kpi__val">{docs.length}</span>
-          <span className="ged-kpi__lbl">Documents total</span>
-        </div>
-        <div className="ged-kpi">
-          <span className="ged-kpi__val">{formatSize(totalSize)}</span>
-          <span className="ged-kpi__lbl">Volume stocké</span>
-        </div>
-        <div className="ged-kpi">
-          <span className="ged-kpi__val">{new Set(docs.map(d => d.project_id).filter(Boolean)).size}</span>
-          <span className="ged-kpi__lbl">Chantiers couverts</span>
-        </div>
-        <div className="ged-kpi">
-          <span className="ged-kpi__val">{docs.filter(d => { const t = new Date(); const c = new Date(d.created_at); return c.getMonth() === t.getMonth() && c.getFullYear() === t.getFullYear(); }).length}</span>
-          <span className="ged-kpi__lbl">Ajoutés ce mois</span>
-        </div>
-      </div>
-
-      {/* Filters */}
-      <div className="ged-filters">
-        <input className="form-input" style={{ maxWidth: 260, fontSize: '0.84rem' }} placeholder="Rechercher un document…" value={search} onChange={e => setSearch(e.target.value)} />
-        <select className="form-select" style={{ maxWidth: 200, fontSize: '0.84rem' }} value={projectFilter} onChange={e => setProjectFilter(e.target.value)}>
-          <option value="">Tous les chantiers</option>
-          {projects.map(p => <option key={p.id} value={p.id}>{p.code} — {p.name}</option>)}
-        </select>
-        <div className="ged-type-filters">
-          <button className={`dqe-filter-btn ${!typeFilter ? 'dqe-filter-btn--active' : ''}`} onClick={() => setTypeFilter('')}>
-            Tous <span className="dqe-filter-count">{docs.length}</span>
+    <div>
+      <PageHeader
+        title="Documents GED"
+        subtitle="Plans · Contrats · PV · Rapports · Factures · Photos"
+        action={
+          <button className="btn-primary" onClick={() => setModal(true)}>
+            + Ajouter un document
           </button>
-          {byType.map(({ type, count }) => (
-            <button key={type} className={`dqe-filter-btn ${typeFilter === type ? 'dqe-filter-btn--active' : ''}`} onClick={() => setTypeFilter(type)}>
-              {GED_TYPE_ICON[type]} {GED_TYPES[type]} <span className="dqe-filter-count">{count}</span>
-            </button>
-          ))}
+        }
+      />
+
+      {/* KPI strip */}
+      <div className="proj-kpi-row">
+        <div className="proj-kpi">
+          <div className="proj-kpi__icon proj-kpi__icon--blue">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+            </svg>
+          </div>
+          <div className="proj-kpi__body">
+            <div className="proj-kpi__value">{docs.length}</div>
+            <div className="proj-kpi__label">Documents total</div>
+          </div>
+        </div>
+
+        <div className="proj-kpi">
+          <div className="proj-kpi__icon proj-kpi__icon--teal">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/>
+              <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+          </div>
+          <div className="proj-kpi__body">
+            <div className="proj-kpi__value" style={{ fontSize: 15 }}>{formatSize(totalSize)}</div>
+            <div className="proj-kpi__label">Volume stocké</div>
+          </div>
+        </div>
+
+        <div className="proj-kpi">
+          <div className="proj-kpi__icon proj-kpi__icon--green">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+              <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+          </div>
+          <div className="proj-kpi__body">
+            <div className="proj-kpi__value">{coveredProjects}</div>
+            <div className="proj-kpi__label">Chantiers couverts</div>
+          </div>
+        </div>
+
+        <div className="proj-kpi">
+          <div className="proj-kpi__icon proj-kpi__icon--orange">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <circle cx="12" cy="12" r="10"/>
+              <polyline points="12 6 12 12 16 14"/>
+            </svg>
+          </div>
+          <div className="proj-kpi__body">
+            <div className="proj-kpi__value">{addedThisMonth}</div>
+            <div className="proj-kpi__label">Ajoutés ce mois</div>
+          </div>
         </div>
       </div>
 
-      {/* Documents grid */}
-      {loading ? (
-        <p style={{ padding: 32, color: 'var(--text-muted)' }}>Chargement…</p>
-      ) : docs.length === 0 ? (
-        <div className="ged-empty">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" width="48" height="48"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-          <p>Aucun document {typeFilter ? `de type « ${GED_TYPES[typeFilter]} »` : ''}</p>
-          <button className="btn btn--secondary btn--sm" onClick={() => setModal(true)}>Ajouter le premier</button>
+      {/* Table panel */}
+      <div style={{ background: 'var(--bg-panel)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
+
+        {/* Toolbar row */}
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center', padding: '14px 18px', borderBottom: '1px solid var(--border)', flexWrap: 'wrap' }}>
+
+          {/* Search */}
+          <div className="acct-search-wrap" style={{ flex: 1, minWidth: 200, maxWidth: 320 }}>
+            <svg className="acct-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input
+              type="text"
+              className="acct-search-input"
+              placeholder="Rechercher un document…"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+            />
+            {search && (
+              <button className="acct-search-clear" onClick={() => setSearch('')}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
+            )}
+          </div>
+
+          {/* Project filter */}
+          <select
+            className="form-select"
+            style={{ fontSize: '0.84rem', maxWidth: 220 }}
+            value={projectFilter}
+            onChange={e => setProjectFilter(e.target.value)}
+          >
+            <option value="">Tous les chantiers</option>
+            {projects.map(p => <option key={p.id} value={p.id}>{p.code} — {p.name}</option>)}
+          </select>
+
+          {/* Type filter tabs */}
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            <button
+              className={`bud-tab${!typeFilter ? ' bud-tab--active' : ''}`}
+              onClick={() => setTypeFilter('')}
+            >
+              Tous <span className="dqe-filter-count">{docs.length}</span>
+            </button>
+            {DOC_TYPES.filter(t => typeCounts[t] > 0).map(t => (
+              <button
+                key={t}
+                className={`bud-tab${typeFilter === t ? ' bud-tab--active' : ''}`}
+                onClick={() => setTypeFilter(typeFilter === t ? '' : t)}
+              >
+                {GED_TYPE_ICON[t]} {GED_TYPES[t]} <span className="dqe-filter-count">{typeCounts[t]}</span>
+              </button>
+            ))}
+          </div>
         </div>
-      ) : (
-        <div className="ged-grid">
-          {docs.map(doc => {
-            const tc = TYPE_COLORS[doc.type] ?? '#94a3b8';
-            return (
-              <div key={doc.id} className="ged-card">
-                <div className="ged-card__top">
-                  <div className="ged-card__icon" style={{ background: `${tc}15`, color: tc }}>
-                    {getMimeIcon(doc.mime_type)}
-                  </div>
-                  <span className="ged-card__type-badge" style={{ background: `${tc}15`, color: tc }}>
-                    {GED_TYPES[doc.type]}
-                  </span>
-                </div>
-                <div className="ged-card__body">
-                  <p className="ged-card__name" title={doc.name}>{doc.name}</p>
-                  {doc.description && <p className="ged-card__desc">{doc.description}</p>}
-                  <div className="ged-card__meta">
-                    {doc.project && <span className="ged-card__project">{doc.project.code}</span>}
-                    <span>{formatSize(doc.size_bytes)}</span>
-                    <span>{fmtDate(doc.created_at)}</span>
-                  </div>
-                  <p className="ged-card__uploader">par {doc.uploader?.name ?? '—'}</p>
-                </div>
-                <div className="ged-card__actions">
-                  <button className="btn btn--sm btn--secondary" onClick={() => handleOpen(doc)}>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="12" height="12"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-                    Ouvrir
-                  </button>
-                  <a
-                    href={`${import.meta.env.VITE_API_URL ?? 'http://localhost:8000'}/api/ged/${doc.id}/download`}
-                    download={doc.original_name}
-                    className="btn btn--sm btn--secondary"
-                  >
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="12" height="12"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                    DL
-                  </a>
-                  {canDelete(doc) && (
-                    <button className="btn-icon btn-icon--delete" onClick={() => handleDelete(doc)}>
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="13" height="13"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
-                    </button>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
+
+        {/* Table */}
+        {loading ? (
+          <p style={{ padding: '2rem', color: 'var(--text-muted)', textAlign: 'center' }}>Chargement…</p>
+        ) : (
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Document</th>
+                <th>Type</th>
+                <th>Chantier</th>
+                <th>Taille</th>
+                <th>Ajouté par</th>
+                <th>Date</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {docs.length === 0 && (
+                <tr>
+                  <td colSpan={7} className="acct-empty" style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                    Aucun document {typeFilter ? `de type « ${GED_TYPES[typeFilter]} »` : ''}
+                  </td>
+                </tr>
+              )}
+              {docs.map(doc => {
+                const tc = TYPE_COLORS[doc.type] ?? '#94a3b8';
+                return (
+                  <tr key={doc.id}>
+                    <td>
+                      <span style={{ fontWeight: 600, color: 'var(--text-body)' }}>
+                        {getMimeIcon(doc.mime_type)} {doc.name}
+                      </span>
+                      {doc.description && (
+                        <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--text-muted)' }}>{doc.description}</p>
+                      )}
+                    </td>
+                    <td>
+                      <span className="badge" style={{ background: `${tc}12`, color: tc, borderColor: `${tc}35` }}>
+                        {GED_TYPE_ICON[doc.type]} {GED_TYPES[doc.type]}
+                      </span>
+                    </td>
+                    <td>
+                      {doc.project
+                        ? <span style={{ color: 'var(--accent)', fontWeight: 500 }}>{doc.project.code}</span>
+                        : <span style={{ color: 'var(--text-muted)' }}>—</span>
+                      }
+                    </td>
+                    <td style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>{formatSize(doc.size_bytes)}</td>
+                    <td style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>{doc.uploader?.name ?? '—'}</td>
+                    <td style={{ color: 'var(--text-muted)', fontSize: '0.82rem', whiteSpace: 'nowrap' }}>{fmtDate(doc.created_at)}</td>
+                    <td>
+                      <div style={{ display: 'flex', gap: 5 }}>
+                        <button className="btn btn--sm btn--secondary" onClick={() => handleOpen(doc)}>
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="12" height="12"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                          Ouvrir
+                        </button>
+                        <a
+                          href={`${import.meta.env.VITE_API_URL ?? 'http://localhost:8000'}/api/ged/${doc.id}/download`}
+                          download={doc.original_name}
+                          className="btn btn--sm btn--secondary"
+                        >
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="12" height="12"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                          DL
+                        </a>
+                        {canDelete(doc) && (
+                          <button className="btn-icon btn-icon--delete" onClick={() => handleDelete(doc)}>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="13" height="13"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
+      </div>
 
       {/* Upload modal */}
       {modal && (
