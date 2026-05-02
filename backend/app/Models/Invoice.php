@@ -11,6 +11,7 @@ class Invoice extends Model
         'project_id', 'supplier_id', 'created_by',
         'reference', 'category', 'amount_ht', 'amount_ttc',
         'status', 'invoice_date', 'due_date', 'paid_date', 'note',
+        'attachment_path', 'attachment_name',
     ];
 
     protected $casts = [
