@@ -30,6 +30,7 @@ use App\Http\Controllers\PortfolioAccountingController;
 use App\Http\Controllers\GeneralExpenseController;
 use App\Http\Controllers\GlobalSupplierController;
 use App\Http\Controllers\StockController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PurchaseOrderController;
 use App\Http\Controllers\GedController;
 use App\Http\Controllers\DemandeBesoinController;
@@ -54,6 +55,9 @@ Route::prefix('auth')->group(function () {
 });
 
 Route::middleware('auth')->group(function () {
+    Route::put('/profile', [ProfileController::class, 'update']);
+    Route::put('/profile/password', [ProfileController::class, 'changePassword']);
+    Route::put('/company', [ProfileController::class, 'updateCompany']);
     Route::get('/dashboard', [DashboardController::class, 'index']);
     Route::get('/my-permissions', [PermissionsController::class, 'myPermissions']);
     Route::get('/permissions', [PermissionsController::class, 'index']);
@@ -145,7 +149,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/projects/{project}/invoices', [InvoiceController::class, 'store']);
     Route::put('/projects/{project}/invoices/{invoice}', [InvoiceController::class, 'update']);
     Route::delete('/projects/{project}/invoices/{invoice}', [InvoiceController::class, 'destroy']);
+    Route::post('/projects/{project}/invoices/{invoice}/validate', [InvoiceController::class, 'validate']);
+    Route::post('/projects/{project}/invoices/{invoice}/pay', [InvoiceController::class, 'pay']);
     Route::get('/projects/{project}/invoices/{invoice}/attachment', [InvoiceController::class, 'downloadAttachment']);
+    Route::get('/projects/{project}/invoices/{invoice}/payment-proof', [InvoiceController::class, 'downloadPaymentProof']);
     Route::get('/projects/{project}/budget', [BudgetController::class, 'index']);
     Route::post('/projects/{project}/budget/entries', [BudgetController::class, 'store']);
     Route::delete('/projects/{project}/budget/entries/{budgetEntry}', [BudgetController::class, 'destroy']);

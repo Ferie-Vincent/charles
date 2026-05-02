@@ -106,17 +106,7 @@ export default function Sidebar({ open, onClose }: { open?: boolean; onClose?: (
     <aside className={`sidebar${open ? ' sidebar--open' : ''}`}>
       <button type="button" className="sidebar-close" onClick={onClose} aria-label="Fermer le menu">✕</button>
       <div className="sidebar-brand">
-        <div className="sidebar-brand__logo">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"/>
-            <line x1="12" y1="22" x2="12" y2="15.5"/>
-            <polyline points="22 8.5 12 15.5 2 8.5"/>
-          </svg>
-        </div>
-        <div>
-          <h2>Chantier</h2>
-          <div className="sidebar-brand__sub">Platform BTP</div>
-        </div>
+        <img src="/heleman.png" alt="Helaman Expertise" className="sidebar-brand__logo-img" />
       </div>
 
       <nav style={{ flex: 1 }}>
@@ -159,24 +149,27 @@ export default function Sidebar({ open, onClose }: { open?: boolean; onClose?: (
               </li>
             </>
           )}
-          <li>
-            <NavLink to="/settings">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="3"/>
-                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-              </svg>
-              Paramètres
-            </NavLink>
-          </li>
         </ul>
 
-        <div className="sidebar-user">
+        <li>
+          <NavLink to="/settings">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            </svg>
+            Paramètres
+          </NavLink>
+        </li>
+        <NavLink to="/profile" className="sidebar-user sidebar-user--link">
           <div className="sidebar-user__avatar">{initials}</div>
           <div className="sidebar-user__info">
             <div className="sidebar-user__name">{user?.name ?? 'Utilisateur'}</div>
             <div className="sidebar-user__role">{user?.role?.label ?? ''}</div>
           </div>
-        </div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="14" height="14" style={{ color: 'rgba(255,255,255,0.3)', flexShrink: 0 }}>
+            <path d="M9 18l6-6-6-6"/>
+          </svg>
+        </NavLink>
       </div>
     </aside>
   );

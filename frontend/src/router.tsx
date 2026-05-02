@@ -26,6 +26,8 @@ import StocksPage from './features/stocks/pages/StocksPage';
 import AchatsPage from './features/achats/pages/AchatsPage';
 import GedPage from './features/ged/pages/GedPage';
 import BesoinsPage from './features/besoins/pages/BesoinsPage';
+import ProfilePage from './features/profile/pages/ProfilePage';
+import SettingsPage from './features/settings/pages/SettingsPage';
 
 function Shell({ children }: { children: ReactNode }) {
   return <AppShell>{children}</AppShell>;
@@ -64,5 +66,7 @@ export const router = createBrowserRouter([
   { path: '/reporting',                element: <Guarded path="/reporting"><ReportingPage /></Guarded> },
   { path: '/users',                    element: <Guarded path="/users"><UsersPage /></Guarded> },
   { path: '/permissions',              element: <Guarded path="/users"><PermissionsPage /></Guarded> },
+  { path: '/profile',                  element: <Shell><ProfilePage /></Shell> },
+  { path: '/settings',                 element: <Shell><SettingsPage /></Shell> },
   { path: '*',                         element: <Navigate to="/" replace /> },
 ]);
