@@ -5932,3 +5932,76 @@ code {
 .bdc-total-line { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: color-mix(in srgb, var(--accent) 6%, var(--surface)); border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent); border-radius: 8px; margin-top: 8px; }
 .bdc-total-line .lbl { font-size: 0.82rem; font-weight: 600; color: var(--text-muted); }
 .bdc-total-line .val { font-size: 1.1rem; font-weight: 800; color: var(--accent); }
+
+/* ── BDC Reception: file upload zone ── */
+.bdc-file-drop {
+  border: 2px dashed var(--border);
+  border-radius: 8px;
+  padding: 14px 16px;
+  cursor: pointer;
+  transition: border-color .15s, background .15s;
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+}
+.bdc-file-drop:hover { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 4%, transparent); }
+.bdc-file-placeholder { display: flex; align-items: center; gap: 8px; color: var(--text-muted); font-size: 0.84rem; }
+.bdc-photos-drop { flex-wrap: wrap; gap: 6px; }
+
+.bdc-file-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 8px; border-radius: 6px;
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent);
+  font-size: 0.78rem; color: var(--text-body); font-weight: 500;
+  max-width: 260px;
+}
+.bdc-file-chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+.bdc-file-chip button { background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: 0.8rem; padding: 0 2px; line-height: 1; }
+.bdc-file-chip button:hover { color: #ef4444; }
+
+.bdc-photo-chips { display: flex; flex-wrap: wrap; gap: 6px; width: 100%; }
+.bdc-photo-chip { max-width: 180px; }
+.bdc-photo-chip img { width: 28px; height: 28px; border-radius: 4px; flex-shrink: 0; }
+.bdc-file-add-more { font-size: 0.78rem; color: var(--accent); font-weight: 600; cursor: pointer; padding: 4px 8px; }
+
+/* ── BDC delivery docs section in detail modal ── */
+.bdc-delivery-docs {
+  margin-top: 16px;
+  border: 1px solid color-mix(in srgb, #10b981 30%, transparent);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.bdc-delivery-docs__header {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 14px;
+  background: color-mix(in srgb, #10b981 8%, var(--surface));
+  font-size: 0.8rem; font-weight: 700; color: #10b981;
+  text-transform: uppercase; letter-spacing: 0.04em;
+  border-bottom: 1px solid color-mix(in srgb, #10b981 20%, transparent);
+}
+.bdc-delivery-docs > div:last-child { padding: 14px; }
+.bdc-reception-note {
+  font-size: 0.84rem; color: var(--text-body);
+  background: var(--surface-alt, #f8fafc);
+  border: 1px solid var(--border);
+  border-radius: 6px; padding: 8px 12px;
+}
+.bdc-doc-link {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 8px 14px; border-radius: 8px;
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+  color: var(--accent); font-size: 0.84rem; font-weight: 600;
+  text-decoration: none; transition: background .15s;
+}
+.bdc-doc-link:hover { background: color-mix(in srgb, var(--accent) 18%, transparent); }
+
+.bdc-photo-gallery { display: flex; flex-wrap: wrap; gap: 8px; }
+.bdc-photo-thumb {
+  width: 80px; height: 80px; border-radius: 6px; overflow: hidden;
+  border: 1px solid var(--border); display: block;
+  transition: transform .15s, box-shadow .15s;
+}
+.bdc-photo-thumb:hover { transform: scale(1.04); box-shadow: 0 4px 16px rgba(0,0,0,.15); }
+.bdc-photo-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }

@@ -6,6 +6,7 @@ use App\Models\PurchaseOrder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Storage;
 
 class PurchaseOrderController extends Controller
 {
@@ -130,10 +131,60 @@ class PurchaseOrderController extends Controller
         abort_if($purchaseOrder->company_id !== $request->user()->company_id, 403);
         abort_if($purchaseOrder->status !== 'approuve', 422, 'Seuls les BDC approuvés peuvent être marqués reçus.');
 
-        $purchaseOrder->update(['status' => 'recu']);
+        $request->validate([
+            'delivery_note' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
+            'photos'        => 'nullable|array|max:10',
+            'photos.*'      => 'file|mimes:jpg,jpeg,png,webp|max:5120',
+            'reception_notes' => 'nullable|string|max:1000',
+        ]);
+
+        $data = ['status' => 'recu', 'received_at' => now()];
+
+        if ($request->hasFile('delivery_note')) {
+            $file = $request->file('delivery_note');
+            $path = "purchase-orders/{$purchaseOrder->id}/bl/" . $file->getClientOriginalName();
+            Storage::disk('s3')->put($path, file_get_contents($file->getRealPath()));
+            $data['delivery_note_path'] = $path;
+        }
+
+        if ($request->hasFile('photos')) {
+            $paths = [];
+            foreach ($request->file('photos') as $photo) {
+                $path = "purchase-orders/{$purchaseOrder->id}/photos/" . uniqid() . '_' . $photo->getClientOriginalName();
+                Storage::disk('s3')->put($path, file_get_contents($photo->getRealPath()));
+                $paths[] = $path;
+            }
+            $data['delivery_photos'] = $paths;
+        }
+
+        if ($request->filled('reception_notes')) {
+            $data['reception_notes'] = $request->reception_notes;
+        }
+
+        $purchaseOrder->update($data);
         $purchaseOrder->load('supplier:id,name', 'project:id,name,code', 'requester:id,name', 'approver:id,name');
 
         return response()->json($purchaseOrder);
+    }
+
+    public function deliveryDocs(Request $request, PurchaseOrder $purchaseOrder): JsonResponse
+    {
+        abort_if($purchaseOrder->company_id !== $request->user()->company_id, 403);
+
+        $blUrl = $purchaseOrder->delivery_note_path
+            ? Storage::disk('s3')->temporaryUrl($purchaseOrder->delivery_note_path, now()->addHour())
+            : null;
+
+        $photoUrls = collect($purchaseOrder->delivery_photos ?? [])->map(
+            fn($p) => Storage::disk('s3')->temporaryUrl($p, now()->addHour())
+        )->values()->all();
+
+        return response()->json([
+            'delivery_note_url' => $blUrl,
+            'photo_urls'        => $photoUrls,
+            'reception_notes'   => $purchaseOrder->reception_notes,
+            'received_at'       => $purchaseOrder->received_at,
+        ]);
     }
 
     public function destroy(Request $request, PurchaseOrder $purchaseOrder): Response
