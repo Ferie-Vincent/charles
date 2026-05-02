@@ -2017,6 +2017,8 @@ code {
   transition: box-shadow 0.2s;
 }
 
+.proj-kpi { cursor: default; }
+.proj-kpi { cursor: default; }
 .proj-kpi:hover { box-shadow: var(--shadow-md); }
 
 .proj-kpi__icon {
@@ -6766,5 +6768,42 @@ code {
 
   .pg-row--markers {
     overflow: hidden;
+  }
+}
+
+/* ─── Touch targets: 44px min per WCAG 2.5.5 ─── */
+@media (max-width: 768px) {
+
+  /* Back link: extend tap area vertically */
+  .proj-hero__back {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 0;
+    margin-bottom: 0.5rem;
+  }
+
+  /* Hero action buttons: tall enough to tap */
+  .proj-hero__report-btn {
+    min-height: 44px;
+    padding: 10px 14px;
+    align-items: center;
+  }
+}
+
+/* ─── Focus rings: visible keyboard nav ─── */
+.proj-hero__back:focus-visible,
+.proj-hero__report-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* ─── Team table: hide email column on small phones ─── */
+@media (max-width: 480px) {
+  .data-table .col-email,
+  .data-table td:last-child,
+  .data-table th:last-child {
+    display: none;
   }
 }
