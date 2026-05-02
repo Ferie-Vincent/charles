@@ -21,8 +21,9 @@ export const ROLE_ACCESS: Record<string, RoleGroup[]> = {
   '/timeline':  ['direction', 'terrain'],
   '/dqe':       ['direction', 'gestion'],
   '/execution': ['direction', 'gestion'],
-  '/costs':     ['direction', 'gestion'],
-  '/qse':       ['direction', 'terrain'],
+  '/costs':       ['direction', 'gestion'],
+  '/accounting':  ['direction', 'gestion'],
+  '/qse':         ['direction', 'terrain'],
   '/reporting': ['direction', 'gestion'],
   '/users':     ['direction'],
 };

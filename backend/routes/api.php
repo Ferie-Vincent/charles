@@ -26,6 +26,8 @@ use App\Http\Controllers\PortfolioDqeController;
 use App\Http\Controllers\DqeVersionController;
 use App\Http\Controllers\SituationTravauxController;
 use App\Http\Controllers\PortfolioAnalysisController;
+use App\Http\Controllers\PortfolioAccountingController;
+use App\Http\Controllers\GeneralExpenseController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/health', function () {
@@ -55,6 +57,11 @@ Route::middleware('auth')->group(function () {
     Route::put('/users/{user}', [UserController::class, 'update']);
     Route::delete('/users/{user}', [UserController::class, 'destroy']);
     Route::get('/portfolio/costs', [PortfolioCostsController::class, 'index']);
+    Route::get('/portfolio/accounting', [PortfolioAccountingController::class, 'index']);
+    Route::get('/expenses', [GeneralExpenseController::class, 'index']);
+    Route::post('/expenses', [GeneralExpenseController::class, 'store']);
+    Route::put('/expenses/{generalExpense}', [GeneralExpenseController::class, 'update']);
+    Route::delete('/expenses/{generalExpense}', [GeneralExpenseController::class, 'destroy']);
     Route::get('/portfolio/evaluation', [PortfolioEvaluationController::class, 'index']);
     Route::get('/portfolio/qhse', [PortfolioQhseController::class, 'index']);
     Route::get('/portfolio/reports', [PortfolioReportingController::class, 'index']);
