@@ -31,31 +31,10 @@ function formatCreatedAt(isoStr: string): string {
   return `${dd}/${mm}/${yyyy} ${hh}:${min}`;
 }
 
-// ── Sub-components ────────────────────────────────────────────────────────────
-
-function TypeBadge({ type }: { type: 'hebdo' | 'manuel' }) {
-  return (
-    <span className={`rp-type-badge rp-type-badge--${type}`}>
-      {type === 'hebdo' ? 'Hebdo' : 'Manuel'}
-    </span>
-  );
-}
-
-function SkeletonRows() {
-  return (
-    <>
-      {Array.from({ length: 6 }).map((_, i) => (
-        <tr key={i} className="rp-tr rp-tr--skeleton">
-          {Array.from({ length: 7 }).map((_, j) => (
-            <td key={j} className="rp-td">
-              <span className="rp-skeleton rp-skeleton--cell" />
-            </td>
-          ))}
-        </tr>
-      ))}
-    </>
-  );
-}
+const TYPE_BADGE: Record<string, string> = {
+  hebdo:  'badge badge-completed',
+  manuel: 'badge badge-draft',
+};
 
 const PAGE_SIZE = 20;
 
@@ -240,7 +219,13 @@ export default function ReportingPage() {
               </tr>
             </thead>
             <tbody>
-              {isLoading && <SkeletonRows />}
+              {isLoading && Array.from({ length: 5 }).map((_, i) => (
+                <tr key={i}>
+                  {Array.from({ length: 7 }).map((_, j) => (
+                    <td key={j}><span style={{ display: 'block', height: 14, background: 'var(--border)', borderRadius: 4, opacity: 0.5 }} /></td>
+                  ))}
+                </tr>
+              ))}
 
               {!isLoading && filtered.length === 0 && (
                 <tr>
@@ -255,19 +240,21 @@ export default function ReportingPage() {
               {!isLoading && visible.map((r: PortfolioReport) => (
                 <tr key={r.id}>
                   <td>
-                    <div className="rp-project-cell">
-                      <span className="rp-code-badge">{r.project_code}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ fontSize: '0.72rem', fontWeight: 700, background: 'var(--accent-subtle)', color: 'var(--accent)', borderRadius: 4, padding: '2px 6px', flexShrink: 0 }}>{r.project_code}</span>
                       <span style={{ fontWeight: 600, color: 'var(--text-body)' }}>{r.project_name}</span>
                     </div>
                   </td>
-                  <td>
-                    <span className="rp-filename">{r.filename}</span>
+                  <td style={{ color: 'var(--text-muted)', fontSize: '0.82rem', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {r.filename}
                   </td>
                   <td style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>
                     {formatWeekOf(r.week_of)}
                   </td>
                   <td>
-                    <TypeBadge type={r.type} />
+                    <span className={TYPE_BADGE[r.type] ?? 'badge badge-draft'}>
+                      {r.type === 'hebdo' ? 'Hebdo' : 'Manuel'}
+                    </span>
                   </td>
                   <td style={{ textAlign: 'right', color: 'var(--text-muted)', fontSize: '0.82rem' }}>
                     {formatBytes(r.size_bytes)}
@@ -277,7 +264,7 @@ export default function ReportingPage() {
                   </td>
                   <td style={{ textAlign: 'center' }}>
                     <button
-                      className="rp-download-btn"
+                      className="btn btn--sm btn--secondary"
                       onClick={() => downloadReport(r.project_id, r.id, r.filename)}
                     >
                       ↓ PDF
@@ -291,9 +278,9 @@ export default function ReportingPage() {
       </div>
 
       {hasMore && (
-        <div className="rp-show-more-wrap">
-          <button className="rp-show-more-btn" onClick={() => setShowAll(true)}>
-            Afficher plus ({filtered.length - PAGE_SIZE} rapports supplémentaires)
+        <div style={{ textAlign: 'center', paddingTop: 16 }}>
+          <button className="btn btn--secondary" onClick={() => setShowAll(true)}>
+            Afficher {filtered.length - PAGE_SIZE} rapports supplémentaires
           </button>
         </div>
       )}
