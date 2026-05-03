@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\DqeVersion;
+use App\Models\Invoice;
 use App\Models\Project;
 use App\Models\PurchaseOrder;
 use App\Models\StockItem;
@@ -70,8 +72,42 @@ class PortfolioOperationsController extends Controller
                 'deficit'   => max(0, $s->threshold - $s->quantity),
             ]);
 
+        $dqePending = DqeVersion::query()
+            ->where('status', 'soumise')
+            ->whereHas('project', fn ($q) => $q->where('company_id', $companyId))
+            ->with('project:id,name,code')
+            ->orderBy('updated_at')
+            ->get()
+            ->map(fn (DqeVersion $dqe) => [
+                'id'             => $dqe->id,
+                'name'           => $dqe->name,
+                'version_number' => $dqe->version_number,
+                'total_ht'       => $dqe->total_ht,
+                'age_days'       => (int) $dqe->updated_at->diffInDays(now()),
+                'project_id'     => $dqe->project_id,
+                'project_name'   => $dqe->project?->name ?? '—',
+                'project_code'   => $dqe->project?->code ?? '—',
+            ]);
+
+        $invoicesPending = Invoice::query()
+            ->where('status', 'soumise')
+            ->whereHas('project', fn ($q) => $q->where('company_id', $companyId))
+            ->with('project:id,name,code', 'supplier:id,name')
+            ->orderBy('created_at')
+            ->get()
+            ->map(fn (Invoice $inv) => [
+                'id'           => $inv->id,
+                'reference'    => $inv->reference,
+                'amount_ht'    => $inv->amount_ht,
+                'supplier'     => $inv->supplier?->name ?? '—',
+                'age_days'     => (int) $inv->created_at->diffInDays(now()),
+                'project_id'   => $inv->project_id,
+                'project_name' => $inv->project?->name ?? '—',
+                'project_code' => $inv->project?->code ?? '—',
+            ]);
+
         return response()->json([
-            'health_summary' => [
+            'health_summary'    => [
                 'avg_score'      => (int) round($avgScore),
                 'critical_count' => $criticalProj->count(),
                 'total_active'   => $projects->count(),
@@ -80,6 +116,8 @@ class PortfolioOperationsController extends Controller
             'bdc_pending'       => $bdcPending->values(),
             'stock_alerts'      => $stockAlerts->values(),
             'critical_projects' => $criticalProj->values(),
+            'invoices_pending'  => $invoicesPending->values(),
+            'dqe_pending'       => $dqePending->values(),
         ]);
     }
 

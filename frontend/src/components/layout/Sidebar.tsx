@@ -176,7 +176,7 @@ export default function Sidebar({ open, onClose }: { open?: boolean; onClose?: (
             <div className="sidebar-user__name">{user?.name ?? 'Utilisateur'}</div>
             <div className="sidebar-user__role">{user?.role?.label ?? ''}</div>
           </div>
-        </div>
+        </NavLink>
       </div>
     </aside>
   );
