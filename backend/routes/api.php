@@ -30,12 +30,10 @@ use App\Http\Controllers\PortfolioAccountingController;
 use App\Http\Controllers\GeneralExpenseController;
 use App\Http\Controllers\GlobalSupplierController;
 use App\Http\Controllers\StockController;
-use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PurchaseOrderController;
 use App\Http\Controllers\GedController;
 use App\Http\Controllers\DemandeBesoinController;
 use App\Http\Controllers\PortfolioOperationsController;
-use App\Http\Controllers\TaskController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/health', function () {
@@ -47,7 +45,7 @@ Route::get('/health', function () {
 });
 
 Route::prefix('auth')->group(function () {
-    Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
 
     Route::middleware('auth')->group(function () {
         Route::get('/me', [AuthController::class, 'me']);
@@ -56,9 +54,6 @@ Route::prefix('auth')->group(function () {
 });
 
 Route::middleware('auth')->group(function () {
-    Route::put('/profile', [ProfileController::class, 'update']);
-    Route::put('/profile/password', [ProfileController::class, 'changePassword']);
-    Route::put('/company', [ProfileController::class, 'updateCompany']);
     Route::get('/dashboard', [DashboardController::class, 'index']);
     Route::get('/my-permissions', [PermissionsController::class, 'myPermissions']);
     Route::get('/permissions', [PermissionsController::class, 'index']);
@@ -84,19 +79,23 @@ Route::middleware('auth')->group(function () {
     Route::post('/purchase-orders', [PurchaseOrderController::class, 'store']);
     Route::put('/purchase-orders/{purchaseOrder}', [PurchaseOrderController::class, 'update']);
     Route::delete('/purchase-orders/{purchaseOrder}', [PurchaseOrderController::class, 'destroy']);
+    Route::patch('/purchase-orders/{purchaseOrder}/submit', [PurchaseOrderController::class, 'submit']);
     Route::patch('/purchase-orders/{purchaseOrder}/approve', [PurchaseOrderController::class, 'approve']);
     Route::patch('/purchase-orders/{purchaseOrder}/reject', [PurchaseOrderController::class, 'reject']);
+    Route::post('/purchase-orders/{purchaseOrder}/resubmit', [PurchaseOrderController::class, 'resubmit']);
     Route::patch('/purchase-orders/{purchaseOrder}/receive', [PurchaseOrderController::class, 'markReceived']);
     Route::get('/purchase-orders/{purchaseOrder}/delivery-docs', [PurchaseOrderController::class, 'deliveryDocs']);
+    Route::post('/purchase-orders/{purchaseOrder}/cancel', [PurchaseOrderController::class, 'cancel']);
     // GED
     // Demandes de besoins
     Route::get('/demandes-besoins', [DemandeBesoinController::class, 'index']);
     Route::post('/demandes-besoins', [DemandeBesoinController::class, 'store']);
-    Route::patch('/demandes-besoins/{demande}/approve',  [DemandeBesoinController::class, 'approve']);
-    Route::patch('/demandes-besoins/{demande}/reject',   [DemandeBesoinController::class, 'reject']);
-    Route::patch('/demandes-besoins/{demande}/prepare',  [DemandeBesoinController::class, 'prepare']);
-    Route::patch('/demandes-besoins/{demande}/deliver',  [DemandeBesoinController::class, 'deliver']);
-    Route::patch('/demandes-besoins/{demande}/record',   [DemandeBesoinController::class, 'record']);
+    Route::patch('/demandes-besoins/{demande}/approve',   [DemandeBesoinController::class, 'approve']);
+    Route::patch('/demandes-besoins/{demande}/reject',    [DemandeBesoinController::class, 'reject']);
+    Route::patch('/demandes-besoins/{demande}/resubmit',  [DemandeBesoinController::class, 'resubmit']);
+    Route::patch('/demandes-besoins/{demande}/prepare',   [DemandeBesoinController::class, 'prepare']);
+    Route::patch('/demandes-besoins/{demande}/deliver',   [DemandeBesoinController::class, 'deliver']);
+    Route::patch('/demandes-besoins/{demande}/record',    [DemandeBesoinController::class, 'record']);
 
     Route::get('/ged', [GedController::class, 'index']);
     Route::post('/ged', [GedController::class, 'store']);
@@ -119,24 +118,22 @@ Route::middleware('auth')->group(function () {
     Route::get('/portfolio/qhse', [PortfolioQhseController::class, 'index']);
     Route::get('/portfolio/reports', [PortfolioReportingController::class, 'index']);
     Route::get('/portfolio/dqe', [PortfolioDqeController::class, 'index']);
-    Route::post('/portfolio/ai-analysis', [PortfolioAnalysisController::class, 'generate']);
-    Route::post('/portfolio/ai-solutions', [PortfolioAnalysisController::class, 'solutions']);
-    Route::get('/tasks', [TaskController::class, 'index']);
-    Route::post('/tasks', [TaskController::class, 'store']);
-    Route::put('/tasks/{task}', [TaskController::class, 'update']);
-    Route::delete('/tasks/{task}', [TaskController::class, 'destroy']);
+    Route::post('/portfolio/ai-analysis', [PortfolioAnalysisController::class, 'generate'])->middleware('throttle:10,60');
     Route::get('/projects', [ProjectController::class, 'index']);
     Route::post('/projects', [ProjectController::class, 'store']);
     Route::get('/projects/{project}', [ProjectController::class, 'show']);
     Route::put('/projects/{project}', [ProjectController::class, 'update']);
+    Route::delete('/projects/{project}', [ProjectController::class, 'destroy']);
     Route::get('/projects/{project}/daily-logs', [DailyLogController::class, 'index']);
     Route::post('/projects/{project}/daily-logs', [DailyLogController::class, 'store']);
+    Route::patch('/projects/{project}/daily-logs/{dailyLog}', [DailyLogController::class, 'update']);
+    Route::delete('/projects/{project}/daily-logs/{dailyLog}', [DailyLogController::class, 'destroy']);
     Route::get('/projects/{project}/health-score', [HealthScoreController::class, 'show']);
     Route::get('/projects/{project}/safety-score', [SafetyScoreController::class, 'show']);
     Route::get('/projects/{project}/material-receipts', [MaterialReceiptController::class, 'index']);
-    Route::post('/projects/{project}/meeting-report', [MeetingReportController::class, 'generate']);
+    Route::post('/projects/{project}/meeting-report', [MeetingReportController::class, 'generate'])->middleware('throttle:10,60');
     Route::get('/projects/{project}/situation-travaux/versions', [SituationTravauxController::class, 'versions']);
-    Route::post('/projects/{project}/situation-travaux', [SituationTravauxController::class, 'generate']);
+    Route::post('/projects/{project}/situation-travaux', [SituationTravauxController::class, 'generate'])->middleware('throttle:10,60');
     Route::post('/projects/{project}/whatsapp/test', [WhatsAppTestController::class, 'test']);
     Route::get('/projects/{project}/photos', [ProjectPhotoController::class, 'index']);
     Route::post('/projects/{project}/photos', [ProjectPhotoController::class, 'store']);
@@ -155,10 +152,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/projects/{project}/invoices', [InvoiceController::class, 'store']);
     Route::put('/projects/{project}/invoices/{invoice}', [InvoiceController::class, 'update']);
     Route::delete('/projects/{project}/invoices/{invoice}', [InvoiceController::class, 'destroy']);
-    Route::post('/projects/{project}/invoices/{invoice}/validate', [InvoiceController::class, 'validate']);
+    Route::patch('/projects/{project}/invoices/{invoice}/transition', [InvoiceController::class, 'transition']);
     Route::post('/projects/{project}/invoices/{invoice}/pay', [InvoiceController::class, 'pay']);
     Route::get('/projects/{project}/invoices/{invoice}/attachment', [InvoiceController::class, 'downloadAttachment']);
-    Route::get('/projects/{project}/invoices/{invoice}/payment-proof', [InvoiceController::class, 'downloadPaymentProof']);
     Route::get('/projects/{project}/budget', [BudgetController::class, 'index']);
     Route::post('/projects/{project}/budget/entries', [BudgetController::class, 'store']);
     Route::delete('/projects/{project}/budget/entries/{budgetEntry}', [BudgetController::class, 'destroy']);
@@ -175,5 +171,6 @@ Route::middleware('auth')->group(function () {
     Route::put('/projects/{project}/dqe-versions/{dqeVersion}/lines/{dqeLine}', [DqeVersionController::class, 'updateLine']);
     Route::delete('/projects/{project}/dqe-versions/{dqeVersion}/lines/{dqeLine}', [DqeVersionController::class, 'destroyLine']);
     Route::post('/projects/{project}/dqe-versions/{dqeVersion}/duplicate', [DqeVersionController::class, 'duplicate']);
+    Route::patch('/projects/{project}/dqe-versions/{dqeVersion}/transition', [DqeVersionController::class, 'transition']);
     Route::get('/projects/{project}/dqe-versions/{dqeVersion}/pdf', [DqeVersionController::class, 'pdf']);
 });

@@ -13,6 +13,9 @@ class GlobalSupplierController extends Controller
 
     public function index(Request $request): JsonResponse
     {
+        $allowedReadRoles = ['comptable', 'direction', 'directeur-technique', 'metreur-economiste', 'conducteur-travaux'];
+        abort_unless(in_array($request->user()->role->name, $allowedReadRoles), 403, 'Accès aux fournisseurs non autorisé.');
+
         $suppliers = Supplier::where('company_id', $request->user()->company_id)
             ->withCount('invoices')
             ->withSum('invoices', 'amount_ht')
@@ -25,6 +28,14 @@ class GlobalSupplierController extends Controller
 
     public function store(Request $request): JsonResponse
     {
+        abort_unless(
+            in_array($request->user()->role->name, [
+                'moyens-generaux', 'comptable', 'direction', 'directeur-technique'
+            ]),
+            403,
+            'Gestion des fournisseurs non autorisée pour ce rôle.'
+        );
+
         $data = $request->validate([
             'name'            => 'required|string|max:255',
             'category'        => 'required|in:' . implode(',', self::CATEGORIES),
@@ -46,6 +57,9 @@ class GlobalSupplierController extends Controller
 
     public function show(Request $request, Supplier $supplier): JsonResponse
     {
+        $allowedReadRoles = ['comptable', 'direction', 'directeur-technique', 'metreur-economiste', 'conducteur-travaux'];
+        abort_unless(in_array($request->user()->role->name, $allowedReadRoles), 403, 'Accès aux fournisseurs non autorisé.');
+
         abort_if($supplier->company_id !== $request->user()->company_id, 404);
 
         $supplier->loadCount('invoices')
@@ -58,6 +72,13 @@ class GlobalSupplierController extends Controller
     public function update(Request $request, Supplier $supplier): JsonResponse
     {
         abort_if($supplier->company_id !== $request->user()->company_id, 403);
+        abort_unless(
+            in_array($request->user()->role->name, [
+                'moyens-generaux', 'comptable', 'direction', 'directeur-technique'
+            ]),
+            403,
+            'Gestion des fournisseurs non autorisée pour ce rôle.'
+        );
 
         $data = $request->validate([
             'name'            => 'sometimes|required|string|max:255',
@@ -77,6 +98,13 @@ class GlobalSupplierController extends Controller
     public function destroy(Request $request, Supplier $supplier): Response
     {
         abort_if($supplier->company_id !== $request->user()->company_id, 403);
+        abort_unless(
+            in_array($request->user()->role->name, [
+                'moyens-generaux', 'comptable', 'direction', 'directeur-technique'
+            ]),
+            403,
+            'Gestion des fournisseurs non autorisée pour ce rôle.'
+        );
         abort_if($supplier->invoices()->exists(), 422);
 
         $supplier->delete();

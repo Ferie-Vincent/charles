@@ -26,7 +26,10 @@ class DqeVersionController extends Controller
 
     public function store(Request $request, Project $project): JsonResponse
     {
-        $this->authorize('view', $project);
+        $this->authorize('update', $project);
+
+        $allowedRoles = ['direction', 'directeur-technique', 'conducteur-travaux', 'metreur-economiste'];
+        abort_unless(in_array($request->user()->role->name, $allowedRoles), 403, 'Création de DQE réservée aux métreurs et conducteurs de travaux.');
 
         $data = $request->validate([
             'name'  => 'required|string|max:200',
@@ -69,13 +72,17 @@ class DqeVersionController extends Controller
 
     public function update(Request $request, Project $project, DqeVersion $dqeVersion): JsonResponse
     {
-        $this->authorize('view', $project);
+        $this->authorize('update', $project);
         abort_unless($dqeVersion->project_id === $project->id, 404);
+        abort_if(
+            in_array($dqeVersion->status, ['validated', 'archived']),
+            422,
+            'Ce DQE est verrouillé et ne peut plus être modifié.'
+        );
 
         $data = $request->validate([
-            'name'   => 'sometimes|string|max:200',
-            'status' => 'sometimes|in:draft,validated,archived',
-            'notes'  => 'nullable|string',
+            'name'  => 'sometimes|string|max:200',
+            'notes' => 'nullable|string',
         ]);
 
         $dqeVersion->update($data);
@@ -85,8 +92,13 @@ class DqeVersionController extends Controller
 
     public function destroy(Request $request, Project $project, DqeVersion $dqeVersion): JsonResponse
     {
-        $this->authorize('view', $project);
+        $this->authorize('update', $project);
         abort_unless($dqeVersion->project_id === $project->id, 404);
+        abort_if(
+            in_array($dqeVersion->status, ['validated', 'archived']),
+            422,
+            'Ce DQE est verrouillé et ne peut plus être modifié.'
+        );
 
         $dqeVersion->delete();
 
@@ -95,8 +107,13 @@ class DqeVersionController extends Controller
 
     public function storeLine(Request $request, Project $project, DqeVersion $dqeVersion): JsonResponse
     {
-        $this->authorize('view', $project);
+        $this->authorize('update', $project);
         abort_unless($dqeVersion->project_id === $project->id, 404);
+        abort_if(
+            in_array($dqeVersion->status, ['validated', 'archived']),
+            422,
+            'Ce DQE est verrouillé et ne peut plus être modifié.'
+        );
 
         $data = $request->validate([
             'lot'           => 'required|string|max:100',
@@ -119,9 +136,14 @@ class DqeVersionController extends Controller
         DqeVersion $dqeVersion,
         DqeLine $dqeLine,
     ): JsonResponse {
-        $this->authorize('view', $project);
+        $this->authorize('update', $project);
         abort_unless($dqeVersion->project_id === $project->id, 404);
         abort_unless($dqeLine->dqe_version_id === $dqeVersion->id, 404);
+        abort_if(
+            in_array($dqeVersion->status, ['validated', 'archived']),
+            422,
+            'Ce DQE est verrouillé et ne peut plus être modifié.'
+        );
 
         $data = $request->validate([
             'lot'           => 'sometimes|string|max:100',
@@ -144,9 +166,14 @@ class DqeVersionController extends Controller
         DqeVersion $dqeVersion,
         DqeLine $dqeLine,
     ): JsonResponse {
-        $this->authorize('view', $project);
+        $this->authorize('update', $project);
         abort_unless($dqeVersion->project_id === $project->id, 404);
         abort_unless($dqeLine->dqe_version_id === $dqeVersion->id, 404);
+        abort_if(
+            in_array($dqeVersion->status, ['validated', 'archived']),
+            422,
+            'Ce DQE est verrouillé et ne peut plus être modifié.'
+        );
 
         $dqeLine->delete();
         $dqeVersion->recomputeTotal();
@@ -156,8 +183,11 @@ class DqeVersionController extends Controller
 
     public function duplicate(Request $request, Project $project, DqeVersion $dqeVersion): JsonResponse
     {
-        $this->authorize('view', $project);
+        $this->authorize('update', $project);
         abort_unless($dqeVersion->project_id === $project->id, 404);
+
+        $allowedRoles = ['direction', 'directeur-technique', 'conducteur-travaux', 'metreur-economiste'];
+        abort_unless(in_array($request->user()->role->name, $allowedRoles), 403, 'Création de DQE réservée aux métreurs et conducteurs de travaux.');
 
         $next = ($project->dqeVersions()->max('version_number') ?? 0) + 1;
 
@@ -178,6 +208,34 @@ class DqeVersionController extends Controller
         $copy->load('lines');
 
         return response()->json($copy, 201);
+    }
+
+    public function transition(Request $request, Project $project, DqeVersion $dqeVersion): JsonResponse
+    {
+        $this->authorize('update', $project);
+        abort_unless($dqeVersion->project_id === $project->id, 404);
+
+        $data = $request->validate(['status' => 'required|in:validated,archived']);
+
+        $user    = $request->user();
+        $current = $dqeVersion->status;
+        $to      = $data['status'];
+        $role    = $user->role->name;
+
+        $validatorRoles = ['metreur-economiste', 'conducteur-travaux', 'direction', 'directeur-technique'];
+        $archiveRoles   = ['direction', 'directeur-technique'];
+
+        if ($current === 'draft' && $to === 'validated') {
+            abort_unless(in_array($role, $validatorRoles), 403, 'Validation DQE réservée au métreur ou conducteur.');
+        } elseif ($current === 'validated' && $to === 'archived') {
+            abort_unless(in_array($role, $archiveRoles), 403, 'Archivage réservé à la direction.');
+        } else {
+            abort(422, "Transition {$current} → {$to} non autorisée.");
+        }
+
+        $dqeVersion->update(['status' => $to]);
+
+        return response()->json($dqeVersion);
     }
 
     public function pdf(Request $request, Project $project, DqeVersion $dqeVersion): Response

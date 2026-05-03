@@ -29,8 +29,14 @@ class UserController extends Controller
         return response()->json($users);
     }
 
-    public function roles(): JsonResponse
+    public function roles(Request $request): JsonResponse
     {
+        abort_unless(
+            in_array($request->user()->role->name, ['direction', 'directeur-technique']),
+            403,
+            'Accès réservé à la direction.'
+        );
+
         return response()->json(
             Role::orderBy('id')->get(['id', 'name', 'label'])
         );
@@ -67,6 +73,8 @@ class UserController extends Controller
 
     public function update(Request $request, User $user): JsonResponse
     {
+        abort_if($user->company_id !== $request->user()->company_id, 403, 'Accès refusé.');
+
         $this->authorize('update', $user);
 
         $data = $request->validate([
@@ -97,9 +105,20 @@ class UserController extends Controller
         ]);
     }
 
-    public function destroy(User $user): JsonResponse
+    public function destroy(Request $request, User $user): JsonResponse
     {
+        abort_if($user->company_id !== $request->user()->company_id, 403, 'Accès refusé.');
+
         $this->authorize('delete', $user);
+
+        // Prevent deleting the last direction user — company would be left without an admin
+        if ($user->role->name === 'direction') {
+            $directionCount = User::where('company_id', $user->company_id)
+                ->whereHas('role', fn($q) => $q->where('name', 'direction'))
+                ->count();
+            abort_if($directionCount <= 1, 422, 'Impossible de supprimer le dernier utilisateur Direction de la société.');
+        }
+
         $user->delete();
         return response()->json(null, 204);
     }

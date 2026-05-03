@@ -3,10 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\DailyLog;
-use App\Models\GedDocument;
 use App\Models\Project;
 use App\Models\ProjectActivity;
 use App\Services\HealthScoreService;
+use App\Services\ProjectMetricsService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -41,28 +41,25 @@ class DashboardController extends Controller
             ->sortBy('end_date')
             ->values();
 
-        $recentActivities = ProjectActivity::query()
+        $activitiesQuery = ProjectActivity::query()
             ->whereHas('project', fn ($q) => $q->where('company_id', $companyId))
-            ->with(['user:id,name', 'project:id,code,name'])
-            ->latest()
-            ->limit(10)
-            ->get();
+            ->with(['user:id,name', 'project:id,code,name']);
+
+        if (in_array($user->role->name, ['chef-chantier', 'conducteur-travaux'])) {
+            $activitiesQuery->whereHas('project', function ($q) use ($user) {
+                $q->whereHas('members', fn ($m) => $m->where('user_id', $user->id));
+            });
+        }
+
+        $recentActivities = $activitiesQuery->latest()->limit(10)->get();
 
         [$logStats, $latestLog] = $this->fetchLogData($activeProjects);
 
-        $ids      = $activeProjects->pluck('id');
-        $docCounts = $ids->isEmpty() ? collect() : GedDocument::whereIn('project_id', $ids)
-            ->selectRaw('project_id, count(*) as cnt')
-            ->groupBy('project_id')
-            ->pluck('cnt', 'project_id');
-
+        $metricsService = new ProjectMetricsService();
         $activeProjectsWithHealth = $activeProjects->map(
             fn (Project $p) => array_merge(
                 $p->toArray(),
-                [
-                    'health'    => $this->computeHealth($p, $logStats, $latestLog),
-                    'doc_count' => (int) ($docCounts->get($p->id, 0)),
-                ]
+                ['health' => $metricsService->compute($p)]
             )
         )->values();
 
@@ -101,50 +98,6 @@ class DashboardController extends Controller
             ->keyBy('project_id');
 
         return [$logStats, $latestLog];
-    }
-
-    private function computeHealth(Project $project, Collection $logStats, Collection $latestLog): array
-    {
-        $stats         = $logStats->get($project->id);
-        $latest        = $latestLog->get($project->id);
-        $totalLogs     = $stats ? (int) $stats->total_logs : 0;
-        $incidentCount = $stats ? (int) $stats->incident_count : 0;
-        $progress      = $latest ? (float) $latest->progress_percent : 0.0;
-
-        $planningScore = 12;
-        if ($project->start_date && $project->end_date) {
-            $totalDays   = max(1, (int) $project->start_date->diffInDays($project->end_date));
-            $elapsedDays = max(0, (int) $project->start_date->diffInDays(now()));
-            $expectedPct = min(100, ($elapsedDays / $totalDays) * 100);
-            $gap         = $expectedPct - $progress;
-
-            $planningScore = match (true) {
-                $gap <= 0  => 25,
-                $gap <= 10 => 20,
-                $gap <= 20 => 12,
-                $gap <= 35 => 5,
-                default    => 0,
-            };
-        }
-
-        $daysSinceStart  = $project->start_date
-            ? max(1, (int) now()->diffInDays($project->start_date))
-            : 1;
-        $regularityScore = (int) round(min($totalLogs / $daysSinceStart, 1) * 25);
-        $budgetScore     = 25;
-        $safetyScore     = max(0, 25 - $incidentCount * 5);
-
-        $total = $planningScore + $regularityScore + $budgetScore + $safetyScore;
-
-        return [
-            'score'      => $total,
-            'status'     => match (true) { $total >= 75 => 'green', $total >= 50 => 'orange', default => 'red' },
-            'planning'   => $planningScore,
-            'regularity' => $regularityScore,
-            'budget'     => $budgetScore,
-            'safety'     => $safetyScore,
-            'progress'   => $progress,
-        ];
     }
 
     private function buildAlerts(Collection $activeProjects, Collection $logStats, Collection $latestLog): array

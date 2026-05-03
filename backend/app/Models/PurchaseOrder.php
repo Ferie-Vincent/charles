@@ -17,6 +17,8 @@ class PurchaseOrder extends Model
         'delivery_note_path', 'delivery_photos', 'reception_notes', 'received_at',
     ];
 
+    protected $hidden = ['delivery_note_path', 'delivery_photos'];
+
     protected $casts = [
         'items'             => 'array',
         'delivery_photos'   => 'array',

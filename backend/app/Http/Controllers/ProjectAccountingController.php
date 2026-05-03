@@ -27,24 +27,26 @@ class ProjectAccountingController extends Controller
 
         // Depuis factures (nouvelle méthode)
         $factures        = $project->invoices;
-        $realiseFactures = (float) $factures->whereIn('status', ['validee', 'payee'])->sum('amount_ht');
+        $realiseFactures = (float) $factures->where('status', 'payee')->sum('amount_ht');
         $engageFact      = (float) $factures->where('status', 'soumise')->sum('amount_ht');
 
         // Métriques consolidées
-        $realise         = max($paiementBE, $realiseFactures); // take the higher source
+        // FIX M9: use invoices (canonical source) for realise — avoid max() double-counting
+        $realise         = $realiseFactures; // factures WHERE status='payee' — source canonique
         $engage          = max($engagement, $engageFact);
         $rac             = max(0, $budgetRef - $engage - $realise);
         $cat             = $realise + $engage + $rac; // Coût à Terminaison
-        $ecart           = $budgetRef - $cat;
+        // FIX M10: écart BTP standard = budget − réalisé − engagé = reste disponible
+        $ecart           = $budgetRef - $realise - $engage; // positif = disponible, négatif = dépassement
         $tauxRealisation = $budgetRef > 0 ? round($realise / $budgetRef * 100, 1) : 0;
         $tauxEngagement  = $budgetRef > 0 ? round($engage / $budgetRef * 100, 1) : 0;
 
         // Breakdown par catégorie (depuis factures validées)
         $byCategory = $factures
-            ->whereIn('status', ['validee', 'payee', 'soumise'])
+            ->whereIn('status', ['payee', 'soumise'])
             ->groupBy('category')
             ->map(fn($grp) => [
-                'realise' => (float) $grp->whereIn('status', ['validee', 'payee'])->sum('amount_ht'),
+                'realise' => (float) $grp->where('status', 'payee')->sum('amount_ht'),
                 'engage'  => (float) $grp->where('status', 'soumise')->sum('amount_ht'),
                 'count'   => $grp->count(),
             ])
@@ -68,7 +70,7 @@ class ProjectAccountingController extends Controller
         $upcoming = $factures
             ->whereNotIn('status', ['payee', 'disputee'])
             ->where('due_date', '!=', null)
-            ->filter(fn($inv) => $inv->due_date && $inv->due_date->diffInDays(now(), false) < 30)
+            ->filter(fn($inv) => $inv->due_date && $inv->due_date->isFuture() && $inv->due_date->diffInDays(now()) <= 30)
             ->sortBy('due_date')
             ->values();
 

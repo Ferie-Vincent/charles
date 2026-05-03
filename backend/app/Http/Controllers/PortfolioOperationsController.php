@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Project;
 use App\Models\PurchaseOrder;
 use App\Models\StockItem;
-use App\Services\HealthScoreService;
+use App\Services\ProjectMetricsService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -13,10 +13,14 @@ class PortfolioOperationsController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        abort_if($request->user()->role->name === 'chef-chantier', 403, 'Accès refusé.');
+        abort_unless(
+            in_array($request->user()->role->name, ['direction', 'directeur-technique']),
+            403,
+            'Accès réservé à la direction.'
+        );
 
         $companyId = $request->user()->company_id;
-        $svc       = new HealthScoreService();
+        $svc       = new ProjectMetricsService();
 
         $projects = Project::query()
             ->where('company_id', $companyId)
@@ -90,7 +94,7 @@ class PortfolioOperationsController extends Controller
             $budgetRef    = $dqeTotal > 0 ? $dqeTotal : (float) $project->budget_amount;
             $previsionnel += $budgetRef;
             $engage       += (float) $project->budgetEntries->where('type', 'engagement')->sum('amount');
-            $realise      += (float) $project->invoices->whereIn('status', ['validee', 'payee'])->sum('amount_ht');
+            $realise      += (float) $project->invoices->where('status', 'payee')->sum('amount_ht');
         }
 
         return [

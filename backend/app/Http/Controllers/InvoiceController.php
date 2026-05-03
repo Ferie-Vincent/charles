@@ -4,21 +4,23 @@ namespace App\Http\Controllers;
 
 use App\Models\Invoice;
 use App\Models\Project;
+use App\Services\WorkflowService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class InvoiceController extends Controller
 {
-    private const VALIDATOR_ROLES = ['direction', 'directeur-technique'];
-
     public function index(Project $project): JsonResponse
     {
         $this->authorize('view', $project);
 
         $invoices = $project->invoices()
-            ->with('supplier:id,name', 'validator:id,name', 'payer:id,name')
+            ->with('supplier:id,name')
             ->orderByDesc('invoice_date')
             ->get();
 
@@ -28,29 +30,41 @@ class InvoiceController extends Controller
     public function store(Request $request, Project $project): JsonResponse
     {
         $this->authorize('update', $project);
-        abort_unless($request->user()->role->name === 'comptable', 403, 'Seul le comptable peut enregistrer des factures.');
 
         $data = $request->validate([
-            'reference'    => 'required|string|max:100',
-            'category'     => 'required|string|max:100',
-            'amount_ht'    => 'required|numeric|min:0',
-            'amount_ttc'   => 'nullable|numeric|min:0',
-            'invoice_date' => 'required|date',
-            'due_date'     => 'nullable|date',
-            'supplier_id'  => 'nullable|exists:suppliers,id',
-            'note'         => 'nullable|string|max:1000',
-            'attachment'   => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
+            'reference'          => 'required|string|max:100',
+            'category'           => 'required|string|max:100',
+            'amount_ht'          => 'required|numeric|min:0',
+            'vat_rate'           => 'nullable|integer|min:0|max:100',
+            'amount_ttc'         => 'nullable|numeric|min:0',
+            'status'             => 'required|in:brouillon,soumise',
+            'invoice_date'       => 'required|date',
+            'due_date'           => 'nullable|date',
+            'supplier_id'        => ['nullable', Rule::exists('suppliers', 'id')->where('project_id', $project->id)],
+            'purchase_order_id'  => ['nullable', Rule::exists('purchase_orders', 'id')->where('company_id', $project->company_id)],
+            'note'               => 'nullable|string|max:1000',
+            'attachment'         => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
         ]);
 
-        $invoice = $project->invoices()->create([
-            ...collect($data)->except('attachment')->all(),
-            'status'     => 'soumise',
-            'created_by' => $request->user()->id,
-        ]);
+        $vatRate   = $data['vat_rate'] ?? 18;
+        $vatAmount = round($data['amount_ht'] * $vatRate / 100, 2);
 
-        if ($request->hasFile('attachment')) {
-            $this->storeAttachment($request, $invoice);
-        }
+        $invoice = DB::transaction(function () use ($request, $project, $data, $vatRate, $vatAmount) {
+            $inv = $project->invoices()->create([
+                ...collect($data)->except('attachment')->all(),
+                'vat_rate'   => $vatRate,
+                'vat_amount' => $vatAmount,
+                'amount_ttc' => $data['amount_ttc'] ?? round($data['amount_ht'] + $vatAmount, 2),
+                'currency'   => 'XOF',
+                'created_by' => $request->user()->id,
+            ]);
+
+            if ($request->hasFile('attachment')) {
+                $this->storeAttachment($request, $inv);
+            }
+
+            return $inv;
+        });
 
         $invoice->load('supplier:id,name');
 
@@ -60,33 +74,45 @@ class InvoiceController extends Controller
     public function update(Request $request, Project $project, Invoice $invoice): JsonResponse
     {
         $this->authorize('update', $project);
-        abort_unless($request->user()->role->name === 'comptable', 403, 'Seul le comptable peut modifier les factures.');
         abort_if($invoice->project_id !== $project->id, 404);
-        abort_if(
-            in_array($invoice->status, ['validee', 'payee']),
-            422,
-            'Une facture validée ou payée ne peut plus être modifiée.'
-        );
+        abort_if($invoice->status === 'payee', 422, 'Une facture payée ne peut pas être modifiée.');
+        abort_if($invoice->status === 'disputee', 422, 'Une facture en litige ne peut pas être modifiée directement. Utilisez la transition.');
 
         $data = $request->validate([
-            'reference'    => 'sometimes|required|string|max:100',
-            'category'     => 'sometimes|required|string|max:100',
-            'amount_ht'    => 'sometimes|required|numeric|min:0',
-            'amount_ttc'   => 'nullable|numeric|min:0',
-            'invoice_date' => 'sometimes|required|date',
-            'due_date'     => 'nullable|date',
-            'supplier_id'  => 'nullable|exists:suppliers,id',
-            'note'         => 'nullable|string|max:1000',
-            'attachment'   => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
+            'reference'         => 'sometimes|required|string|max:100',
+            'category'          => 'sometimes|required|string|max:100',
+            'amount_ht'         => 'sometimes|required|numeric|min:0',
+            'vat_rate'          => 'nullable|integer|min:0|max:100',
+            'amount_ttc'        => 'nullable|numeric|min:0',
+            'status'            => 'sometimes|required|in:brouillon,soumise',
+            'invoice_date'      => 'sometimes|required|date',
+            'due_date'          => 'nullable|date',
+            'supplier_id'       => ['nullable', Rule::exists('suppliers', 'id')->where('project_id', $project->id)],
+            'purchase_order_id' => ['nullable', Rule::exists('purchase_orders', 'id')->where('company_id', $project->company_id)],
+            'note'              => 'nullable|string|max:1000',
+            'attachment'        => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
         ]);
+
+        // Recalculate TVA if amount_ht or vat_rate changed
+        if (isset($data['amount_ht']) || isset($data['vat_rate'])) {
+            $amountHt  = $data['amount_ht'] ?? $invoice->amount_ht;
+            $vatRate   = $data['vat_rate'] ?? $invoice->vat_rate ?? 18;
+            $vatAmount = round($amountHt * $vatRate / 100, 2);
+            $data['vat_rate']   = $vatRate;
+            $data['vat_amount'] = $vatAmount;
+            if (! isset($data['amount_ttc'])) {
+                $data['amount_ttc'] = round($amountHt + $vatAmount, 2);
+            }
+        }
 
         $invoice->update(collect($data)->except('attachment')->all());
 
         if ($request->hasFile('attachment')) {
-            if ($invoice->attachment_path) {
-                Storage::disk('public')->delete($invoice->attachment_path);
+            $oldPath = $invoice->attachment_path;
+            $this->storeAttachment($request, $invoice); // store new first
+            if ($oldPath) {
+                Storage::disk('public')->delete($oldPath); // delete old only after success
             }
-            $this->storeAttachment($request, $invoice);
         }
 
         $invoice->load('supplier:id,name');
@@ -94,76 +120,12 @@ class InvoiceController extends Controller
         return response()->json($invoice);
     }
 
-    /** Direction / DT uniquement : soumise → validee */
-    public function validate(Request $request, Project $project, Invoice $invoice): JsonResponse
-    {
-        $this->authorize('view', $project);
-        abort_if($invoice->project_id !== $project->id, 404);
-        abort_unless(
-            in_array($request->user()->role->name, self::VALIDATOR_ROLES),
-            403,
-            'Seul le DG ou le DT peut valider une facture.'
-        );
-        abort_if($invoice->status !== 'soumise', 422, 'Seules les factures soumises peuvent être validées.');
-
-        $invoice->update([
-            'status'       => 'validee',
-            'validated_by' => $request->user()->id,
-            'validated_at' => now(),
-        ]);
-
-        $invoice->load('supplier:id,name', 'validator:id,name');
-
-        return response()->json($invoice);
-    }
-
-    /** Comptable uniquement : validee → payee, preuve de paiement obligatoire */
-    public function pay(Request $request, Project $project, Invoice $invoice): JsonResponse
-    {
-        $this->authorize('view', $project);
-        abort_if($invoice->project_id !== $project->id, 404);
-        abort_unless(
-            $request->user()->role->name === 'comptable',
-            403,
-            'Seul le comptable peut enregistrer un paiement.'
-        );
-        abort_if($invoice->status !== 'validee', 422, 'Seules les factures validées peuvent être marquées payées.');
-
-        $request->validate([
-            'paid_date'     => 'required|date',
-            'payment_proof' => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240',
-            'note'          => 'nullable|string|max:500',
-        ]);
-
-        $proof     = $request->file('payment_proof');
-        $proofName = $proof->getClientOriginalName();
-        $proofPath = $proof->storeAs("invoices/{$invoice->id}/payment", $proofName, 'public');
-
-        $invoice->update([
-            'status'             => 'payee',
-            'paid_date'          => $request->paid_date,
-            'paid_by'            => $request->user()->id,
-            'paid_at'            => now(),
-            'payment_proof_path' => $proofPath,
-            'payment_proof_name' => $proofName,
-            'note'               => $request->note ?? $invoice->note,
-        ]);
-
-        $invoice->load('supplier:id,name', 'validator:id,name', 'payer:id,name');
-
-        return response()->json($invoice);
-    }
-
     public function destroy(Project $project, Invoice $invoice): Response
     {
         $this->authorize('update', $project);
-        abort_unless(auth()->user()->role->name === 'comptable', 403, 'Seul le comptable peut supprimer les factures.');
         abort_if($invoice->project_id !== $project->id, 404);
-        abort_if(
-            in_array($invoice->status, ['validee', 'payee']),
-            422,
-            'Impossible de supprimer une facture validée ou payée.'
-        );
+        abort_if($invoice->status === 'payee', 422, 'Une facture payée ne peut pas être supprimée.');
+        abort_if($invoice->status === 'disputee', 422, 'Résolvez le litige avant de supprimer cette facture.');
 
         if ($invoice->attachment_path) {
             Storage::disk('public')->delete($invoice->attachment_path);
@@ -171,6 +133,68 @@ class InvoiceController extends Controller
 
         $invoice->delete();
         return response()->noContent();
+    }
+
+    public function transition(Request $request, Project $project, Invoice $invoice): JsonResponse
+    {
+        $this->authorize('update', $project);
+        abort_if($invoice->project_id !== $project->id, 404);
+
+        $data = $request->validate([
+            'status' => 'required|in:soumise,validee,disputee',
+        ]);
+
+        try {
+            app(WorkflowService::class)->transitionInvoice($invoice, $data['status'], $request->user());
+        } catch (\InvalidArgumentException $e) {
+            abort(422, $e->getMessage());
+        } catch (\RuntimeException $e) {
+            abort(403, $e->getMessage());
+        }
+
+        $invoice->load('supplier:id,name');
+
+        return response()->json($invoice);
+    }
+
+    public function pay(Request $request, Project $project, Invoice $invoice): JsonResponse
+    {
+        $this->authorize('update', $project);
+        abort_if($invoice->project_id !== $project->id, 404);
+        abort_unless(
+            $request->user()->role->name === 'comptable',
+            403,
+            'Paiement réservé au comptable.'
+        );
+        abort_unless($invoice->status === 'validee', 422, 'Seule une facture validée peut être payée.');
+        abort_unless($invoice->attachment_path, 422, 'La facture doit avoir une pièce jointe avant d\'être payée.');
+        abort_unless($invoice->purchase_order_id, 422, 'La facture doit être liée à un bon de commande avant d\'être payée.');
+
+        $data = $request->validate([
+            'paid_date'     => 'required|date',
+            'payment_proof' => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240',
+        ]);
+
+        $file      = $request->file('payment_proof');
+        $extension = strtolower($file->getClientOriginalExtension());
+        $allowedExtensions = ['pdf', 'jpg', 'jpeg', 'png'];
+        if (!in_array($extension, $allowedExtensions)) {
+            abort(422, 'Type de fichier non autorisé.');
+        }
+        $safeName  = now()->format('YmdHis') . '_' . Str::uuid() . '.' . $extension;
+        $path      = $file->storeAs("invoices/{$invoice->id}/proof", $safeName, 'public');
+
+        $invoice->update([
+            'status'              => 'payee',
+            'paid_by'             => $request->user()->id,
+            'paid_at'             => now(),
+            'paid_date'           => $data['paid_date'],
+            'payment_proof_path'  => $path,
+            'payment_proof_name'  => $file->getClientOriginalName(),
+        ]);
+        $invoice->load('supplier:id,name');
+
+        return response()->json($invoice);
     }
 
     public function downloadAttachment(Project $project, Invoice $invoice): \Symfony\Component\HttpFoundation\StreamedResponse
@@ -184,22 +208,17 @@ class InvoiceController extends Controller
         );
     }
 
-    public function downloadPaymentProof(Project $project, Invoice $invoice): \Symfony\Component\HttpFoundation\StreamedResponse
-    {
-        $this->authorize('view', $project);
-        abort_if($invoice->project_id !== $project->id || !$invoice->payment_proof_path, 404);
-
-        return Storage::disk('public')->download(
-            $invoice->payment_proof_path,
-            $invoice->payment_proof_name ?? 'preuve-paiement'
-        );
-    }
-
     private function storeAttachment(Request $request, Invoice $invoice): void
     {
-        $file = $request->file('attachment');
-        $name = $file->getClientOriginalName();
-        $path = $file->storeAs("invoices/{$invoice->id}", $name, 'public');
+        $file      = $request->file('attachment');
+        $name      = $file->getClientOriginalName();
+        $extension = strtolower($file->getClientOriginalExtension());
+        $allowedExtensions = ['pdf', 'jpg', 'jpeg', 'png'];
+        if (!in_array($extension, $allowedExtensions)) {
+            abort(422, 'Type de fichier non autorisé.');
+        }
+        $safeName = now()->format('YmdHis') . '_' . Str::uuid() . '.' . $extension;
+        $path     = $file->storeAs("invoices/{$invoice->id}", $safeName, 'public');
 
         $invoice->update(['attachment_path' => $path, 'attachment_name' => $name]);
     }

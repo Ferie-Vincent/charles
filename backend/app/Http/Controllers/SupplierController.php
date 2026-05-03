@@ -70,6 +70,12 @@ class SupplierController extends Controller
     {
         $this->authorize('update', $project);
         abort_if($supplier->project_id !== $project->id, 404);
+
+        $hasFinalisedInvoices = $supplier->invoices()
+            ->whereIn('status', ['validee', 'payee'])
+            ->exists();
+        abort_if($hasFinalisedInvoices, 422, 'Ce fournisseur a des factures validées ou payées. Archivez-les avant de supprimer le fournisseur.');
+
         $supplier->delete();
         return response()->noContent();
     }

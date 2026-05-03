@@ -7,6 +7,7 @@ use App\Models\Project;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Validation\Rule;
 
 class SituationTravauxController extends Controller
 {
@@ -14,9 +15,12 @@ class SituationTravauxController extends Controller
     {
         $this->authorize('view', $project);
 
+        $allowedRoles = ['direction', 'directeur-technique', 'conducteur-travaux', 'metreur-economiste'];
+        abort_unless(in_array($request->user()->role->name, $allowedRoles), 403, 'Génération de situation de travaux non autorisée pour ce rôle.');
+
         $data = $request->validate([
             'periode'        => ['required', 'string', 'regex:/^\d{4}-\d{2}$/'],
-            'dqe_version_id' => ['nullable', 'integer', 'exists:dqe_versions,id'],
+            'dqe_version_id' => ['nullable', 'integer', Rule::exists('dqe_versions', 'id')->where('project_id', $project->id)],
             'avancement'     => ['nullable', 'numeric', 'min:0', 'max:100'],
         ]);
 
@@ -35,6 +39,14 @@ class SituationTravauxController extends Controller
         if (! $dqeVersion) {
             return response()->json(['error' => 'Aucun DQE validé trouvé pour ce chantier.'], 422);
         }
+
+        abort_if($dqeVersion->project_id !== $project->id, 403);
+
+        abort_if(
+            $dqeVersion->status !== 'validated',
+            422,
+            'La situation ne peut être générée qu\'à partir d\'un DQE validé (statut actuel : ' . $dqeVersion->status . ').'
+        );
 
         // Gather project context
         $avancement      = $data['avancement'] ?? $project->progress_percent ?? 0;

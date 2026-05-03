@@ -8,18 +8,20 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Invoice extends Model
 {
     protected $fillable = [
-        'project_id', 'supplier_id', 'created_by',
-        'reference', 'category', 'amount_ht', 'amount_ttc',
+        'project_id', 'supplier_id', 'purchase_order_id', 'created_by',
+        'reference', 'category', 'amount_ht', 'amount_ttc', 'vat_rate', 'vat_amount', 'currency',
         'status', 'invoice_date', 'due_date', 'paid_date', 'note',
         'attachment_path', 'attachment_name',
-        'validated_by', 'validated_at',
-        'paid_by', 'paid_at',
-        'payment_proof_path', 'payment_proof_name',
+        'validated_by', 'validated_at', 'paid_by', 'paid_at', 'payment_proof_path', 'payment_proof_name',
     ];
+
+    protected $hidden = ['attachment_path', 'payment_proof_path'];
 
     protected $casts = [
         'amount_ht'    => 'float',
         'amount_ttc'   => 'float',
+        'vat_rate'     => 'integer',
+        'vat_amount'   => 'float',
         'invoice_date' => 'date',
         'due_date'     => 'date',
         'paid_date'    => 'date',
@@ -40,15 +42,5 @@ class Invoice extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
-    }
-
-    public function validator(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'validated_by');
-    }
-
-    public function payer(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'paid_by');
     }
 }

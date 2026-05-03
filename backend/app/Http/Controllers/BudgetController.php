@@ -39,7 +39,6 @@ class BudgetController extends Controller
     public function store(Request $request, Project $project): JsonResponse
     {
         $this->authorize('update', $project);
-        abort_unless($request->user()->role->name === 'comptable', 403, 'Seul le comptable peut enregistrer des entrées budgétaires.');
 
         $data = $request->validate([
             'type'       => 'required|in:previsionnel,engagement,paiement',
@@ -61,7 +60,11 @@ class BudgetController extends Controller
     public function destroy(Project $project, BudgetEntry $budgetEntry): Response
     {
         $this->authorize('update', $project);
-        abort_unless(auth()->user()->role->name === 'comptable', 403, 'Seul le comptable peut supprimer des entrées budgétaires.');
+        abort_if($budgetEntry->project_id !== $project->id, 404);
+
+        $linkedDemande = \App\Models\DemandeBesoin::where('budget_entry_id', $budgetEntry->id)->exists();
+        abort_if($linkedDemande, 422, 'Cette entrée budgétaire est liée à une demande de besoin. Supprimez la demande d\'abord.');
+
         $budgetEntry->delete();
         return response()->noContent();
     }

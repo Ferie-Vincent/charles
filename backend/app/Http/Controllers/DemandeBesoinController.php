@@ -6,6 +6,8 @@ use App\Models\BudgetEntry;
 use App\Models\DemandeBesoin;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class DemandeBesoinController extends Controller
 {
@@ -48,7 +50,10 @@ class DemandeBesoinController extends Controller
         abort_unless(in_array($user->role->name, [...self::TERRAIN, ...self::DIRECTION]), 403);
 
         $data = $request->validate([
-            'project_id'     => 'required|exists:projects,id',
+            'project_id'     => [
+                'required',
+                Rule::exists('projects', 'id')->where('company_id', $request->user()->company_id),
+            ],
             'title'          => 'required|string|max:255',
             'description'    => 'nullable|string',
             'category'       => 'required|in:materiaux,equipement,sous-traitance,main-oeuvre,autre',
@@ -72,6 +77,7 @@ class DemandeBesoinController extends Controller
     public function approve(Request $request, DemandeBesoin $demande): JsonResponse
     {
         $user = $request->user();
+        abort_if($demande->company_id !== $user->company_id, 403);
         abort_unless(in_array($user->role->name, self::DIRECTION), 403);
         abort_unless($demande->status === 'soumis', 422);
 
@@ -87,6 +93,7 @@ class DemandeBesoinController extends Controller
     public function reject(Request $request, DemandeBesoin $demande): JsonResponse
     {
         $user = $request->user();
+        abort_if($demande->company_id !== $user->company_id, 403);
         abort_unless(in_array($user->role->name, self::DIRECTION), 403);
         abort_unless($demande->status === 'soumis', 422);
 
@@ -105,6 +112,7 @@ class DemandeBesoinController extends Controller
     public function prepare(Request $request, DemandeBesoin $demande): JsonResponse
     {
         $user = $request->user();
+        abort_if($demande->company_id !== $user->company_id, 403);
         abort_unless(in_array($user->role->name, [...self::LOGISTIQUE, ...self::DIRECTION]), 403);
         abort_unless($demande->status === 'approuve', 422);
 
@@ -120,12 +128,14 @@ class DemandeBesoinController extends Controller
     public function deliver(Request $request, DemandeBesoin $demande): JsonResponse
     {
         $user = $request->user();
+        abort_if($demande->company_id !== $user->company_id, 403);
         abort_unless(in_array($user->role->name, [...self::LOGISTIQUE, ...self::DIRECTION]), 403);
         abort_unless($demande->status === 'en_preparation', 422);
 
         $demande->update([
             'status'       => 'livre',
             'delivered_at' => now(),
+            'delivered_by' => $user->id,
         ]);
 
         return response()->json(['data' => $demande->fresh()]);
@@ -134,6 +144,7 @@ class DemandeBesoinController extends Controller
     public function record(Request $request, DemandeBesoin $demande): JsonResponse
     {
         $user = $request->user();
+        abort_if($demande->company_id !== $user->company_id, 403);
         abort_unless(in_array($user->role->name, [...self::COMPTABLE, ...self::DIRECTION]), 403);
         abort_unless($demande->status === 'livre', 422);
 
@@ -145,28 +156,37 @@ class DemandeBesoinController extends Controller
             'equipement'     => 'Équipements',
             'sous-traitance' => 'Sous-traitance',
             'main-oeuvre'    => "Main d'œuvre",
-            'autre'          => 'Installation',
+            'autre'          => 'Matériaux',
         ];
 
-        $entry = BudgetEntry::create([
-            'project_id'  => $demande->project_id,
-            'created_by'  => $user->id,
-            'type'        => 'paiement',
-            'category'    => $categoryMap[$demande->category] ?? 'Matériaux',
-            'label'       => $demande->title,
-            'amount'      => $request->actual_cost,
-            'entry_date'  => now()->toDateString(),
-            'note'        => "Demande de besoin #" . $demande->id . ($demande->notes ? ' — ' . $demande->notes : ''),
-        ]);
+        $actualCost = $request->actual_cost;
 
-        $demande->update([
-            'status'         => 'comptabilise',
-            'actual_cost'    => $request->actual_cost,
-            'recorded_by'    => $user->id,
-            'recorded_at'    => now(),
-            'budget_entry_id' => $entry->id,
-        ]);
+        $result = DB::transaction(function () use ($demande, $user, $categoryMap, $actualCost) {
+            $locked = DemandeBesoin::where('id', $demande->id)->lockForUpdate()->first();
+            abort_unless($locked->status === 'livre', 422, "Cette demande n'est pas dans l'état livré.");
 
-        return response()->json(['data' => $demande->fresh(), 'budget_entry' => $entry]);
+            $entry = BudgetEntry::create([
+                'project_id'  => $locked->project_id,
+                'created_by'  => $user->id,
+                'type'        => 'paiement',
+                'category'    => $categoryMap[$locked->category] ?? 'Matériaux',
+                'label'       => $locked->title,
+                'amount'      => $actualCost,
+                'entry_date'  => now()->toDateString(),
+                'note'        => "Demande de besoin #" . $locked->id . ($locked->notes ? ' — ' . $locked->notes : ''),
+            ]);
+
+            $locked->update([
+                'status'          => 'comptabilise',
+                'actual_cost'     => $actualCost,
+                'recorded_by'     => $user->id,
+                'recorded_at'     => now(),
+                'budget_entry_id' => $entry->id,
+            ]);
+
+            return ['demande' => $locked, 'entry' => $entry];
+        });
+
+        return response()->json(['data' => $result['demande']->fresh(), 'budget_entry' => $result['entry']]);
     }
 }
