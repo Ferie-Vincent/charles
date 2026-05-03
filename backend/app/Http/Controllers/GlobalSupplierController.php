@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Supplier;
+use App\Support\Roles;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -29,9 +30,7 @@ class GlobalSupplierController extends Controller
     public function store(Request $request): JsonResponse
     {
         abort_unless(
-            in_array($request->user()->role->name, [
-                'moyens-generaux', 'comptable', 'direction', 'directeur-technique'
-            ]),
+            in_array($request->user()->role->name, [...Roles::LOGISTICS, ...Roles::FINANCE]),
             403,
             'Gestion des fournisseurs non autorisée pour ce rôle.'
         );
@@ -73,9 +72,7 @@ class GlobalSupplierController extends Controller
     {
         abort_if($supplier->company_id !== $request->user()->company_id, 403);
         abort_unless(
-            in_array($request->user()->role->name, [
-                'moyens-generaux', 'comptable', 'direction', 'directeur-technique'
-            ]),
+            in_array($request->user()->role->name, [...Roles::LOGISTICS, ...Roles::FINANCE]),
             403,
             'Gestion des fournisseurs non autorisée pour ce rôle.'
         );
@@ -99,9 +96,7 @@ class GlobalSupplierController extends Controller
     {
         abort_if($supplier->company_id !== $request->user()->company_id, 403);
         abort_unless(
-            in_array($request->user()->role->name, [
-                'moyens-generaux', 'comptable', 'direction', 'directeur-technique'
-            ]),
+            in_array($request->user()->role->name, [...Roles::LOGISTICS, ...Roles::FINANCE]),
             403,
             'Gestion des fournisseurs non autorisée pour ce rôle.'
         );

@@ -7,6 +7,7 @@ use App\Models\Project;
 use App\Models\ProjectActivity;
 use App\Services\HealthScoreService;
 use App\Services\ProjectMetricsService;
+use App\Support\Roles;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -21,7 +22,7 @@ class DashboardController extends Controller
             ->select(['id','company_id','name','code','status','budget_amount','start_date','end_date','location','latitude','longitude'])
             ->where('company_id', $companyId);
 
-        if (in_array($user->role->name, ['chef-chantier', 'conducteur-travaux'])) {
+        if (in_array($user->role->name, Roles::TERRAIN)) {
             $query->whereHas('members', fn ($q) => $q->where('user_id', $user->id));
         }
 
@@ -45,7 +46,7 @@ class DashboardController extends Controller
             ->whereHas('project', fn ($q) => $q->where('company_id', $companyId))
             ->with(['user:id,name', 'project:id,code,name']);
 
-        if (in_array($user->role->name, ['chef-chantier', 'conducteur-travaux'])) {
+        if (in_array($user->role->name, Roles::TERRAIN)) {
             $activitiesQuery->whereHas('project', function ($q) use ($user) {
                 $q->whereHas('members', fn ($m) => $m->where('user_id', $user->id));
             });

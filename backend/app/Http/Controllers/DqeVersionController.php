@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\DqeLine;
 use App\Models\DqeVersion;
 use App\Models\Project;
+use App\Support\Roles;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -28,8 +29,7 @@ class DqeVersionController extends Controller
     {
         $this->authorize('update', $project);
 
-        $allowedRoles = ['direction', 'directeur-technique', 'conducteur-travaux', 'metreur-economiste'];
-        abort_unless(in_array($request->user()->role->name, $allowedRoles), 403, 'Création de DQE réservée aux métreurs et conducteurs de travaux.');
+        abort_unless(in_array($request->user()->role->name, Roles::DQE_VIEWERS), 403, 'Création de DQE réservée aux métreurs et conducteurs de travaux.');
 
         $data = $request->validate([
             'name'  => 'required|string|max:200',
@@ -75,7 +75,7 @@ class DqeVersionController extends Controller
         $this->authorize('update', $project);
         abort_unless($dqeVersion->project_id === $project->id, 404);
         abort_if(
-            in_array($dqeVersion->status, ['validated', 'archived']),
+            in_array($dqeVersion->status, ['soumise', 'validated', 'archived']),
             422,
             'Ce DQE est verrouillé et ne peut plus être modifié.'
         );
@@ -95,7 +95,7 @@ class DqeVersionController extends Controller
         $this->authorize('update', $project);
         abort_unless($dqeVersion->project_id === $project->id, 404);
         abort_if(
-            in_array($dqeVersion->status, ['validated', 'archived']),
+            in_array($dqeVersion->status, ['soumise', 'validated', 'archived']),
             422,
             'Ce DQE est verrouillé et ne peut plus être modifié.'
         );
@@ -110,7 +110,7 @@ class DqeVersionController extends Controller
         $this->authorize('update', $project);
         abort_unless($dqeVersion->project_id === $project->id, 404);
         abort_if(
-            in_array($dqeVersion->status, ['validated', 'archived']),
+            in_array($dqeVersion->status, ['soumise', 'validated', 'archived']),
             422,
             'Ce DQE est verrouillé et ne peut plus être modifié.'
         );
@@ -140,7 +140,7 @@ class DqeVersionController extends Controller
         abort_unless($dqeVersion->project_id === $project->id, 404);
         abort_unless($dqeLine->dqe_version_id === $dqeVersion->id, 404);
         abort_if(
-            in_array($dqeVersion->status, ['validated', 'archived']),
+            in_array($dqeVersion->status, ['soumise', 'validated', 'archived']),
             422,
             'Ce DQE est verrouillé et ne peut plus être modifié.'
         );
@@ -170,7 +170,7 @@ class DqeVersionController extends Controller
         abort_unless($dqeVersion->project_id === $project->id, 404);
         abort_unless($dqeLine->dqe_version_id === $dqeVersion->id, 404);
         abort_if(
-            in_array($dqeVersion->status, ['validated', 'archived']),
+            in_array($dqeVersion->status, ['soumise', 'validated', 'archived']),
             422,
             'Ce DQE est verrouillé et ne peut plus être modifié.'
         );
@@ -186,8 +186,7 @@ class DqeVersionController extends Controller
         $this->authorize('update', $project);
         abort_unless($dqeVersion->project_id === $project->id, 404);
 
-        $allowedRoles = ['direction', 'directeur-technique', 'conducteur-travaux', 'metreur-economiste'];
-        abort_unless(in_array($request->user()->role->name, $allowedRoles), 403, 'Création de DQE réservée aux métreurs et conducteurs de travaux.');
+        abort_unless(in_array($request->user()->role->name, Roles::DQE_VIEWERS), 403, 'Création de DQE réservée aux métreurs et conducteurs de travaux.');
 
         $next = ($project->dqeVersions()->max('version_number') ?? 0) + 1;
 
@@ -215,19 +214,27 @@ class DqeVersionController extends Controller
         $this->authorize('update', $project);
         abort_unless($dqeVersion->project_id === $project->id, 404);
 
-        $data = $request->validate(['status' => 'required|in:validated,archived']);
+        $data = $request->validate(['status' => 'required|in:soumise,validated,archived,draft']);
 
         $user    = $request->user();
         $current = $dqeVersion->status;
         $to      = $data['status'];
         $role    = $user->role->name;
 
-        $validatorRoles = ['metreur-economiste', 'conducteur-travaux', 'direction', 'directeur-technique'];
-        $archiveRoles   = ['direction', 'directeur-technique'];
+        $submitRoles  = Roles::DQE_SUBMITTERS;
+        $dgRoles      = ['direction'];
+        $archiveRoles = Roles::MANAGEMENT;
 
-        if ($current === 'draft' && $to === 'validated') {
-            abort_unless(in_array($role, $validatorRoles), 403, 'Validation DQE réservée au métreur ou conducteur.');
-        } elseif ($current === 'validated' && $to === 'archived') {
+        if ($current === 'draft' && $to === 'soumise') {
+            abort_unless(in_array($role, $submitRoles), 403, 'Soumission DQE réservée au DT, conducteur ou métreur.');
+        } elseif ($current === 'draft' && $to === 'validated') {
+            // DG peut valider directement (ex: DQE qu'il a créé lui-même)
+            abort_unless(in_array($role, $dgRoles), 403, 'Validation directe réservée au Directeur Général.');
+        } elseif ($current === 'soumise' && $to === 'validated') {
+            abort_unless(in_array($role, $dgRoles), 403, 'Validation DQE réservée au Directeur Général.');
+        } elseif ($current === 'soumise' && $to === 'draft') {
+            abort_unless(in_array($role, $dgRoles), 403, 'Rejet DQE réservé au Directeur Général.');
+        } elseif (in_array($current, ['draft', 'soumise', 'validated']) && $to === 'archived') {
             abort_unless(in_array($role, $archiveRoles), 403, 'Archivage réservé à la direction.');
         } else {
             abort(422, "Transition {$current} → {$to} non autorisée.");

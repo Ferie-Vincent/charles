@@ -8,6 +8,7 @@ use App\Models\Project;
 use App\Models\PurchaseOrder;
 use App\Models\StockItem;
 use App\Services\ProjectMetricsService;
+use App\Support\Roles;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -16,7 +17,7 @@ class PortfolioOperationsController extends Controller
     public function index(Request $request): JsonResponse
     {
         abort_unless(
-            in_array($request->user()->role->name, ['direction', 'directeur-technique']),
+            in_array($request->user()->role->name, Roles::MANAGEMENT),
             403,
             'Accès réservé à la direction.'
         );

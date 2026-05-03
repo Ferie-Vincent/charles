@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\BudgetEntry;
 use App\Models\DemandeBesoin;
+use App\Support\Roles;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -11,11 +12,6 @@ use Illuminate\Validation\Rule;
 
 class DemandeBesoinController extends Controller
 {
-    private const TERRAIN   = ['chef-chantier', 'conducteur-travaux'];
-    private const DIRECTION = ['direction', 'directeur-technique'];
-    private const LOGISTIQUE = ['moyens-generaux'];
-    private const COMPTABLE = ['comptable'];
-
     public function index(Request $request): JsonResponse
     {
         $user  = $request->user();
@@ -28,15 +24,15 @@ class DemandeBesoinController extends Controller
             ->latest();
 
         // Terrain: only their own requests on their projects
-        if (in_array($role, self::TERRAIN)) {
+        if (in_array($role, Roles::TERRAIN)) {
             $query->where('requested_by', $user->id);
         }
         // Logistique: only approved/en_preparation
-        elseif (in_array($role, self::LOGISTIQUE)) {
+        elseif (in_array($role, Roles::LOGISTICS)) {
             $query->whereIn('status', ['approuve', 'en_preparation', 'livre', 'comptabilise']);
         }
         // Comptable: only livré (ready to record)
-        elseif (in_array($role, self::COMPTABLE)) {
+        elseif ($role === 'comptable') {
             $query->whereIn('status', ['livre', 'comptabilise']);
         }
         // Direction + metreur: all
@@ -47,7 +43,7 @@ class DemandeBesoinController extends Controller
     public function store(Request $request): JsonResponse
     {
         $user = $request->user();
-        abort_unless(in_array($user->role->name, [...self::TERRAIN, ...self::DIRECTION]), 403);
+        abort_unless(in_array($user->role->name, [...Roles::TERRAIN, ...Roles::MANAGEMENT]), 403);
 
         $data = $request->validate([
             'project_id'     => [
@@ -78,7 +74,7 @@ class DemandeBesoinController extends Controller
     {
         $user = $request->user();
         abort_if($demande->company_id !== $user->company_id, 403);
-        abort_unless(in_array($user->role->name, self::DIRECTION), 403);
+        abort_unless(in_array($user->role->name, Roles::MANAGEMENT), 403);
         abort_unless($demande->status === 'soumis', 422);
 
         $demande->update([
@@ -87,14 +83,51 @@ class DemandeBesoinController extends Controller
             'approved_at' => now(),
         ]);
 
-        return response()->json(['data' => $demande->fresh()]);
+        // Calcul avertissement budget (non bloquant)
+        $budgetWarning = null;
+        $project       = $demande->project;
+
+        if ($project && $demande->estimated_cost > 0) {
+            $budgetRef = (float) ($project->dqeVersions()
+                ->where('status', 'validated')
+                ->orderByDesc('version_number')
+                ->value('total_ht') ?? $project->budget_amount ?? 0);
+
+            if ($budgetRef > 0) {
+                $engagedDemandes = DemandeBesoin::where('project_id', $project->id)
+                    ->whereIn('status', ['approuve', 'en_preparation', 'livre', 'comptabilise'])
+                    ->where('id', '!=', $demande->id)
+                    ->sum('estimated_cost');
+
+                $engagedInvoices = $project->invoices()
+                    ->whereIn('status', ['validee', 'payee'])
+                    ->sum('amount_ht');
+
+                $disponible = $budgetRef - $engagedDemandes - $engagedInvoices;
+
+                if ($demande->estimated_cost > $disponible) {
+                    $budgetWarning = [
+                        'budget_ref'  => round($budgetRef, 2),
+                        'engage'      => round($engagedDemandes + $engagedInvoices, 2),
+                        'disponible'  => round($disponible, 2),
+                        'demande'     => round($demande->estimated_cost, 2),
+                        'depassement' => round($demande->estimated_cost - $disponible, 2),
+                    ];
+                }
+            }
+        }
+
+        return response()->json([
+            'data'           => $demande->fresh(),
+            'budget_warning' => $budgetWarning,
+        ]);
     }
 
     public function reject(Request $request, DemandeBesoin $demande): JsonResponse
     {
         $user = $request->user();
         abort_if($demande->company_id !== $user->company_id, 403);
-        abort_unless(in_array($user->role->name, self::DIRECTION), 403);
+        abort_unless(in_array($user->role->name, Roles::MANAGEMENT), 403);
         abort_unless($demande->status === 'soumis', 422);
 
         $request->validate(['reason' => 'required|string']);
@@ -109,11 +142,36 @@ class DemandeBesoinController extends Controller
         return response()->json(['data' => $demande->fresh()]);
     }
 
+    public function resubmit(Request $request, DemandeBesoin $demande): JsonResponse
+    {
+        $user = $request->user();
+        abort_if($demande->company_id !== $user->company_id, 403);
+        abort_unless($demande->status === 'rejete', 422, 'Seule une demande rejetée peut être resoumise.');
+
+        $isCreator   = $demande->requested_by === $user->id;
+        $isDirection = in_array($user->role->name, Roles::MANAGEMENT, true);
+        abort_unless($isCreator || $isDirection, 403, 'Seul le demandeur ou la direction peut resoumettre.');
+
+        $data = $request->validate(['correction_note' => 'nullable|string|max:500']);
+
+        $demande->update([
+            'status'           => 'soumis',
+            'approved_by'      => null,
+            'approved_at'      => null,
+            'rejection_reason' => null,
+            'notes'            => isset($data['correction_note']) && $data['correction_note']
+                ? ($demande->notes ? $demande->notes . "\n[Correction] " . $data['correction_note'] : $data['correction_note'])
+                : $demande->notes,
+        ]);
+
+        return response()->json(['data' => $demande->fresh(['project:id,name,code', 'requester:id,name'])]);
+    }
+
     public function prepare(Request $request, DemandeBesoin $demande): JsonResponse
     {
         $user = $request->user();
         abort_if($demande->company_id !== $user->company_id, 403);
-        abort_unless(in_array($user->role->name, [...self::LOGISTIQUE, ...self::DIRECTION]), 403);
+        abort_unless(in_array($user->role->name, [...Roles::LOGISTICS, ...Roles::MANAGEMENT]), 403);
         abort_unless($demande->status === 'approuve', 422);
 
         $demande->update([
@@ -129,7 +187,7 @@ class DemandeBesoinController extends Controller
     {
         $user = $request->user();
         abort_if($demande->company_id !== $user->company_id, 403);
-        abort_unless(in_array($user->role->name, [...self::LOGISTIQUE, ...self::DIRECTION]), 403);
+        abort_unless(in_array($user->role->name, [...Roles::LOGISTICS, ...Roles::MANAGEMENT]), 403);
         abort_unless($demande->status === 'en_preparation', 422);
 
         $demande->update([
@@ -145,7 +203,7 @@ class DemandeBesoinController extends Controller
     {
         $user = $request->user();
         abort_if($demande->company_id !== $user->company_id, 403);
-        abort_unless(in_array($user->role->name, [...self::COMPTABLE, ...self::DIRECTION]), 403);
+        abort_unless(in_array($user->role->name, Roles::FINANCE), 403);
         abort_unless($demande->status === 'livre', 422);
 
         $request->validate(['actual_cost' => 'required|numeric|min:0']);

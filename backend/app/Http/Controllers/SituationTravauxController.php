@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\DqeVersion;
 use App\Models\Project;
+use App\Support\Roles;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -15,8 +16,7 @@ class SituationTravauxController extends Controller
     {
         $this->authorize('view', $project);
 
-        $allowedRoles = ['direction', 'directeur-technique', 'conducteur-travaux', 'metreur-economiste'];
-        abort_unless(in_array($request->user()->role->name, $allowedRoles), 403, 'Génération de situation de travaux non autorisée pour ce rôle.');
+        abort_unless(in_array($request->user()->role->name, Roles::DQE_VIEWERS), 403, 'Génération de situation de travaux non autorisée pour ce rôle.');
 
         $data = $request->validate([
             'periode'        => ['required', 'string', 'regex:/^\d{4}-\d{2}$/'],

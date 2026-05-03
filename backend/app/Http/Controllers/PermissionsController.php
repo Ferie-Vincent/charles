@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Role;
 use App\Models\RolePermission;
+use App\Support\Roles;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -12,7 +13,6 @@ class PermissionsController extends Controller
     private const FEATURES = ['projects', 'map', 'timeline', 'dqe', 'execution', 'costs', 'accounting', 'qse', 'reporting', 'achats', 'stocks', 'suppliers', 'besoins', 'ged'];
 
     // Roles direction/directeur-technique always have full access — not configurable
-    private const LOCKED_ROLES = ['direction', 'directeur-technique'];
 
     public function index(Request $request): JsonResponse
     {
@@ -25,7 +25,7 @@ class PermissionsController extends Controller
             ->where('company_id', $companyId)
             ->get();
 
-        $roles = Role::whereNotIn('name', self::LOCKED_ROLES)->orderBy('id')->get();
+        $roles = Role::whereNotIn('name', Roles::LOCKED)->orderBy('id')->get();
 
         $matrix = [];
         foreach ($roles as $role) {

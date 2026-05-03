@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\PurchaseOrder;
+use App\Support\Roles;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -12,8 +13,6 @@ use Illuminate\Validation\Rule;
 
 class PurchaseOrderController extends Controller
 {
-    private const APPROVER_ROLES = ['direction', 'directeur-technique'];
-
     public function index(Request $request): JsonResponse
     {
         $user  = $request->user();
@@ -23,7 +22,7 @@ class PurchaseOrderController extends Controller
 
         // FIX H10: terrain roles only see BDCs linked to their own projects
         $role = $user->role->name;
-        if (in_array($role, ['chef-chantier', 'conducteur-travaux'])) {
+        if (in_array($role, Roles::TERRAIN)) {
             $query->whereHas('project', function ($q) use ($user) {
                 $q->whereHas('members', function ($q2) use ($user) {
                     $q2->where('user_id', $user->id);
@@ -39,10 +38,7 @@ class PurchaseOrderController extends Controller
         $user = $request->user();
 
         abort_unless(
-            in_array($user->role->name, [
-                'conducteur-travaux', 'chef-chantier', 'metreur-economiste',
-                'moyens-generaux', 'direction', 'directeur-technique',
-            ]),
+            in_array($user->role->name, Roles::BDC_CREATORS),
             403,
             'Création de BDC non autorisée pour ce rôle.'
         );
@@ -98,20 +94,16 @@ class PurchaseOrderController extends Controller
         abort_if(!in_array($purchaseOrder->status, ['brouillon', 'soumis']), 422, 'Seuls les BDC brouillon ou soumis peuvent être modifiés.');
 
         $user = $request->user();
-
         $role = $user->role->name;
 
         abort_unless(
-            in_array($role, [
-                'conducteur-travaux', 'chef-chantier', 'metreur-economiste',
-                'moyens-generaux', 'direction', 'directeur-technique',
-            ]),
+            in_array($role, Roles::BDC_CREATORS),
             403,
             'Modification de BDC non autorisée pour ce rôle.'
         );
 
         // FIX M9: approvers cannot modify a submitted BDC they didn't create — reject it instead
-        if (in_array($role, ['direction', 'directeur-technique']) && $purchaseOrder->status === 'soumis') {
+        if (in_array($role, Roles::MANAGEMENT) && $purchaseOrder->status === 'soumis') {
             abort_if(
                 $purchaseOrder->requested_by !== $user->id,
                 403,
@@ -194,7 +186,7 @@ class PurchaseOrderController extends Controller
         abort_if($purchaseOrder->company_id !== $request->user()->company_id, 403);
         abort_if($purchaseOrder->status !== 'approuve', 422, 'Seuls les BDC approuvés peuvent être marqués reçus.');
         abort_unless(
-            in_array($request->user()->role->name, ['moyens-generaux', 'direction', 'directeur-technique']),
+            in_array($request->user()->role->name, [...Roles::LOGISTICS, ...Roles::MANAGEMENT]),
             403,
             'Réception BDC réservée à la logistique.'
         );
@@ -290,7 +282,7 @@ class PurchaseOrderController extends Controller
 
         abort_unless(
             $purchaseOrder->requested_by === $user->id
-                || in_array($user->role->name, ['direction', 'directeur-technique']),
+                || in_array($user->role->name, Roles::MANAGEMENT),
             403,
             'Seul le demandeur ou la direction peut supprimer ce BDC.'
         );
@@ -305,7 +297,7 @@ class PurchaseOrderController extends Controller
         abort_if($purchaseOrder->company_id !== $user->company_id, 403);
         abort_unless($purchaseOrder->status === 'brouillon', 422, 'Seul un BDC en brouillon peut être soumis.');
         abort_unless(
-            $purchaseOrder->requested_by === $user->id || in_array($user->role->name, ['direction', 'directeur-technique'], true),
+            $purchaseOrder->requested_by === $user->id || in_array($user->role->name, Roles::MANAGEMENT, true),
             403,
             'Seul le créateur ou la direction peut soumettre ce BDC.'
         );
@@ -320,9 +312,9 @@ class PurchaseOrderController extends Controller
         abort_if($purchaseOrder->company_id !== $request->user()->company_id, 403);
         abort_unless($purchaseOrder->status === 'rejete', 422, 'Seul un BDC rejeté peut être resoumis.');
 
-        $user = $request->user();
+        $user        = $request->user();
         $canResubmit = $purchaseOrder->requested_by === $user->id
-            || in_array($user->role->name, ['direction', 'directeur-technique']);
+            || in_array($user->role->name, Roles::MANAGEMENT);
 
         abort_unless($canResubmit, 403, 'Seul le demandeur original peut resoumettre.');
 
@@ -348,8 +340,8 @@ class PurchaseOrderController extends Controller
     {
         abort_if($purchaseOrder->company_id !== $request->user()->company_id, 403);
 
-        $user = $request->user();
-        $isDirection = in_array($user->role->name, ['direction', 'directeur-technique'], true);
+        $user        = $request->user();
+        $isDirection = in_array($user->role->name, Roles::MANAGEMENT, true);
 
         abort_if(
             ! in_array($purchaseOrder->status, ['brouillon', 'soumis', 'approuve'], true),
@@ -422,7 +414,7 @@ class PurchaseOrderController extends Controller
     private function authorizeApprover(Request $request): void
     {
         abort_unless(
-            in_array($request->user()->role->name, self::APPROVER_ROLES),
+            in_array($request->user()->role->name, Roles::MANAGEMENT),
             403,
             'Seuls la Direction et le DT peuvent approuver les BDC.'
         );

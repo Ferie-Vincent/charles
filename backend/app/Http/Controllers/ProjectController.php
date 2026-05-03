@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreProjectRequest;
 use App\Http\Requests\UpdateProjectRequest;
 use App\Models\Project;
+use App\Support\Roles;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -18,7 +19,7 @@ class ProjectController extends Controller
         $user  = $request->user();
         $query = Project::query()->where('company_id', $user->company_id);
 
-        if (in_array($user->role->name, ['chef-chantier', 'conducteur-travaux'])) {
+        if (in_array($user->role->name, Roles::TERRAIN)) {
             $query->whereHas('members', fn ($q) => $q->where('user_id', $user->id));
         }
 
