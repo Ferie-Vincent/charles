@@ -48,7 +48,7 @@ class PermissionsController extends Controller
     {
         $user = $request->user();
 
-        if (in_array($user->role->name, self::LOCKED_ROLES)) {
+        if (in_array($user->role->name, Roles::LOCKED)) {
             return response()->json(['features' => array_fill_keys(self::FEATURES, true)]);
         }
 
@@ -81,7 +81,7 @@ class PermissionsController extends Controller
         $roles     = Role::query()->pluck('id', 'name');
 
         foreach ($data['permissions'] as $item) {
-            if (in_array($item['role_name'], self::LOCKED_ROLES)) continue;
+            if (in_array($item['role_name'], Roles::LOCKED)) continue;
 
             RolePermission::updateOrCreate(
                 [
