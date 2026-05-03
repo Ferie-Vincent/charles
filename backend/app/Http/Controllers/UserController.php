@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Role;
 use App\Models\User;
+use App\Support\Roles;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -32,7 +33,7 @@ class UserController extends Controller
     public function roles(Request $request): JsonResponse
     {
         abort_unless(
-            in_array($request->user()->role->name, ['direction', 'directeur-technique']),
+            in_array($request->user()->role->name, Roles::MANAGEMENT),
             403,
             'Accès réservé à la direction.'
         );

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\StockItem;
 use App\Models\StockMovement;
+use App\Support\Roles;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -29,7 +30,7 @@ class StockController extends Controller
     public function store(Request $request): JsonResponse
     {
         abort_unless(
-            in_array($request->user()->role->name, ['moyens-generaux', 'direction', 'directeur-technique']),
+            in_array($request->user()->role->name, [...Roles::LOGISTICS, ...Roles::MANAGEMENT]),
             403,
             'Gestion des articles réservée à la logistique.'
         );
@@ -58,7 +59,7 @@ class StockController extends Controller
     {
         abort_if($stockItem->company_id !== $request->user()->company_id, 403);
         abort_unless(
-            in_array($request->user()->role->name, ['moyens-generaux', 'direction', 'directeur-technique']),
+            in_array($request->user()->role->name, [...Roles::LOGISTICS, ...Roles::MANAGEMENT]),
             403,
             'Gestion des articles réservée à la logistique.'
         );
@@ -82,7 +83,7 @@ class StockController extends Controller
     {
         abort_if($stockItem->company_id !== $request->user()->company_id, 403);
         abort_unless(
-            in_array($request->user()->role->name, ['moyens-generaux', 'direction', 'directeur-technique']),
+            in_array($request->user()->role->name, [...Roles::LOGISTICS, ...Roles::MANAGEMENT]),
             403,
             'Gestion des articles réservée à la logistique.'
         );
@@ -110,10 +111,7 @@ class StockController extends Controller
     {
         abort_if($stockItem->company_id !== $request->user()->company_id, 403);
         abort_unless(
-            in_array($request->user()->role->name, [
-                'moyens-generaux', 'conducteur-travaux', 'chef-chantier',
-                'direction', 'directeur-technique',
-            ]),
+            in_array($request->user()->role->name, [...Roles::LOGISTICS, ...Roles::TERRAIN, ...Roles::MANAGEMENT]),
             403,
             'Mouvement de stock non autorisé pour ce rôle.'
         );

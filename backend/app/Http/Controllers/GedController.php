@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\GedDocument;
+use App\Support\Roles;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -37,10 +38,7 @@ class GedController extends Controller
     {
         $role = $request->user()->role->name;
         abort_unless(
-            in_array($role, [
-                'conducteur-travaux', 'chef-chantier', 'metreur-economiste',
-                'comptable', 'moyens-generaux', 'direction', 'directeur-technique'
-            ]),
+            in_array($role, Roles::ALL_WRITE),
             403,
             'Upload de documents non autorisé pour ce rôle.'
         );
@@ -103,10 +101,7 @@ class GedController extends Controller
 
         $role = $request->user()->role->name;
         abort_unless(
-            in_array($role, [
-                'conducteur-travaux', 'chef-chantier', 'metreur-economiste',
-                'comptable', 'moyens-generaux', 'direction', 'directeur-technique'
-            ]),
+            in_array($role, Roles::ALL_WRITE),
             403,
             'Upload de documents non autorisé pour ce rôle.'
         );
@@ -128,8 +123,8 @@ class GedController extends Controller
     {
         abort_if($gedDocument->company_id !== $request->user()->company_id, 403);
 
-        $isOwner    = $gedDocument->uploaded_by === $request->user()->id;
-        $isDirection = in_array($request->user()->role->name, ['direction', 'directeur-technique']);
+        $isOwner     = $gedDocument->uploaded_by === $request->user()->id;
+        $isDirection = in_array($request->user()->role->name, Roles::MANAGEMENT);
         abort_unless($isOwner || $isDirection, 403, 'Seul le créateur ou la direction peut supprimer ce document.');
 
         Storage::disk('public')->delete($gedDocument->path);

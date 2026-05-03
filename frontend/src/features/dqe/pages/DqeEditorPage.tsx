@@ -13,6 +13,8 @@ import {
 } from '../api/dqe-api';
 import { UNITES_BTP, STATUS_LABELS, type DqeLine, type DqeLineInput } from '../types';
 import PageHeader from '../../../components/ui/PageHeader';
+import { useAuth } from '../../../features/auth/stores/auth-store';
+import { getRoleGroup } from '../../../lib/roles';
 
 function fmtHT(n: number) {
   return n.toLocaleString('fr-FR', { maximumFractionDigits: 0 });
@@ -20,6 +22,7 @@ function fmtHT(n: number) {
 
 const STATUS_BADGE: Record<string, string> = {
   draft:     'badge badge-draft',
+  soumise:   'badge badge-urgent',
   validated: 'badge badge-active',
   archived:  'badge badge-archived',
 };
@@ -34,6 +37,8 @@ export default function DqeEditorPage() {
   const { id: projectId, versionId } = useParams<{ id: string; versionId: string }>();
   const nav = useNavigate();
   const qc = useQueryClient();
+  const { user } = useAuth();
+  const roleGroup = getRoleGroup(user?.role?.name ?? '');
 
   const pid = Number(projectId);
   const vid = Number(versionId);
@@ -52,16 +57,13 @@ export default function DqeEditorPage() {
     mutationFn: (status: string) => updateDqeVersion(pid, vid, { status: status as any }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['dqe-version', pid, vid] });
-      qc.invalidateQueries({ queryKey: ['portfolio-dqe'] });
+      qc.invalidateQueries({ queryKey: ['portfolio-operations'] });
     },
   });
 
   const dupVersion = useMutation({
     mutationFn: () => duplicateDqeVersion(pid, vid),
-    onSuccess: (v) => {
-      qc.invalidateQueries({ queryKey: ['portfolio-dqe'] });
-      nav(`/projects/${pid}/dqe/${v.id}`);
-    },
+    onSuccess: (v) => nav(`/projects/${pid}/dqe/${v.id}`),
   });
 
   const addLine = useMutation({
@@ -112,7 +114,11 @@ export default function DqeEditorPage() {
   if (error || !data) return <p style={{ padding: 40, color: 'var(--text-muted)', textAlign: 'center' }}>Erreur de chargement.</p>;
 
   const { version, lots } = data;
-  const totalLines = lots.reduce((acc, l) => acc + l.lines.length, 0);
+  const totalLines  = lots.reduce((acc, l) => acc + l.lines.length, 0);
+  const isDG        = roleGroup === 'direction';
+  const canSubmit   = version.status === 'draft' && !isDG;
+  const canValidate = version.status === 'soumise' && isDG;
+  const canValidateDirect = version.status === 'draft' && isDG;
 
   return (
     <div>
@@ -127,7 +133,18 @@ export default function DqeEditorPage() {
             >
               ← Retour au chantier
             </button>
-            {version.status === 'draft' && (
+            {canSubmit && (
+              <button
+                className="btn-primary"
+                style={{ padding: '6px 14px', fontSize: 13 }}
+                onClick={() => updateVersion.mutate('soumise')}
+                disabled={updateVersion.isPending || totalLines === 0}
+                title={totalLines === 0 ? 'Ajoutez des lignes avant de soumettre' : ''}
+              >
+                ✉ Soumettre au DG
+              </button>
+            )}
+            {(canValidate || canValidateDirect) && (
               <button
                 className="btn-primary"
                 style={{ background: '#16a34a', borderColor: '#16a34a', padding: '6px 14px', fontSize: 13 }}
@@ -135,6 +152,17 @@ export default function DqeEditorPage() {
                 disabled={updateVersion.isPending}
               >
                 ✓ Valider
+              </button>
+            )}
+            {canValidate && (
+              <button
+                className="dqe-back-btn"
+                style={{ color: '#dc2626', borderColor: '#dc2626' }}
+                onClick={() => updateVersion.mutate('draft')}
+                disabled={updateVersion.isPending}
+                title="Renvoyer en brouillon pour corrections"
+              >
+                ✕ Rejeter
               </button>
             )}
             <button

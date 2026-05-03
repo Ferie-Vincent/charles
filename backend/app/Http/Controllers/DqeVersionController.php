@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\DqeLine;
 use App\Models\DqeVersion;
 use App\Models\Project;
+use App\Support\Roles;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -28,8 +29,7 @@ class DqeVersionController extends Controller
     {
         $this->authorize('update', $project);
 
-        $allowedRoles = ['direction', 'directeur-technique', 'conducteur-travaux', 'metreur-economiste'];
-        abort_unless(in_array($request->user()->role->name, $allowedRoles), 403, 'Création de DQE réservée aux métreurs et conducteurs de travaux.');
+        abort_unless(in_array($request->user()->role->name, Roles::DQE_VIEWERS), 403, 'Création de DQE réservée aux métreurs et conducteurs de travaux.');
 
         $data = $request->validate([
             'name'  => 'required|string|max:200',
@@ -186,8 +186,7 @@ class DqeVersionController extends Controller
         $this->authorize('update', $project);
         abort_unless($dqeVersion->project_id === $project->id, 404);
 
-        $allowedRoles = ['direction', 'directeur-technique', 'conducteur-travaux', 'metreur-economiste'];
-        abort_unless(in_array($request->user()->role->name, $allowedRoles), 403, 'Création de DQE réservée aux métreurs et conducteurs de travaux.');
+        abort_unless(in_array($request->user()->role->name, Roles::DQE_VIEWERS), 403, 'Création de DQE réservée aux métreurs et conducteurs de travaux.');
 
         $next = ($project->dqeVersions()->max('version_number') ?? 0) + 1;
 
@@ -222,19 +221,19 @@ class DqeVersionController extends Controller
         $to      = $data['status'];
         $role    = $user->role->name;
 
-        $submitRoles  = ['metreur-economiste', 'conducteur-travaux', 'directeur-technique'];
-        $validateRole = ['direction'];
-        $archiveRoles = ['direction', 'directeur-technique'];
+        $submitRoles  = Roles::DQE_SUBMITTERS;
+        $dgRoles      = ['direction'];
+        $archiveRoles = Roles::MANAGEMENT;
 
         if ($current === 'draft' && $to === 'soumise') {
             abort_unless(in_array($role, $submitRoles), 403, 'Soumission DQE réservée au DT, conducteur ou métreur.');
         } elseif ($current === 'draft' && $to === 'validated') {
-            // Direction peut valider directement sans passer par soumise
-            abort_unless(in_array($role, [...$validateRole, 'directeur-technique']), 403, 'Validation directe DQE réservée à la direction.');
+            // DG peut valider directement (ex: DQE qu'il a créé lui-même)
+            abort_unless(in_array($role, $dgRoles), 403, 'Validation directe réservée au Directeur Général.');
         } elseif ($current === 'soumise' && $to === 'validated') {
-            abort_unless(in_array($role, $validateRole), 403, 'Validation DQE réservée au Directeur Général.');
+            abort_unless(in_array($role, $dgRoles), 403, 'Validation DQE réservée au Directeur Général.');
         } elseif ($current === 'soumise' && $to === 'draft') {
-            abort_unless(in_array($role, $validateRole), 403, 'Rejet DQE réservé au Directeur Général.');
+            abort_unless(in_array($role, $dgRoles), 403, 'Rejet DQE réservé au Directeur Général.');
         } elseif (in_array($current, ['draft', 'soumise', 'validated']) && $to === 'archived') {
             abort_unless(in_array($role, $archiveRoles), 403, 'Archivage réservé à la direction.');
         } else {

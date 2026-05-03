@@ -3,13 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\GeneralExpense;
+use App\Support\Roles;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class GeneralExpenseController extends Controller
 {
-    private const APPROVER_ROLES = ['comptable'];
-
     public function index(Request $request): JsonResponse
     {
         $allowedReadRoles = ['comptable', 'direction', 'directeur-technique', 'metreur-economiste', 'conducteur-travaux'];
@@ -26,9 +25,7 @@ class GeneralExpenseController extends Controller
     public function store(Request $request): JsonResponse
     {
         abort_unless(
-            in_array($request->user()->role->name, [
-                'comptable', 'direction', 'directeur-technique'
-            ]),
+            in_array($request->user()->role->name, Roles::FINANCE),
             403,
             'Création de dépenses réservée au comptable et à la direction.'
         );
@@ -58,9 +55,7 @@ class GeneralExpenseController extends Controller
     {
         $this->authorizeCompany($request, $generalExpense);
         abort_unless(
-            in_array($request->user()->role->name, [
-                'comptable', 'direction', 'directeur-technique'
-            ]),
+            in_array($request->user()->role->name, Roles::FINANCE),
             403,
             'Création de dépenses réservée au comptable et à la direction.'
         );
@@ -123,9 +118,7 @@ class GeneralExpenseController extends Controller
     {
         $this->authorizeCompany($request, $generalExpense);
         abort_unless(
-            in_array($request->user()->role->name, [
-                'comptable', 'direction', 'directeur-technique'
-            ]),
+            in_array($request->user()->role->name, Roles::FINANCE),
             403,
             'Création de dépenses réservée au comptable et à la direction.'
         );
@@ -142,6 +135,6 @@ class GeneralExpenseController extends Controller
 
     private function authorizeApprover(Request $request): void
     {
-        abort_unless(in_array($request->user()->role->name, self::APPROVER_ROLES), 403, 'Seul le comptable peut valider les dépenses.');
+        abort_unless(in_array($request->user()->role->name, Roles::MANAGEMENT), 403, 'Seuls la Direction et le DT peuvent approuver les dépenses.');
     }
 }
