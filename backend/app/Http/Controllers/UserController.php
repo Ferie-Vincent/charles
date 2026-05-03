@@ -29,8 +29,14 @@ class UserController extends Controller
         return response()->json($users);
     }
 
-    public function roles(): JsonResponse
+    public function roles(Request $request): JsonResponse
     {
+        abort_unless(
+            in_array($request->user()->role->name, ['direction', 'directeur-technique']),
+            403,
+            'Accès réservé à la direction.'
+        );
+
         return response()->json(
             Role::orderBy('id')->get(['id', 'name', 'label'])
         );

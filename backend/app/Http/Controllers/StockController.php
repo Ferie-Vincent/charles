@@ -7,6 +7,7 @@ use App\Models\StockMovement;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
 
 class StockController extends Controller
 {
@@ -27,6 +28,12 @@ class StockController extends Controller
 
     public function store(Request $request): JsonResponse
     {
+        abort_unless(
+            in_array($request->user()->role->name, ['moyens-generaux', 'direction', 'directeur-technique']),
+            403,
+            'Gestion des articles réservée à la logistique.'
+        );
+
         $data = $request->validate([
             'name'      => 'required|string|max:255',
             'reference' => 'nullable|string|max:100',
@@ -50,6 +57,11 @@ class StockController extends Controller
     public function update(Request $request, StockItem $stockItem): JsonResponse
     {
         abort_if($stockItem->company_id !== $request->user()->company_id, 403);
+        abort_unless(
+            in_array($request->user()->role->name, ['moyens-generaux', 'direction', 'directeur-technique']),
+            403,
+            'Gestion des articles réservée à la logistique.'
+        );
 
         $data = $request->validate([
             'name'      => 'sometimes|required|string|max:255',
@@ -69,6 +81,11 @@ class StockController extends Controller
     public function destroy(Request $request, StockItem $stockItem): Response
     {
         abort_if($stockItem->company_id !== $request->user()->company_id, 403);
+        abort_unless(
+            in_array($request->user()->role->name, ['moyens-generaux', 'direction', 'directeur-technique']),
+            403,
+            'Gestion des articles réservée à la logistique.'
+        );
         $stockItem->delete();
         return response()->noContent();
     }
@@ -92,6 +109,14 @@ class StockController extends Controller
     public function addMovement(Request $request, StockItem $stockItem): JsonResponse
     {
         abort_if($stockItem->company_id !== $request->user()->company_id, 403);
+        abort_unless(
+            in_array($request->user()->role->name, [
+                'moyens-generaux', 'conducteur-travaux', 'chef-chantier',
+                'direction', 'directeur-technique',
+            ]),
+            403,
+            'Mouvement de stock non autorisé pour ce rôle.'
+        );
 
         $data = $request->validate([
             'type'          => 'required|in:entree,sortie,ajustement',
@@ -102,22 +127,44 @@ class StockController extends Controller
             'notes'         => 'nullable|string|max:500',
         ]);
 
-        $movement = $stockItem->movements()->create([
-            ...$data,
-            'created_by' => $request->user()->id,
-        ]);
+        $movement = null;
+        $insufficientStock = false;
 
-        // Update stock quantity
-        $delta = match($data['type']) {
-            'entree'      =>  $data['quantity'],
-            'sortie'      => -$data['quantity'],
-            'ajustement'  =>  $data['quantity'] - $stockItem->quantity,
-        };
+        DB::transaction(function () use ($stockItem, $data, $request, &$movement, &$insufficientStock) {
+            // Recharger avec lock pour éviter race condition
+            $lockedItem = StockItem::lockForUpdate()->find($stockItem->id);
 
-        if ($data['type'] === 'ajustement') {
-            $stockItem->update(['quantity' => $data['quantity']]);
-        } else {
-            $stockItem->increment('quantity', $delta);
+            if ($data['type'] === 'sortie' && $data['quantity'] > $lockedItem->quantity) {
+                $insufficientStock = $lockedItem->quantity . ' ' . $lockedItem->unit;
+                return;
+            }
+
+            // FIX H3: for ajustement, store the signed delta (not the absolute target) so
+            // movement history remains mathematically consistent (SUM of quantities = net stock change).
+            $movementData = $data;
+            if ($data['type'] === 'ajustement') {
+                $movementData['quantity'] = $data['quantity'] - $lockedItem->quantity;
+            }
+
+            $movement = $lockedItem->movements()->create([
+                ...$movementData,
+                'created_by' => $request->user()->id,
+            ]);
+
+            if ($data['type'] === 'ajustement') {
+                $lockedItem->update(['quantity' => $data['quantity']]);
+            } elseif ($data['type'] === 'entree') {
+                $lockedItem->increment('quantity', $data['quantity']);
+            } else {
+                $lockedItem->decrement('quantity', $data['quantity']);
+            }
+
+        });
+
+        if ($insufficientStock !== false) {
+            return response()->json([
+                'message' => 'Stock insuffisant. Disponible : ' . $insufficientStock,
+            ], 422);
         }
 
         $stockItem->refresh();

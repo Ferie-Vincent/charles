@@ -12,6 +12,9 @@ class GeneralExpenseController extends Controller
 
     public function index(Request $request): JsonResponse
     {
+        $allowedReadRoles = ['comptable', 'direction', 'directeur-technique', 'metreur-economiste', 'conducteur-travaux'];
+        abort_unless(in_array($request->user()->role->name, $allowedReadRoles), 403, 'Accès aux dépenses non autorisé.');
+
         $expenses = GeneralExpense::where('company_id', $request->user()->company_id)
             ->with('creator:id,name', 'approver:id,name')
             ->orderByDesc('expense_date')
@@ -22,6 +25,14 @@ class GeneralExpenseController extends Controller
 
     public function store(Request $request): JsonResponse
     {
+        abort_unless(
+            in_array($request->user()->role->name, [
+                'comptable', 'direction', 'directeur-technique'
+            ]),
+            403,
+            'Création de dépenses réservée au comptable et à la direction.'
+        );
+
         $validated = $request->validate([
             'category'     => 'required|in:transport,hebergement,restauration,fournitures,communication,salaires,charges,autre',
             'label'        => 'required|string|max:255',
@@ -46,6 +57,13 @@ class GeneralExpenseController extends Controller
     public function update(Request $request, GeneralExpense $generalExpense): JsonResponse
     {
         $this->authorizeCompany($request, $generalExpense);
+        abort_unless(
+            in_array($request->user()->role->name, [
+                'comptable', 'direction', 'directeur-technique'
+            ]),
+            403,
+            'Création de dépenses réservée au comptable et à la direction.'
+        );
         abort_if($generalExpense->status !== 'en_attente', 422, 'Seules les dépenses en attente peuvent être modifiées.');
 
         $validated = $request->validate([
@@ -104,6 +122,13 @@ class GeneralExpenseController extends Controller
     public function destroy(Request $request, GeneralExpense $generalExpense): JsonResponse
     {
         $this->authorizeCompany($request, $generalExpense);
+        abort_unless(
+            in_array($request->user()->role->name, [
+                'comptable', 'direction', 'directeur-technique'
+            ]),
+            403,
+            'Création de dépenses réservée au comptable et à la direction.'
+        );
         abort_if($generalExpense->status === 'approuvee', 422, 'Une dépense approuvée ne peut pas être supprimée.');
         $generalExpense->delete();
 

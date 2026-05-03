@@ -81,8 +81,10 @@ Route::middleware('auth')->group(function () {
     Route::delete('/purchase-orders/{purchaseOrder}', [PurchaseOrderController::class, 'destroy']);
     Route::patch('/purchase-orders/{purchaseOrder}/approve', [PurchaseOrderController::class, 'approve']);
     Route::patch('/purchase-orders/{purchaseOrder}/reject', [PurchaseOrderController::class, 'reject']);
+    Route::post('/purchase-orders/{purchaseOrder}/resubmit', [PurchaseOrderController::class, 'resubmit']);
     Route::patch('/purchase-orders/{purchaseOrder}/receive', [PurchaseOrderController::class, 'markReceived']);
     Route::get('/purchase-orders/{purchaseOrder}/delivery-docs', [PurchaseOrderController::class, 'deliveryDocs']);
+    Route::post('/purchase-orders/{purchaseOrder}/cancel', [PurchaseOrderController::class, 'cancel']);
     // GED
     // Demandes de besoins
     Route::get('/demandes-besoins', [DemandeBesoinController::class, 'index']);
@@ -145,6 +147,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/projects/{project}/invoices', [InvoiceController::class, 'store']);
     Route::put('/projects/{project}/invoices/{invoice}', [InvoiceController::class, 'update']);
     Route::delete('/projects/{project}/invoices/{invoice}', [InvoiceController::class, 'destroy']);
+    Route::patch('/projects/{project}/invoices/{invoice}/transition', [InvoiceController::class, 'transition']);
+    Route::post('/projects/{project}/invoices/{invoice}/pay', [InvoiceController::class, 'pay']);
     Route::get('/projects/{project}/invoices/{invoice}/attachment', [InvoiceController::class, 'downloadAttachment']);
     Route::get('/projects/{project}/budget', [BudgetController::class, 'index']);
     Route::post('/projects/{project}/budget/entries', [BudgetController::class, 'store']);
@@ -162,5 +166,6 @@ Route::middleware('auth')->group(function () {
     Route::put('/projects/{project}/dqe-versions/{dqeVersion}/lines/{dqeLine}', [DqeVersionController::class, 'updateLine']);
     Route::delete('/projects/{project}/dqe-versions/{dqeVersion}/lines/{dqeLine}', [DqeVersionController::class, 'destroyLine']);
     Route::post('/projects/{project}/dqe-versions/{dqeVersion}/duplicate', [DqeVersionController::class, 'duplicate']);
+    Route::patch('/projects/{project}/dqe-versions/{dqeVersion}/transition', [DqeVersionController::class, 'transition']);
     Route::get('/projects/{project}/dqe-versions/{dqeVersion}/pdf', [DqeVersionController::class, 'pdf']);
 });

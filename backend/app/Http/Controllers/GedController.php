@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class GedController extends Controller
 {
@@ -34,10 +35,20 @@ class GedController extends Controller
 
     public function store(Request $request): JsonResponse
     {
+        $role = $request->user()->role->name;
+        abort_unless(
+            in_array($role, [
+                'conducteur-travaux', 'chef-chantier', 'metreur-economiste',
+                'comptable', 'moyens-generaux', 'direction', 'directeur-technique'
+            ]),
+            403,
+            'Upload de documents non autorisé pour ce rôle.'
+        );
+
         $request->validate([
             'file'        => 'required|file|max:51200', // 50 MB
             'type'        => 'required|in:plan,contrat,pv,rapport,facture,photo,autre,ao,os,marche',
-            'project_id'  => 'nullable|exists:projects,id',
+            'project_id'  => ['nullable', Rule::exists('projects', 'id')->where('company_id', $request->user()->company_id)],
             'name'        => 'nullable|string|max:255',
             'description' => 'nullable|string|max:500',
         ]);
@@ -90,10 +101,20 @@ class GedController extends Controller
     {
         abort_if($gedDocument->company_id !== $request->user()->company_id, 403);
 
+        $role = $request->user()->role->name;
+        abort_unless(
+            in_array($role, [
+                'conducteur-travaux', 'chef-chantier', 'metreur-economiste',
+                'comptable', 'moyens-generaux', 'direction', 'directeur-technique'
+            ]),
+            403,
+            'Upload de documents non autorisé pour ce rôle.'
+        );
+
         $data = $request->validate([
             'name'        => 'sometimes|string|max:255',
             'type'        => 'sometimes|in:plan,contrat,pv,rapport,facture,photo,autre,ao,os,marche',
-            'project_id'  => 'nullable|exists:projects,id',
+            'project_id'  => ['nullable', Rule::exists('projects', 'id')->where('company_id', $request->user()->company_id)],
             'description' => 'nullable|string|max:500',
         ]);
 

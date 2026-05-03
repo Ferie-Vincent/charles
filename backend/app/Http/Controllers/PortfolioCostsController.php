@@ -10,10 +10,17 @@ class PortfolioCostsController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
+        abort_unless(
+            in_array($request->user()->role->name, ['direction', 'directeur-technique']),
+            403,
+            'Accès réservé à la direction.'
+        );
+
         $companyId = $request->user()->company_id;
 
         $projects = Project::query()
             ->where('company_id', $companyId)
+            ->where('status', 'active')
             ->with(['budgetEntries', 'invoices', 'dqeVersions'])
             ->get();
 
@@ -25,12 +32,12 @@ class PortfolioCostsController extends Controller
             $paiementBE   = (float) $project->budgetEntries->where('type', 'paiement')->sum('amount');
 
             $invoices     = $project->invoices;
-            $realise      = max($paiementBE, (float) $invoices->whereIn('status', ['validee', 'payee'])->sum('amount_ht'));
+            $realise      = max($paiementBE, (float) $invoices->where('status', 'payee')->sum('amount_ht'));
             $engage       = max($engagement, (float) $invoices->where('status', 'soumise')->sum('amount_ht'));
 
             $rac          = max(0, $budgetRef - $engage - $realise);
             $cat          = $realise + $engage + $rac;
-            $ecart        = $budgetRef - $cat;
+            $ecart        = $budgetRef - $realise; // positif = reste à dépenser, négatif = dépassement
 
             $tauxRealise  = $budgetRef > 0 ? round($realise / $budgetRef * 100, 1) : 0;
             $tauxEngage   = $budgetRef > 0 ? round($engage / $budgetRef * 100, 1) : 0;

@@ -131,7 +131,7 @@ it('updates a dqe version name', function () {
         ->assertJsonFragment(['name' => 'New Name']);
 });
 
-it('validates a draft version by updating status to validated', function () {
+it('validates a draft version via transition endpoint', function () {
     $version = DqeVersion::create([
         'project_id'     => $this->project->id,
         'created_by'     => $this->user->id,
@@ -140,8 +140,9 @@ it('validates a draft version by updating status to validated', function () {
         'status'         => 'draft',
     ]);
 
+    // $this->user has the 'direction' role (first seeded role), which is allowed to validate
     $this->actingAs($this->user)
-        ->putJson("/api/projects/{$this->project->id}/dqe-versions/{$version->id}", [
+        ->patchJson("/api/projects/{$this->project->id}/dqe-versions/{$version->id}/transition", [
             'status' => 'validated',
         ])
         ->assertOk()
