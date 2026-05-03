@@ -31,11 +31,13 @@ class ProjectAccountingController extends Controller
         $engageFact      = (float) $factures->where('status', 'soumise')->sum('amount_ht');
 
         // Métriques consolidées
-        $realise         = max($paiementBE, $realiseFactures); // take the higher source
+        // FIX M9: use invoices (canonical source) for realise — avoid max() double-counting
+        $realise         = $realiseFactures; // factures WHERE status='payee' — source canonique
         $engage          = max($engagement, $engageFact);
         $rac             = max(0, $budgetRef - $engage - $realise);
         $cat             = $realise + $engage + $rac; // Coût à Terminaison
-        $ecart           = $budgetRef - $realise; // positif = reste à dépenser, négatif = dépassement
+        // FIX M10: écart BTP standard = budget − réalisé − engagé = reste disponible
+        $ecart           = $budgetRef - $realise - $engage; // positif = disponible, négatif = dépassement
         $tauxRealisation = $budgetRef > 0 ? round($realise / $budgetRef * 100, 1) : 0;
         $tauxEngagement  = $budgetRef > 0 ? round($engage / $budgetRef * 100, 1) : 0;
 

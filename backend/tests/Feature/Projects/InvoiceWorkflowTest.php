@@ -3,6 +3,7 @@
 use App\Models\Company;
 use App\Models\Invoice;
 use App\Models\Project;
+use App\Models\PurchaseOrder;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
@@ -29,16 +30,31 @@ function makeProject(Company $company): Project
     ]);
 }
 
-function makeInvoice(Project $project, User $creator, string $status = 'soumise'): Invoice
+function makeInvoice(Project $project, User $creator, string $status = 'soumise', bool $withAttachment = false, ?int $purchaseOrderId = null): Invoice
 {
     return Invoice::create([
-        'project_id'   => $project->id,
-        'created_by'   => $creator->id,
-        'reference'    => 'FACT-' . uniqid(),
-        'category'     => 'Matériaux',
-        'amount_ht'    => 100000,
-        'invoice_date' => now()->toDateString(),
-        'status'       => $status,
+        'project_id'       => $project->id,
+        'created_by'       => $creator->id,
+        'reference'        => 'FACT-' . uniqid(),
+        'category'         => 'Matériaux',
+        'amount_ht'        => 100000,
+        'invoice_date'     => now()->toDateString(),
+        'status'           => $status,
+        'attachment_path'  => $withAttachment ? 'invoices/test/facture.pdf' : null,
+        'attachment_name'  => $withAttachment ? 'facture.pdf' : null,
+        'purchase_order_id' => $purchaseOrderId,
+    ]);
+}
+
+function makePurchaseOrder(Company $company, User $requester): PurchaseOrder
+{
+    return PurchaseOrder::create([
+        'company_id'   => $company->id,
+        'requested_by' => $requester->id,
+        'reference'    => 'BDC-TEST-' . uniqid(),
+        'status'       => 'approuve',
+        'items'        => json_encode([['description' => 'Test', 'quantity' => 1, 'unit_price' => 100000]]),
+        'total_amount' => 100000,
     ]);
 }
 
@@ -102,10 +118,11 @@ it('cannot validate an already validated invoice', function () {
 it('comptable can record payment with proof on a validee invoice', function () {
     Storage::fake('public');
 
-    $company   = Company::factory()->create();
-    $comptable = makeUser($company, 'comptable');
-    $project   = makeProject($company);
-    $invoice   = makeInvoice($project, $comptable, 'validee');
+    $company      = Company::factory()->create();
+    $comptable    = makeUser($company, 'comptable');
+    $project      = makeProject($company);
+    $purchaseOrder = makePurchaseOrder($company, $comptable);
+    $invoice      = makeInvoice($project, $comptable, 'validee', withAttachment: true, purchaseOrderId: $purchaseOrder->id);
 
     $proof = UploadedFile::fake()->create('proof.pdf', 50, 'application/pdf');
 
@@ -121,7 +138,9 @@ it('comptable can record payment with proof on a validee invoice', function () {
         ->assertJsonPath('status', 'payee')
         ->assertJsonPath('paid_by', $comptable->id);
 
-    $this->assertNotNull($res->json('payment_proof_path'));
+    // payment_proof_path is hidden from JSON responses (security: do not expose storage paths)
+    $this->assertNull($res->json('payment_proof_path'));
+    $this->assertNotNull($res->json('payment_proof_name'));
 });
 
 it('payment requires a proof file', function () {

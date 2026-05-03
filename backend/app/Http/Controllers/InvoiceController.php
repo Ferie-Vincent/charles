@@ -4,10 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Models\Invoice;
 use App\Models\Project;
+use App\Services\WorkflowService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class InvoiceController extends Controller
@@ -29,26 +32,39 @@ class InvoiceController extends Controller
         $this->authorize('update', $project);
 
         $data = $request->validate([
-            'reference'    => 'required|string|max:100',
-            'category'     => 'required|string|max:100',
-            'amount_ht'    => 'required|numeric|min:0',
-            'amount_ttc'   => 'nullable|numeric|min:0',
-            'status'       => 'required|in:brouillon,soumise',
-            'invoice_date' => 'required|date',
-            'due_date'     => 'nullable|date',
-            'supplier_id'  => ['nullable', Rule::exists('suppliers', 'id')->where('project_id', $project->id)],
-            'note'         => 'nullable|string|max:1000',
-            'attachment'   => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
+            'reference'          => 'required|string|max:100',
+            'category'           => 'required|string|max:100',
+            'amount_ht'          => 'required|numeric|min:0',
+            'vat_rate'           => 'nullable|integer|min:0|max:100',
+            'amount_ttc'         => 'nullable|numeric|min:0',
+            'status'             => 'required|in:brouillon,soumise',
+            'invoice_date'       => 'required|date',
+            'due_date'           => 'nullable|date',
+            'supplier_id'        => ['nullable', Rule::exists('suppliers', 'id')->where('project_id', $project->id)],
+            'purchase_order_id'  => ['nullable', Rule::exists('purchase_orders', 'id')->where('company_id', $project->company_id)],
+            'note'               => 'nullable|string|max:1000',
+            'attachment'         => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
         ]);
 
-        $invoice = $project->invoices()->create([
-            ...collect($data)->except('attachment')->all(),
-            'created_by' => $request->user()->id,
-        ]);
+        $vatRate   = $data['vat_rate'] ?? 18;
+        $vatAmount = round($data['amount_ht'] * $vatRate / 100, 2);
 
-        if ($request->hasFile('attachment')) {
-            $this->storeAttachment($request, $invoice);
-        }
+        $invoice = DB::transaction(function () use ($request, $project, $data, $vatRate, $vatAmount) {
+            $inv = $project->invoices()->create([
+                ...collect($data)->except('attachment')->all(),
+                'vat_rate'   => $vatRate,
+                'vat_amount' => $vatAmount,
+                'amount_ttc' => $data['amount_ttc'] ?? round($data['amount_ht'] + $vatAmount, 2),
+                'currency'   => 'XOF',
+                'created_by' => $request->user()->id,
+            ]);
+
+            if ($request->hasFile('attachment')) {
+                $this->storeAttachment($request, $inv);
+            }
+
+            return $inv;
+        });
 
         $invoice->load('supplier:id,name');
 
@@ -63,26 +79,40 @@ class InvoiceController extends Controller
         abort_if($invoice->status === 'disputee', 422, 'Une facture en litige ne peut pas être modifiée directement. Utilisez la transition.');
 
         $data = $request->validate([
-            'reference'    => 'sometimes|required|string|max:100',
-            'category'     => 'sometimes|required|string|max:100',
-            'amount_ht'    => 'sometimes|required|numeric|min:0',
-            'amount_ttc'   => 'nullable|numeric|min:0',
-            'status'       => 'sometimes|required|in:brouillon,soumise',
-            'invoice_date' => 'sometimes|required|date',
-            'due_date'     => 'nullable|date',
-            'supplier_id'  => ['nullable', Rule::exists('suppliers', 'id')->where('project_id', $project->id)],
-            'note'         => 'nullable|string|max:1000',
-            'attachment'   => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
+            'reference'         => 'sometimes|required|string|max:100',
+            'category'          => 'sometimes|required|string|max:100',
+            'amount_ht'         => 'sometimes|required|numeric|min:0',
+            'vat_rate'          => 'nullable|integer|min:0|max:100',
+            'amount_ttc'        => 'nullable|numeric|min:0',
+            'status'            => 'sometimes|required|in:brouillon,soumise',
+            'invoice_date'      => 'sometimes|required|date',
+            'due_date'          => 'nullable|date',
+            'supplier_id'       => ['nullable', Rule::exists('suppliers', 'id')->where('project_id', $project->id)],
+            'purchase_order_id' => ['nullable', Rule::exists('purchase_orders', 'id')->where('company_id', $project->company_id)],
+            'note'              => 'nullable|string|max:1000',
+            'attachment'        => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
         ]);
+
+        // Recalculate TVA if amount_ht or vat_rate changed
+        if (isset($data['amount_ht']) || isset($data['vat_rate'])) {
+            $amountHt  = $data['amount_ht'] ?? $invoice->amount_ht;
+            $vatRate   = $data['vat_rate'] ?? $invoice->vat_rate ?? 18;
+            $vatAmount = round($amountHt * $vatRate / 100, 2);
+            $data['vat_rate']   = $vatRate;
+            $data['vat_amount'] = $vatAmount;
+            if (! isset($data['amount_ttc'])) {
+                $data['amount_ttc'] = round($amountHt + $vatAmount, 2);
+            }
+        }
 
         $invoice->update(collect($data)->except('attachment')->all());
 
         if ($request->hasFile('attachment')) {
-            // Remove old file
-            if ($invoice->attachment_path) {
-                Storage::disk('public')->delete($invoice->attachment_path);
+            $oldPath = $invoice->attachment_path;
+            $this->storeAttachment($request, $invoice); // store new first
+            if ($oldPath) {
+                Storage::disk('public')->delete($oldPath); // delete old only after success
             }
-            $this->storeAttachment($request, $invoice);
         }
 
         $invoice->load('supplier:id,name');
@@ -114,42 +144,14 @@ class InvoiceController extends Controller
             'status' => 'required|in:soumise,validee,disputee',
         ]);
 
-        $user    = $request->user();
-        $current = $invoice->status;
-        $to      = $data['status'];
-        $role    = $user->role->name;
-
-        $transitions = [
-            'brouillon' => ['soumise'],
-            'soumise'   => ['validee', 'disputee'],
-            'validee'   => ['disputee'],
-            'disputee'  => ['soumise'],
-        ];
-
-        abort_unless(
-            isset($transitions[$current]) && in_array($to, $transitions[$current]),
-            422,
-            "Transition {$current} → {$to} non autorisée."
-        );
-
-        $directionRoles = ['direction', 'directeur-technique'];
-        $comptableRoles = ['comptable', 'direction', 'directeur-technique'];
-        $allWriteRoles  = ['conducteur-travaux', 'chef-chantier', 'metreur-economiste', 'comptable', 'direction', 'directeur-technique'];
-
-        if ($to === 'soumise' && $current !== 'disputee') {
-            abort_unless(in_array($role, $allWriteRoles), 403, 'Rôle insuffisant.');
-        } elseif ($current === 'disputee' && $to === 'soumise') {
-            abort_unless(in_array($role, $directionRoles), 403, 'Résolution litige réservée à la direction.');
-        } elseif ($to === 'validee') {
-            abort_unless(in_array($role, $directionRoles), 403, 'Validation réservée à la direction.');
-        } elseif ($to === 'disputee') {
-            abort_unless(in_array($role, $directionRoles), 403, 'Réservé à la direction.');
+        try {
+            app(WorkflowService::class)->transitionInvoice($invoice, $data['status'], $request->user());
+        } catch (\InvalidArgumentException $e) {
+            abort(422, $e->getMessage());
+        } catch (\RuntimeException $e) {
+            abort(403, $e->getMessage());
         }
 
-        $updates = ['status' => $to];
-        if ($to === 'validee') $updates += ['validated_by' => $user->id, 'validated_at' => now()];
-
-        $invoice->update($updates);
         $invoice->load('supplier:id,name');
 
         return response()->json($invoice);
@@ -165,6 +167,8 @@ class InvoiceController extends Controller
             'Paiement réservé au comptable.'
         );
         abort_unless($invoice->status === 'validee', 422, 'Seule une facture validée peut être payée.');
+        abort_unless($invoice->attachment_path, 422, 'La facture doit avoir une pièce jointe avant d\'être payée.');
+        abort_unless($invoice->purchase_order_id, 422, 'La facture doit être liée à un bon de commande avant d\'être payée.');
 
         $data = $request->validate([
             'paid_date'     => 'required|date',
@@ -172,7 +176,12 @@ class InvoiceController extends Controller
         ]);
 
         $file      = $request->file('payment_proof');
-        $safeName  = now()->format('YmdHis') . '_' . $file->getClientOriginalName();
+        $extension = strtolower($file->getClientOriginalExtension());
+        $allowedExtensions = ['pdf', 'jpg', 'jpeg', 'png'];
+        if (!in_array($extension, $allowedExtensions)) {
+            abort(422, 'Type de fichier non autorisé.');
+        }
+        $safeName  = now()->format('YmdHis') . '_' . Str::uuid() . '.' . $extension;
         $path      = $file->storeAs("invoices/{$invoice->id}/proof", $safeName, 'public');
 
         $invoice->update([
@@ -201,9 +210,14 @@ class InvoiceController extends Controller
 
     private function storeAttachment(Request $request, Invoice $invoice): void
     {
-        $file     = $request->file('attachment');
-        $name     = $file->getClientOriginalName();
-        $safeName = now()->format('YmdHis') . '_' . $name;
+        $file      = $request->file('attachment');
+        $name      = $file->getClientOriginalName();
+        $extension = strtolower($file->getClientOriginalExtension());
+        $allowedExtensions = ['pdf', 'jpg', 'jpeg', 'png'];
+        if (!in_array($extension, $allowedExtensions)) {
+            abort(422, 'Type de fichier non autorisé.');
+        }
+        $safeName = now()->format('YmdHis') . '_' . Str::uuid() . '.' . $extension;
         $path     = $file->storeAs("invoices/{$invoice->id}", $safeName, 'public');
 
         $invoice->update(['attachment_path' => $path, 'attachment_name' => $name]);

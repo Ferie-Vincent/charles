@@ -60,6 +60,11 @@ class BudgetController extends Controller
     public function destroy(Project $project, BudgetEntry $budgetEntry): Response
     {
         $this->authorize('update', $project);
+        abort_if($budgetEntry->project_id !== $project->id, 404);
+
+        $linkedDemande = \App\Models\DemandeBesoin::where('budget_entry_id', $budgetEntry->id)->exists();
+        abort_if($linkedDemande, 422, 'Cette entrée budgétaire est liée à une demande de besoin. Supprimez la demande d\'abord.');
+
         $budgetEntry->delete();
         return response()->noContent();
     }

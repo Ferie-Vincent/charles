@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\LoginRequest;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class AuthController extends Controller
@@ -41,13 +42,19 @@ class AuthController extends Controller
         ]);
     }
 
-    public function me(): JsonResponse
+    public function me(Request $request): JsonResponse
     {
         /** @var User $user */
-        $user = Auth::user();
+        $user = $request->user()->load('role', 'company');
+
+        if (!$user->role || !$user->company) {
+            Auth::guard('web')->logout();
+            $request->session()->invalidate();
+            return response()->json(['message' => 'Compte désactivé.'], 401);
+        }
 
         return response()->json([
-            'user' => $user?->load(['company', 'role']),
+            'user' => $user,
         ]);
     }
 }

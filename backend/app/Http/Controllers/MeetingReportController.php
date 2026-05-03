@@ -14,6 +14,9 @@ class MeetingReportController extends Controller
     {
         $this->authorize('view', $project);
 
+        $allowedRoles = ['direction', 'directeur-technique', 'conducteur-travaux', 'chef-chantier', 'metreur-economiste'];
+        abort_unless(in_array($request->user()->role->name, $allowedRoles), 403, 'Génération de compte-rendu non autorisée pour ce rôle.');
+
         $data = $request->validate([
             'date'            => ['required', 'date'],
             'location'        => ['nullable', 'string', 'max:200'],

@@ -83,7 +83,7 @@ class PurchaseOrderController extends Controller
                 'reference'    => $reference,
                 'company_id'   => $user->company_id,
                 'requested_by' => $user->id,
-                'status'       => 'soumis',
+                'status'       => 'brouillon',
             ]);
         });
 
@@ -215,18 +215,19 @@ class PurchaseOrderController extends Controller
         $data = ['status' => 'recu', 'received_at' => now()];
 
         if ($request->hasFile('delivery_note')) {
-            $file = $request->file('delivery_note');
-            $path = "purchase-orders/{$purchaseOrder->id}/bl/" . $file->getClientOriginalName();
-            Storage::disk('public')->put($path, file_get_contents($file->getRealPath()));
-            $data['delivery_note_path'] = $path;
+            $file      = $request->file('delivery_note');
+            $extension = strtolower($file->getClientOriginalExtension());
+            $safeName  = now()->format('YmdHis') . '_' . \Str::uuid() . '.' . $extension;
+            $blPath    = $file->storeAs("purchase-orders/{$purchaseOrder->id}/bl", $safeName, 'public');
+            $data['delivery_note_path'] = $blPath;
         }
 
         if ($request->hasFile('photos')) {
             $paths = [];
             foreach ($request->file('photos') as $photo) {
-                $path = "purchase-orders/{$purchaseOrder->id}/photos/" . uniqid() . '_' . $photo->getClientOriginalName();
-                Storage::disk('public')->put($path, file_get_contents($photo->getRealPath()));
-                $paths[] = $path;
+                $extension = strtolower($photo->getClientOriginalExtension());
+                $safeName  = now()->format('YmdHis') . '_' . \Str::uuid() . '.' . $extension;
+                $paths[]   = $photo->storeAs("purchase-orders/{$purchaseOrder->id}/photos", $safeName, 'public');
             }
             $data['delivery_photos'] = $paths;
         }
@@ -236,9 +237,12 @@ class PurchaseOrderController extends Controller
         }
 
         // FIX C3: single outer transaction; createStockMovementsFromBdc() is now plain (no nested transaction)
-        // FIX L5: capture movement count to detect silent data issues
         $movementsCreated = 0;
         DB::transaction(function () use ($purchaseOrder, $data, $request, &$movementsCreated) {
+            // Verrou pessimiste : empêche double réception concurrente sur le même BDC
+            $locked = PurchaseOrder::where('id', $purchaseOrder->id)->lockForUpdate()->first();
+            abort_if($locked->status !== 'approuve', 422, 'Ce BDC a déjà été réceptionné ou son statut a changé.');
+
             $purchaseOrder->update($data);
             $movementsCreated = $this->createStockMovementsFromBdc($purchaseOrder, $request->user());
         });
@@ -295,6 +299,22 @@ class PurchaseOrderController extends Controller
         return response()->noContent();
     }
 
+    public function submit(Request $request, PurchaseOrder $purchaseOrder): JsonResponse
+    {
+        $user = $request->user();
+        abort_if($purchaseOrder->company_id !== $user->company_id, 403);
+        abort_unless($purchaseOrder->status === 'brouillon', 422, 'Seul un BDC en brouillon peut être soumis.');
+        abort_unless(
+            $purchaseOrder->requested_by === $user->id || in_array($user->role->name, ['direction', 'directeur-technique'], true),
+            403,
+            'Seul le créateur ou la direction peut soumettre ce BDC.'
+        );
+
+        $purchaseOrder->update(['status' => 'soumis']);
+
+        return response()->json($purchaseOrder->load('supplier:id,name', 'project:id,name,code', 'requester:id,name'));
+    }
+
     public function resubmit(Request $request, PurchaseOrder $purchaseOrder): JsonResponse
     {
         abort_if($purchaseOrder->company_id !== $request->user()->company_id, 403);
@@ -329,19 +349,27 @@ class PurchaseOrderController extends Controller
         abort_if($purchaseOrder->company_id !== $request->user()->company_id, 403);
 
         $user = $request->user();
-        abort_unless(
-            $purchaseOrder->requested_by === $user->id
-                || in_array($user->role->name, ['direction', 'directeur-technique']),
-            403,
-            'Seul le demandeur ou la direction peut annuler ce BDC.'
+        $isDirection = in_array($user->role->name, ['direction', 'directeur-technique'], true);
+
+        abort_if(
+            ! in_array($purchaseOrder->status, ['brouillon', 'soumis', 'approuve'], true),
+            422,
+            'Seules les commandes en brouillon, soumises ou approuvées peuvent être annulées.'
         );
 
-        // FIX M8: cancel is only for brouillon/soumis; rejete should go through resubmit
-        abort_if(
-            !in_array($purchaseOrder->status, ['brouillon', 'soumis']),
-            422,
-            'Seules les commandes en brouillon ou soumises peuvent être annulées.'
-        );
+        // Annulation d'un BDC approuvé : direction uniquement + motif obligatoire
+        if ($purchaseOrder->status === 'approuve') {
+            abort_unless($isDirection, 403, "Annulation d'une commande approuvée réservée à la direction.");
+            $data = $request->validate(['motif_annulation' => 'required|string|max:500']);
+            $purchaseOrder->rejection_reason = $data['motif_annulation'];
+            $purchaseOrder->save();
+        } else {
+            abort_unless(
+                $purchaseOrder->requested_by === $user->id || $isDirection,
+                403,
+                'Seul le demandeur ou la direction peut annuler ce BDC.'
+            );
+        }
 
         $purchaseOrder->update(['status' => 'annule']);
 
@@ -376,11 +404,12 @@ class PurchaseOrderController extends Controller
 
             if ($stockItem) {
                 $stockItem->movements()->create([
-                    'type'          => 'entree',
-                    'quantity'      => $qty,
-                    'reason'        => "Réception BDC #{$order->reference}",
-                    'movement_date' => now()->toDateString(),
-                    'created_by'    => $by->id,
+                    'type'              => 'entree',
+                    'quantity'          => $qty,
+                    'reason'            => "Réception BDC #{$order->reference}",
+                    'movement_date'     => now()->toDateString(),
+                    'created_by'        => $by->id,
+                    'purchase_order_id' => $order->id,
                 ]);
                 $stockItem->increment('quantity', $qty);
                 $created++;

@@ -7,6 +7,7 @@ use App\Http\Requests\UpdateProjectRequest;
 use App\Models\Project;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class ProjectController extends Controller
 {
@@ -56,5 +57,23 @@ class ProjectController extends Controller
         return response()->json([
             'data' => $project->fresh(),
         ]);
+    }
+
+    public function destroy(Request $request, Project $project): \Illuminate\Http\Response
+    {
+        $this->authorize('delete', $project);
+
+        // Cleanup physical files before DB delete
+        // Project photos
+        Storage::disk('public')->deleteDirectory("projects/{$project->id}");
+        // Invoice attachments (scoped by project via sub-directory convention)
+        Storage::disk('public')->deleteDirectory("invoices/{$project->id}");
+        // Purchase order files (scoped by project via sub-directory convention)
+        Storage::disk('public')->deleteDirectory("purchase-orders/{$project->id}");
+        // Note: GED documents have project_id nullOnDelete, files remain in company GED
+
+        $project->delete(); // DB cascade handles child rows
+
+        return response()->noContent();
     }
 }

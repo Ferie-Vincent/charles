@@ -2,6 +2,7 @@
 
 namespace App\Policies;
 
+use App\Models\DailyLog;
 use App\Models\Project;
 use App\Models\User;
 
@@ -34,5 +35,24 @@ class DailyLogPolicy
         }
 
         return true;
+    }
+
+    public function update(User $user, DailyLog $dailyLog, Project $project): bool
+    {
+        if ($user->company_id !== $project->company_id) return false;
+
+        $allowedRoles = ['direction', 'directeur-technique', 'conducteur-travaux'];
+        if (in_array($user->role->name, $allowedRoles)) return true;
+
+        if ($user->role->name === 'chef-chantier') {
+            return $project->members()->where('user_id', $user->id)->exists();
+        }
+
+        return false;
+    }
+
+    public function delete(User $user, DailyLog $dailyLog, Project $project): bool
+    {
+        return $this->update($user, $dailyLog, $project);
     }
 }
