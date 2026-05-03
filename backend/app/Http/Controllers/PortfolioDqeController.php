@@ -10,6 +10,12 @@ class PortfolioDqeController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
+        abort_unless(
+            in_array($request->user()->role->name, ['direction', 'directeur-technique']),
+            403,
+            'Accès réservé à la direction.'
+        );
+
         $companyId = $request->user()->company_id;
 
         $versions = DqeVersion::query()

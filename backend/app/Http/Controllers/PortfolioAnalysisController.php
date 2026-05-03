@@ -11,6 +11,12 @@ class PortfolioAnalysisController extends Controller
 {
     public function generate(Request $request): JsonResponse
     {
+        abort_unless(
+            in_array($request->user()->role->name, ['direction', 'directeur-technique']),
+            403,
+            'Analyse IA réservée à la direction.'
+        );
+
         $user    = $request->user();
         $groqKey = config('services.groq.key');
         $anthropicKey = config('services.anthropic.key');

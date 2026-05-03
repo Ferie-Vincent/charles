@@ -26,7 +26,7 @@ class ProjectIncidentController extends Controller
 
     public function store(Request $request, Project $project): JsonResponse
     {
-        $this->authorize('update', $project);
+        $this->authorize('create', [Incident::class, $project]);
 
         $data = $request->validate([
             'type'              => 'required|string|max:100',
@@ -61,7 +61,9 @@ class ProjectIncidentController extends Controller
 
     public function update(Request $request, Project $project, Incident $incident): JsonResponse
     {
-        $this->authorize('update', $project);
+        abort_if($incident->project_id !== $project->id, 404);
+
+        $this->authorize('update', $incident);
 
         $data = $request->validate([
             'status'            => 'sometimes|in:ouvert,en_cours,resolu,ferme',
@@ -76,8 +78,12 @@ class ProjectIncidentController extends Controller
 
     public function destroy(Project $project, Incident $incident): Response
     {
-        $this->authorize('update', $project);
+        abort_if($incident->project_id !== $project->id, 404);
+
+        $this->authorize('delete', $incident);
+
         $incident->delete();
+
         return response()->noContent();
     }
 

@@ -12,6 +12,12 @@ class PortfolioQhseController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
+        abort_unless(
+            in_array($request->user()->role->name, ['direction', 'directeur-technique']),
+            403,
+            'Accès réservé à la direction.'
+        );
+
         $companyId = $request->user()->company_id;
 
         // Fetch all incidents scoped to company, with project and reporter
@@ -37,7 +43,7 @@ class PortfolioQhseController extends Controller
 
         $activeProjects = Project::query()
             ->where('company_id', $companyId)
-            ->where('status', 'actif')
+            ->where('status', 'active')
             ->with(['incidents' => function ($q) use ($monthFrom, $monthTo) {
                 $q->whereBetween('occurred_at', [$monthFrom, $monthTo])
                   ->select(['id', 'project_id', 'severity']);

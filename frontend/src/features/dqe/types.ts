@@ -1,4 +1,4 @@
-export type DqeStatus = 'draft' | 'validated' | 'archived';
+export type DqeStatus = 'draft' | 'soumise' | 'validated' | 'archived';
 
 export type DqeVersion = {
   id: number;
@@ -53,6 +53,7 @@ export const UNITES_BTP = [
 
 export const STATUS_LABELS: Record<DqeStatus, string> = {
   draft:     'Brouillon',
+  soumise:   'En attente DG',
   validated: 'Validé',
   archived:  'Archivé',
 };

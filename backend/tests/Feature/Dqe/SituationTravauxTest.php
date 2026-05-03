@@ -69,7 +69,7 @@ it('generates situation using specific dqe_version_id', function () {
         'created_by'     => $this->user->id,
         'version_number' => 1,
         'name'           => 'DQE Spécifique',
-        'status'         => 'draft',
+        'status'         => 'validated',  // doit être validé pour générer une situation
     ]);
 
     // Mock Groq HTTP call

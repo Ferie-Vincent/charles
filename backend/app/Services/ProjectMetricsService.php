@@ -19,6 +19,7 @@ class ProjectMetricsService
      *   budget_score: int,
      *   safety_score: int,
      *   realise: float,
+     *   engage: float,
      *   previsionnel: float,
      *   ecart: float,
      *   latest_progress: int,
@@ -57,21 +58,23 @@ class ProjectMetricsService
         $safetyScore = max(0, 25 - $incidentCount * 5);
 
         // --- Budget score (max 25, corrigé — plus de placeholder fixe) ---
-        [$budgetScore, $realise, $previsionnel] = $this->computeBudgetScore($project);
+        [$budgetScore, $realise, $engage, $previsionnel] = $this->computeBudgetScore($project);
 
-        $ecart = $previsionnel - $realise;
+        $ecart = $previsionnel - $engage;
 
         // --- Total ---
         $total = (int) round($planningScore + $regularityScore + $budgetScore + $safetyScore);
 
         return [
             'score'            => $total,
+            'status'           => $this->status($total),
             'label'            => $this->label($total),
             'planning_score'   => (int) round($planningScore),
             'regularity_score' => (int) round($regularityScore),
             'budget_score'     => (int) round($budgetScore),
             'safety_score'     => (int) round($safetyScore),
-            'realise'          => round($realise, 2),
+            'realise'          => round($realise, 2),   // factures payées uniquement
+            'engage'           => round($engage, 2),    // factures validées + payées (engagements fermes)
             'previsionnel'     => round($previsionnel, 2),
             'ecart'            => round($ecart, 2),
             'latest_progress'  => $latestProgress,
@@ -97,14 +100,13 @@ class ProjectMetricsService
     // -------------------------------------------------------------------------
 
     /**
-     * Calcule le budget_score, le réalisé et le prévisionnel.
+     * Calcule le budget_score, le réalisé, l'engagé et le prévisionnel.
      *
-     * @return array{0: float, 1: float, 2: float}  [budget_score, realise, previsionnel]
+     * @return array{0: float, 1: float, 2: float, 3: float}  [budget_score, realise, engage, previsionnel]
      */
     private function computeBudgetScore(Project $project): array
     {
         // Référence budgétaire : DQE validé > budget_amount du projet.
-        // Use already-loaded relation to avoid N+1.
         $dqeVersions = $project->relationLoaded('dqeVersions')
             ? $project->dqeVersions
             : $project->dqeVersions()->get();
@@ -118,20 +120,23 @@ class ProjectMetricsService
             ? (float) $validatedDqe->total_ht
             : (float) ($project->budget_amount ?? 0);
 
-        // Réalisé = factures payées uniquement.
-        // Use already-loaded relation to avoid N+1.
         $invoices = $project->relationLoaded('invoices')
             ? $project->invoices
             : $project->invoices()->get();
 
+        // Réalisé = factures payées uniquement (décaissé).
         $realise = (float) $invoices->where('status', 'payee')->sum('amount_ht');
+
+        // Engagé = validées + payées (engagements fermes, décaissés ou non).
+        $engage = (float) $invoices->whereIn('status', ['validee', 'payee'])->sum('amount_ht');
 
         // Pas de référence budgétaire → score neutre.
         if ($budgetRef <= 0) {
-            return [15.0, $realise, 0.0];
+            return [15.0, $realise, $engage, 0.0];
         }
 
-        $ratio = $realise / $budgetRef;
+        // Score basé sur l'engagé (plus prudent que le seul réalisé).
+        $ratio = $engage / $budgetRef;
 
         $score = match (true) {
             $ratio <= 0.5  => 25.0,
@@ -141,7 +146,14 @@ class ProjectMetricsService
             default        => 0.0,
         };
 
-        return [$score, $realise, $budgetRef];
+        return [$score, $realise, $engage, $budgetRef];
+    }
+
+    private function status(int $score): string
+    {
+        if ($score >= 75) return 'green';
+        if ($score >= 50) return 'orange';
+        return 'red';
     }
 
     private function label(int $score): string

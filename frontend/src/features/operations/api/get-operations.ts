@@ -40,12 +40,36 @@ export interface CriticalProject {
   health_label: 'critical' | 'warning' | 'good';
 }
 
+export interface InvoicePending {
+  id: number;
+  reference: string;
+  amount_ht: number;
+  supplier: string;
+  age_days: number;
+  project_id: number;
+  project_name: string;
+  project_code: string;
+}
+
+export interface DqePending {
+  id: number;
+  name: string;
+  version_number: number;
+  total_ht: number;
+  age_days: number;
+  project_id: number;
+  project_name: string;
+  project_code: string;
+}
+
 export interface OperationsData {
   health_summary: HealthSummary;
   budget_summary: BudgetSummary;
   bdc_pending: BdcPending[];
   stock_alerts: StockAlert[];
   critical_projects: CriticalProject[];
+  invoices_pending: InvoicePending[];
+  dqe_pending: DqePending[];
 }
 
 export async function getOperations(): Promise<OperationsData> {

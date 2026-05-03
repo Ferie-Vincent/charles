@@ -36,10 +36,12 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
     enabled: canSeeOps,
   });
 
-  const bdcPending     = ops?.bdc_pending     ?? [];
-  const stockAlerts    = ops?.stock_alerts    ?? [];
-  const criticalProj   = ops?.critical_projects ?? [];
-  const notifCount     = bdcPending.length + stockAlerts.length + criticalProj.length;
+  const bdcPending      = ops?.bdc_pending      ?? [];
+  const stockAlerts     = ops?.stock_alerts     ?? [];
+  const criticalProj    = ops?.critical_projects ?? [];
+  const invoicesPending = (roleGroup === 'direction' ? (ops?.invoices_pending ?? []) : []);
+  const dqePending      = (roleGroup === 'direction' ? (ops?.dqe_pending      ?? []) : []);
+  const notifCount      = bdcPending.length + stockAlerts.length + criticalProj.length + invoicesPending.length + dqePending.length;
 
   useEffect(() => {
     function handleOutside(e: MouseEvent) {
@@ -187,6 +189,43 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
                         </div>
                       </button>
                     ))}
+
+                    {dqePending.map((dqe: any) => (
+                      <button
+                        key={`dqe-${dqe.id}`}
+                        type="button"
+                        className="topbar-notif-item topbar-notif-item--warning"
+                        onClick={() => { navigate(`/projects/${dqe.project_id}/dqe/${dqe.id}`); setNotifOpen(false); }}
+                      >
+                        <span className="topbar-notif-item__dot topbar-notif-item__dot--warning" />
+                        <div className="topbar-notif-item__body">
+                          <div className="topbar-notif-item__title">DQE à valider — v{dqe.version_number} {dqe.name}</div>
+                          <div className="topbar-notif-item__sub">
+                            {dqe.project_code} · {dqe.total_ht ? `${fmtAmount(dqe.total_ht)} HT` : '—'}
+                            {` · ${dqe.age_days}j`}
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+
+                    {invoicesPending.map((inv: any) => (
+                      <button
+                        key={`inv-${inv.id}`}
+                        type="button"
+                        className="topbar-notif-item topbar-notif-item--warning"
+                        onClick={() => { navigate(`/projects/${inv.project_id}/accounting`); setNotifOpen(false); }}
+                      >
+                        <span className="topbar-notif-item__dot topbar-notif-item__dot--warning" />
+                        <div className="topbar-notif-item__body">
+                          <div className="topbar-notif-item__title">Facture à valider — {inv.reference}</div>
+                          <div className="topbar-notif-item__sub">
+                            {inv.project_code} · {inv.supplier}
+                            {inv.amount_ht ? ` · ${fmtAmount(inv.amount_ht)}` : ''}
+                            {` · ${inv.age_days}j`}
+                          </div>
+                        </div>
+                      </button>
+                    ))}
                   </div>
                 )}
 
@@ -240,22 +279,6 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
                 </div>
               </div>
               <div className="topbar-user-menu__divider" />
-<<<<<<< Updated upstream
-=======
-              <Link
-                to="/settings"
-                className="topbar-user-menu__item"
-                role="menuitem"
-                onClick={() => setUserMenuOpen(false)}
-              >
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="3"/>
-                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-                </svg>
-                Parametres
-              </Link>
-              <div className="topbar-user-menu__divider" />
->>>>>>> Stashed changes
               <button
                 type="button"
                 className="topbar-user-menu__item topbar-user-menu__item--danger"

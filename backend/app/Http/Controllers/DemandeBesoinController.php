@@ -87,7 +87,44 @@ class DemandeBesoinController extends Controller
             'approved_at' => now(),
         ]);
 
-        return response()->json(['data' => $demande->fresh()]);
+        // Calcul avertissement budget (non bloquant)
+        $budgetWarning = null;
+        $project       = $demande->project;
+
+        if ($project && $demande->estimated_cost > 0) {
+            $budgetRef = (float) ($project->dqeVersions()
+                ->where('status', 'validated')
+                ->orderByDesc('version_number')
+                ->value('total_ht') ?? $project->budget_amount ?? 0);
+
+            if ($budgetRef > 0) {
+                $engagedDemandes = DemandeBesoin::where('project_id', $project->id)
+                    ->whereIn('status', ['approuve', 'en_preparation', 'livre', 'comptabilise'])
+                    ->where('id', '!=', $demande->id)
+                    ->sum('estimated_cost');
+
+                $engagedInvoices = $project->invoices()
+                    ->whereIn('status', ['validee', 'payee'])
+                    ->sum('amount_ht');
+
+                $disponible = $budgetRef - $engagedDemandes - $engagedInvoices;
+
+                if ($demande->estimated_cost > $disponible) {
+                    $budgetWarning = [
+                        'budget_ref'  => round($budgetRef, 2),
+                        'engage'      => round($engagedDemandes + $engagedInvoices, 2),
+                        'disponible'  => round($disponible, 2),
+                        'demande'     => round($demande->estimated_cost, 2),
+                        'depassement' => round($demande->estimated_cost - $disponible, 2),
+                    ];
+                }
+            }
+        }
+
+        return response()->json([
+            'data'           => $demande->fresh(),
+            'budget_warning' => $budgetWarning,
+        ]);
     }
 
     public function reject(Request $request, DemandeBesoin $demande): JsonResponse
@@ -107,6 +144,31 @@ class DemandeBesoinController extends Controller
         ]);
 
         return response()->json(['data' => $demande->fresh()]);
+    }
+
+    public function resubmit(Request $request, DemandeBesoin $demande): JsonResponse
+    {
+        $user = $request->user();
+        abort_if($demande->company_id !== $user->company_id, 403);
+        abort_unless($demande->status === 'rejete', 422, 'Seule une demande rejetée peut être resoumise.');
+
+        $isCreator    = $demande->requested_by === $user->id;
+        $isDirection  = in_array($user->role->name, self::DIRECTION, true);
+        abort_unless($isCreator || $isDirection, 403, 'Seul le demandeur ou la direction peut resoumettre.');
+
+        $data = $request->validate(['correction_note' => 'nullable|string|max:500']);
+
+        $demande->update([
+            'status'           => 'soumis',
+            'approved_by'      => null,
+            'approved_at'      => null,
+            'rejection_reason' => null,
+            'notes'            => isset($data['correction_note']) && $data['correction_note']
+                ? ($demande->notes ? $demande->notes . "\n[Correction] " . $data['correction_note'] : $data['correction_note'])
+                : $demande->notes,
+        ]);
+
+        return response()->json(['data' => $demande->fresh(['project:id,name,code', 'requester:id,name'])]);
     }
 
     public function prepare(Request $request, DemandeBesoin $demande): JsonResponse

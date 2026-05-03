@@ -20,7 +20,7 @@ class StoreProjectRequest extends FormRequest
             'location' => ['nullable', 'string', 'max:255'],
             'budget_amount' => ['nullable', 'numeric', 'min:0'],
             'start_date' => ['nullable', 'date'],
-            'end_date' => ['nullable', 'date'],
+            'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
         ];
     }
 }

@@ -13,10 +13,17 @@ class PortfolioAccountingController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
+        abort_unless(
+            in_array($request->user()->role->name, ['direction', 'directeur-technique']),
+            403,
+            'Accès réservé à la direction.'
+        );
+
         $companyId = $request->user()->company_id;
 
         $projects = Project::query()
             ->where('company_id', $companyId)
+            ->whereIn('status', ['active', 'draft'])
             ->with(['budgetEntries', 'invoices.supplier', 'dqeVersions'])
             ->get();
 
@@ -36,9 +43,9 @@ class PortfolioAccountingController extends Controller
             $realise = $paiementBE + $invoicesPayee;
             $engage  = $engagement + $invoicesSoumis;
 
-            $rac  = max(0, $budgetRef - $engage - $realise);
-            $cat  = $realise + $engage + $rac;
-            $ecart = $budgetRef - $cat;
+            $rac   = max(0, $budgetRef - $engage - $realise);
+            $cat   = $realise + $engage + $rac;
+            $ecart = $budgetRef - $realise; // positif = reste à dépenser, négatif = dépassement
 
             return [
                 'id'          => $project->id,
@@ -144,6 +151,12 @@ class PortfolioAccountingController extends Controller
 
     public function activityDetail(Request $request, string $type, int $id): JsonResponse
     {
+        abort_unless(
+            in_array($request->user()->role->name, ['direction', 'directeur-technique']),
+            403,
+            'Accès réservé à la direction.'
+        );
+
         $companyId = $request->user()->company_id;
 
         if ($type === 'budget_entry') {
