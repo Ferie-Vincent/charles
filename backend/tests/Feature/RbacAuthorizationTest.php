@@ -164,7 +164,7 @@ describe('Portfolio operations endpoint', function () {
 describe('Purchase order RBAC', function () {
     beforeEach(function () {
         $this->company = Company::factory()->create();
-        $this->project = rbacProject($this->company);
+        $this->project = rbacProject($this->company, ['status' => 'active']);
     });
 
     it('allows BDC_CREATORS to create purchase orders', function (string $role) {
@@ -235,7 +235,7 @@ describe('Stock adjustments audit endpoint', function () {
 describe('Demande besoin RBAC', function () {
     beforeEach(function () {
         $this->company = Company::factory()->create();
-        $this->project = rbacProject($this->company);
+        $this->project = rbacProject($this->company, ['status' => 'active']);
     });
 
     it('allows terrain and management to create demandes', function (string $role) {

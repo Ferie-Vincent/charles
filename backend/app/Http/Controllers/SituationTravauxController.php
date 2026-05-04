@@ -3,11 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\DqeVersion;
+use App\Models\GedDocument;
 use App\Models\Project;
 use App\Support\Roles;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
 class SituationTravauxController extends Controller
@@ -67,13 +70,43 @@ class SituationTravauxController extends Controller
             return response()->json(['error' => $content['error']], 502);
         }
 
+        $gedDoc = $this->archiveToGed($project, $data['periode'], $content['text'], $request->user()->id);
+
         return response()->json([
             'situation'      => $content['text'],
             'dqe_version'    => $dqeVersion->name,
             'dqe_version_id' => $dqeVersion->id,
             'total_ht'       => $dqeVersion->total_ht,
             'avancement'     => $avancement,
+            'ged_document_id' => $gedDoc?->id,
         ]);
+    }
+
+    private function archiveToGed(Project $project, string $periode, string $text, int $userId): ?GedDocument
+    {
+        try {
+            $safeCode = preg_replace('/[^A-Za-z0-9\-_]/', '', $project->code);
+            $filename = "situation-travaux-{$safeCode}-{$periode}.md";
+            $path     = "ged/situation-travaux/{$project->id}/{$filename}";
+
+            Storage::disk('public')->put($path, $text);
+
+            return GedDocument::create([
+                'company_id'    => $project->company_id,
+                'project_id'    => $project->id,
+                'uploaded_by'   => $userId,
+                'name'          => "Situation Travaux – {$project->name} – {$periode}",
+                'original_name' => $filename,
+                'path'          => $path,
+                'mime_type'     => 'text/markdown',
+                'size_bytes'    => Storage::disk('public')->size($path),
+                'type'          => 'rapport',
+                'description'   => "Situation de travaux générée par IA – période {$periode}",
+            ]);
+        } catch (\Throwable $e) {
+            Log::warning("SituationTravaux: archiveToGed failed for project #{$project->id}: {$e->getMessage()}");
+            return null;
+        }
     }
 
     public function versions(Project $project): JsonResponse

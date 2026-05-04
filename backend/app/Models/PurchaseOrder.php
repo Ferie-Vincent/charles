@@ -15,6 +15,7 @@ class PurchaseOrder extends Model
         'reference', 'status', 'items', 'total_amount',
         'expected_delivery', 'approved_at', 'rejection_reason', 'notes',
         'delivery_note_path', 'delivery_photos', 'reception_notes', 'received_at',
+        'engagement_entry_id',
     ];
 
     protected $hidden = ['delivery_note_path', 'delivery_photos'];
@@ -32,5 +33,6 @@ class PurchaseOrder extends Model
     public function requester(): BelongsTo  { return $this->belongsTo(User::class, 'requested_by'); }
     public function supplier(): BelongsTo   { return $this->belongsTo(Supplier::class); }
     public function project(): BelongsTo    { return $this->belongsTo(Project::class); }
-    public function approver(): BelongsTo   { return $this->belongsTo(User::class, 'approved_by'); }
+    public function approver(): BelongsTo        { return $this->belongsTo(User::class, 'approved_by'); }
+    public function engagementEntry(): BelongsTo { return $this->belongsTo(BudgetEntry::class, 'engagement_entry_id'); }
 }

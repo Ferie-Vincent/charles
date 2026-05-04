@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Events\DqeValidated;
+use App\Events\InvoiceValidated;
 use App\Models\DqeVersion;
 use App\Models\Invoice;
 use App\Models\PurchaseOrder;
@@ -77,6 +79,10 @@ class WorkflowService
         }
 
         $invoice->update($updates);
+
+        if ($to === 'validee') {
+            event(new InvoiceValidated($invoice, $by));
+        }
     }
 
     // =========================================================================
@@ -110,6 +116,10 @@ class WorkflowService
         $this->assertRoleGate($to, $roleSlug, self::DQE_ROLE_GATES);
 
         $dqe->update(['status' => $to]);
+
+        if ($to === 'validated') {
+            event(new DqeValidated($dqe->load('project'), $by));
+        }
     }
 
     // =========================================================================

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\InvoicePaid;
 use App\Models\Invoice;
 use App\Models\Project;
 use App\Services\WorkflowService;
@@ -192,6 +193,9 @@ class InvoiceController extends Controller
             'payment_proof_path'  => $path,
             'payment_proof_name'  => $file->getClientOriginalName(),
         ]);
+
+        event(new InvoicePaid($invoice->load('project'), $request->user()));
+
         $invoice->load('supplier:id,name');
 
         return response()->json($invoice);

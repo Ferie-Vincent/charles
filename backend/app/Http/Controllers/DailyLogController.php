@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\DailyLogCreated;
 use App\Http\Requests\StoreDailyLogRequest;
 use App\Models\DailyLog;
 use App\Models\Project;
@@ -73,6 +74,8 @@ class DailyLogController extends Controller
             'user_id'    => $request->user()->id,
             'log_date'   => $today,
         ]);
+
+        event(new DailyLogCreated($log, $project));
 
         return response()->json(['data' => $log], 201);
     }

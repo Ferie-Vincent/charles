@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Incident;
 use App\Models\Project;
+use App\Models\Task;
+use App\Models\User;
 use App\Services\WhatsAppAlertService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
@@ -46,14 +48,8 @@ class ProjectIncidentController extends Controller
 
         $incident->load('reporter:id,name');
 
-        // Send WhatsApp alert for critical incidents
-        if ($incident->severity === 'critique') {
-            $msg = "🚨 *INCIDENT CRITIQUE* — {$project->name}\n"
-                . "Type : {$incident->type}\n"
-                . "Lieu : " . ($incident->location ?? 'Non précisé') . "\n"
-                . "Déclaré par : {$incident->reporter->name}\n"
-                . "Date : " . now()->format('d/m/Y H:i');
-            app(WhatsAppAlertService::class)->send($msg);
+        if (in_array($incident->severity, ['critique', 'majeur'], true)) {
+            $this->handleSeriousIncident($incident, $project);
         }
 
         return response()->json($incident, 201);
@@ -85,6 +81,38 @@ class ProjectIncidentController extends Controller
         $incident->delete();
 
         return response()->noContent();
+    }
+
+    private function handleSeriousIncident(Incident $incident, Project $project): void
+    {
+        if ($incident->severity === 'critique') {
+            $msg = "INCIDENT CRITIQUE — {$project->name}\n"
+                . "Type : {$incident->type}\n"
+                . "Lieu : " . ($incident->location ?? 'Non précisé') . "\n"
+                . "Déclaré par : {$incident->reporter->name}\n"
+                . "Date : " . now()->format('d/m/Y H:i');
+            app(WhatsAppAlertService::class)->send($msg);
+        }
+
+        $dueDays = $incident->severity === 'critique' ? 2 : 7;
+
+        $dtUser = User::whereHas('role', fn($q) => $q->where('name', 'directeur-technique'))
+            ->where('company_id', $project->company_id)
+            ->first();
+
+        Task::create([
+            'company_id'   => $project->company_id,
+            'assigned_to'  => $dtUser?->id,
+            'assigned_by'  => $incident->reported_by,
+            'title'        => "Action corrective – Incident {$incident->severity} #{$incident->id} – {$project->name}",
+            'detail'       => "Description : {$incident->description}\nType : {$incident->type}\nLieu : " . ($incident->location ?? 'N/A'),
+            'priority'     => $incident->severity === 'critique' ? 'haute' : 'normale',
+            'role_target'  => 'directeur-technique',
+            'project_code' => $project->code,
+            'status'       => 'a_faire',
+            'source'       => 'auto',
+            'due_date'     => now()->addDays($dueDays)->toDateString(),
+        ]);
     }
 
     public function pdf(Project $project, Incident $incident): Response

@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\BdcApproved;
+use App\Events\BdcCancelled;
+use App\Events\BdcReceived;
 use App\Models\PurchaseOrder;
 use App\Support\Roles;
 use Illuminate\Http\JsonResponse;
@@ -55,6 +58,11 @@ class PurchaseOrderController extends Controller
             'expected_delivery'   => 'nullable|date',
             'notes'               => 'nullable|string|max:1000',
         ]);
+
+        if (! empty($data['project_id'])) {
+            $proj = \App\Models\Project::find($data['project_id']);
+            abort_if($proj && $proj->status === 'completed', 422, 'Impossible de créer un BDC sur un projet terminé.');
+        }
 
         $items = collect($data['items'])->map(fn($i) => [
             ...$i,
@@ -157,6 +165,8 @@ class PurchaseOrderController extends Controller
             'rejection_reason' => null,
         ]);
 
+        event(new BdcApproved($purchaseOrder, $request->user()));
+
         $purchaseOrder->load('supplier:id,name', 'project:id,name,code', 'requester:id,name', 'approver:id,name');
 
         return response()->json($purchaseOrder);
@@ -243,6 +253,8 @@ class PurchaseOrderController extends Controller
             // Silent: BDC may have no stock-linked items — log but do not fail
             \Illuminate\Support\Facades\Log::info("markReceived: BDC #{$purchaseOrder->reference} — 0 stock movements created (items may have no stock_item_id).");
         }
+
+        event(new BdcReceived($purchaseOrder->fresh(), $request->user()));
 
         $purchaseOrder->load('supplier:id,name', 'project:id,name,code', 'requester:id,name', 'approver:id,name');
 
@@ -350,7 +362,9 @@ class PurchaseOrderController extends Controller
         );
 
         // Annulation d'un BDC approuvé : direction uniquement + motif obligatoire
-        if ($purchaseOrder->status === 'approuve') {
+        $wasApproved = $purchaseOrder->status === 'approuve';
+
+        if ($wasApproved) {
             abort_unless($isDirection, 403, "Annulation d'une commande approuvée réservée à la direction.");
             $data = $request->validate(['motif_annulation' => 'required|string|max:500']);
             $purchaseOrder->rejection_reason = $data['motif_annulation'];
@@ -364,6 +378,8 @@ class PurchaseOrderController extends Controller
         }
 
         $purchaseOrder->update(['status' => 'annule']);
+
+        event(new BdcCancelled($purchaseOrder, $user, $wasApproved));
 
         return response()->json($purchaseOrder->load('supplier:id,name', 'project:id,name,code'));
     }
