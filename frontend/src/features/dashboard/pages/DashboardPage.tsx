@@ -142,7 +142,7 @@ function LogiProjectList({ projects }: { projects: DashboardData['active_project
   const HEALTH_COLOR: Record<string, string> = { green: '#10b981', orange: '#f59e0b', red: '#ef4444' };
 
   return (
-    <div className="card card--full" style={{ margin: 0 }}>
+    <div className="card card--full" style={{ margin: 0, display: 'flex', flexDirection: 'column' }}>
       <div className="card-head">
         <div className="card-icon card-icon--green">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16">
@@ -154,7 +154,7 @@ function LogiProjectList({ projects }: { projects: DashboardData['active_project
           <p className="card-subtitle" style={{ margin: 0 }}>Sites à approvisionner</p>
         </div>
       </div>
-      <div className="terrain-project-list">
+      <div className="terrain-project-list" style={{ flex: 1, overflowY: 'auto' }}>
         {projects.map(p => (
           <div key={p.id} className="terrain-project-row">
             <div className="terrain-project-row__info">
