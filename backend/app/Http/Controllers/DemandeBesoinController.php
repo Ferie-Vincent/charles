@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\DemandeBesoinApproved;
 use App\Models\BudgetEntry;
 use App\Models\DemandeBesoin;
 use App\Support\Roles;
@@ -82,6 +83,8 @@ class DemandeBesoinController extends Controller
             'approved_by' => $user->id,
             'approved_at' => now(),
         ]);
+
+        event(new DemandeBesoinApproved($demande, $user));
 
         // Calcul avertissement budget (non bloquant)
         $budgetWarning = null;

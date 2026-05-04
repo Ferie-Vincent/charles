@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\StockBelowThreshold;
 use App\Models\StockItem;
 use App\Models\StockMovement;
 use App\Support\Roles;
@@ -187,6 +188,10 @@ class StockController extends Controller
 
         $stockItem->refresh();
         $movement->load('creator:id,name', 'project:id,name,code');
+
+        if (in_array($data['type'], ['sortie', 'ajustement'], true) && $stockItem->is_low) {
+            event(new StockBelowThreshold($stockItem, $data['project_id'] ?? null));
+        }
 
         return response()->json([
             'movement' => $movement,

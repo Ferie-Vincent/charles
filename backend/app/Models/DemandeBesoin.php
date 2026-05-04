@@ -16,7 +16,7 @@ class DemandeBesoin extends Model
         'approved_by', 'approved_at', 'rejection_reason',
         'prepared_by', 'prepared_at',
         'delivered_at', 'delivered_by',
-        'actual_cost', 'recorded_by', 'recorded_at', 'budget_entry_id',
+        'actual_cost', 'recorded_by', 'recorded_at', 'budget_entry_id', 'preengagement_entry_id',
         'notes',
     ];
 
@@ -36,5 +36,6 @@ class DemandeBesoin extends Model
     public function preparer(): BelongsTo      { return $this->belongsTo(User::class, 'prepared_by'); }
     public function deliverer(): BelongsTo     { return $this->belongsTo(User::class, 'delivered_by'); }
     public function recorder(): BelongsTo      { return $this->belongsTo(User::class, 'recorded_by'); }
-    public function budgetEntry(): BelongsTo   { return $this->belongsTo(BudgetEntry::class); }
+    public function budgetEntry(): BelongsTo        { return $this->belongsTo(BudgetEntry::class); }
+    public function preengagementEntry(): BelongsTo { return $this->belongsTo(BudgetEntry::class, 'preengagement_entry_id'); }
 }

@@ -21,6 +21,7 @@ class Project extends Model
         'longitude',
         'budget_amount',
         'target_progress',
+        'current_progress',
         'start_date',
         'end_date',
     ];
@@ -28,12 +29,13 @@ class Project extends Model
     protected function casts(): array
     {
         return [
-            'budget_amount'   => 'decimal:2',
-            'target_progress' => 'integer',
-            'start_date'      => 'date',
-            'end_date'        => 'date',
-            'latitude'        => 'float',
-            'longitude'       => 'float',
+            'budget_amount'    => 'decimal:2',
+            'target_progress'  => 'integer',
+            'current_progress' => 'integer',
+            'start_date'       => 'date',
+            'end_date'         => 'date',
+            'latitude'         => 'float',
+            'longitude'        => 'float',
         ];
     }
 
