@@ -46,8 +46,8 @@ it('returns 100 score shape', function () {
 });
 
 it('returns critical label when score below 50', function () {
-    // planning=0 (no logs, target=100), regularity=0, budget=25, safety=0 (5 incidents) → total=25
-    $this->project->update(['target_progress' => 100]);
+    // Force start_date 60 days ago so regularity = min(5/60) * 25 ≈ 2 → score ≈ 27 (critical)
+    $this->project->update(['target_progress' => 100, 'start_date' => now()->subDays(60)->toDateString()]);
 
     foreach (range(0, 4) as $i) {
         DailyLog::factory()->create([

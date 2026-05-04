@@ -68,6 +68,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/portfolio/accounting/activity/{type}/{id}', [PortfolioAccountingController::class, 'activityDetail']);
     Route::get('/portfolio/operations', [PortfolioOperationsController::class, 'index']);
     // Stock items & movements
+    Route::get('/stock-movements/adjustments', [StockController::class, 'adjustmentAudit']);
     Route::get('/stock-items', [StockController::class, 'index']);
     Route::post('/stock-items', [StockController::class, 'store']);
     Route::put('/stock-items/{stockItem}', [StockController::class, 'update']);

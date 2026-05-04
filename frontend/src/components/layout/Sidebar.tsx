@@ -94,7 +94,7 @@ export default function Sidebar({ open, onClose }: { open?: boolean; onClose?: (
   const visibleItems = navItems.filter(item => {
     const feature = item.to.replace('/', '');
     if (!feature) return true;
-    if (group === 'direction') return true;
+    if (group === 'direction' || group === 'dt') return true;
     return canAccess(feature, group);
   });
 

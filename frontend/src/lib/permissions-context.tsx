@@ -22,18 +22,20 @@ const Ctx = createContext<PermissionsCtx>({
 });
 
 const GROUP_ROLES: Record<RoleGroup, string[]> = {
-  direction: [],
-  terrain:   ['conducteur-travaux', 'chef-chantier'],
-  gestion:   ['metreur-economiste', 'comptable'],
+  direction:  [],
+  dt:         ['directeur-technique'],
+  terrain:    ['conducteur-travaux', 'chef-chantier'],
+  metreur:    ['metreur-economiste'],
+  comptable:  ['comptable'],
   logistique: ['moyens-generaux'],
-  lecture:   ['lecture-seule'],
+  lecture:    ['lecture-seule'],
 };
 
 export function PermissionsProvider({ children }: { children: ReactNode }) {
-  const [matrix, setMatrix]       = useState<PermMatrix>({});
-  const [features, setFeatures]   = useState<string[]>([]);
+  const [matrix, setMatrix]         = useState<PermMatrix>({});
+  const [features, setFeatures]     = useState<string[]>([]);
   const [myFeatures, setMyFeatures] = useState<FeatureMap>({});
-  const [loaded, setLoaded]       = useState(false);
+  const [loaded, setLoaded]         = useState(false);
 
   async function load() {
     const [myRes, matrixRes] = await Promise.allSettled([
@@ -53,7 +55,8 @@ export function PermissionsProvider({ children }: { children: ReactNode }) {
   useEffect(() => { load(); }, []);
 
   function canAccess(feature: string, group: RoleGroup): boolean {
-    if (group === 'direction') return true;
+    // direction and dt are LOCKED roles — all features enabled at backend level
+    if (group === 'direction' || group === 'dt') return true;
     // Use own features map (loaded via /my-permissions for all roles)
     if (Object.keys(myFeatures).length > 0) {
       return myFeatures[feature] ?? false;

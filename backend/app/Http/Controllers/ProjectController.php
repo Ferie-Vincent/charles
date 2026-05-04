@@ -53,7 +53,20 @@ class ProjectController extends Controller
     {
         $this->authorize('update', $project);
 
-        $project->update($request->validated());
+        $role      = $request->user()->role->name;
+        $validated = $request->validated();
+
+        $data = match(true) {
+            in_array($role, Roles::MANAGEMENT)  => $validated,
+            $role === 'conducteur-travaux'       => collect($validated)->only(['status', 'target_progress', 'location', 'end_date'])->all(),
+            $role === 'metreur-economiste'       => collect($validated)->only(['budget_amount', 'target_progress'])->all(),
+            $role === 'chef-chantier'            => collect($validated)->only(['status', 'target_progress'])->all(),
+            default                              => [],
+        };
+
+        abort_if(empty($data), 403, 'Aucun champ modifiable pour ce rôle.');
+
+        $project->update($data);
 
         return response()->json([
             'data' => $project->fresh(),

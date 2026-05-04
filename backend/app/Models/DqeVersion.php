@@ -10,7 +10,7 @@ class DqeVersion extends Model
 {
     protected $fillable = [
         'project_id', 'created_by', 'version_number',
-        'name', 'status', 'total_ht', 'notes',
+        'name', 'status', 'total_ht', 'notes', 'rejection_reason',
     ];
 
     protected $casts = [
