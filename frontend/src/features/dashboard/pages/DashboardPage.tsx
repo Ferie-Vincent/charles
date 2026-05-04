@@ -142,7 +142,7 @@ function LogiProjectList({ projects }: { projects: DashboardData['active_project
   const HEALTH_COLOR: Record<string, string> = { green: '#10b981', orange: '#f59e0b', red: '#ef4444' };
 
   return (
-    <div className="card card--full" style={{ margin: 0, display: 'flex', flexDirection: 'column' }}>
+    <div className="card" style={{ margin: 0, display: 'flex', flexDirection: 'column' }}>
       <div className="card-head">
         <div className="card-icon card-icon--green">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16">
@@ -183,7 +183,7 @@ function LogiActivityFeed({ activities }: { activities: DashboardData['recent_ac
   const filtered = activities.filter(a => LOGI_ACTIVITY_TYPES.has(a.type));
 
   return (
-    <div className="card card--full" style={{ margin: 0, overflow: 'hidden' }}>
+    <div className="card" style={{ margin: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
       <div className="card-head">
         <div className="card-icon card-icon--purple">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16">
