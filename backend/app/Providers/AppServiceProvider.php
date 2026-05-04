@@ -7,16 +7,20 @@ use App\Events\BdcCancelled;
 use App\Events\BdcReceived;
 use App\Events\DailyLogCreated;
 use App\Events\DemandeBesoinApproved;
+use App\Events\DemandeBesoinDelivered;
 use App\Events\DqeValidated;
 use App\Events\InvoicePaid;
+use App\Events\ProjectCompleted;
 use App\Events\StockBelowThreshold;
 use App\Listeners\ArchiveBdcDocsToGed;
 use App\Listeners\ArchiveInvoiceProofToGed;
+use App\Listeners\CreateArchiveOnProjectCompleted;
 use App\Listeners\CreateBudgetEngagementOnBdcApproved;
 use App\Listeners\CreateBudgetPaymentOnInvoicePaid;
 use App\Listeners\CreateIncidentFromDailyLog;
 use App\Listeners\CreatePreEngagementOnDemandeBesoinApproved;
 use App\Listeners\CreateStockAlertOnLowStock;
+use App\Listeners\CreateStockEntryOnDemandeBesoinDelivered;
 use App\Listeners\ReverseEngagementOnBdcCancelled;
 use App\Listeners\UpdateProjectBudgetOnDqeValidated;
 use App\Listeners\UpdateProjectProgressOnDailyLog;
@@ -56,5 +60,7 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(DailyLogCreated::class, CreateIncidentFromDailyLog::class);
         Event::listen(DqeValidated::class, UpdateProjectBudgetOnDqeValidated::class);
         Event::listen(StockBelowThreshold::class, CreateStockAlertOnLowStock::class);
+        Event::listen(DemandeBesoinDelivered::class, CreateStockEntryOnDemandeBesoinDelivered::class);
+        Event::listen(ProjectCompleted::class, CreateArchiveOnProjectCompleted::class);
     }
 }

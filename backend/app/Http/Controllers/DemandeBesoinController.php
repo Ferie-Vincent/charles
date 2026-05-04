@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Events\DemandeBesoinApproved;
+use App\Events\DemandeBesoinDelivered;
 use App\Models\BudgetEntry;
 use App\Models\DemandeBesoin;
 use App\Support\Roles;
@@ -60,6 +61,9 @@ class DemandeBesoinController extends Controller
             'urgency'        => 'required|in:normal,urgent,critique',
             'notes'          => 'nullable|string',
         ]);
+
+        $proj = \App\Models\Project::find($data['project_id']);
+        abort_if($proj && $proj->status === 'completed', 422, 'Impossible de créer une demande sur un projet terminé.');
 
         $demande = DemandeBesoin::create([
             ...$data,
@@ -198,6 +202,8 @@ class DemandeBesoinController extends Controller
             'delivered_at' => now(),
             'delivered_by' => $user->id,
         ]);
+
+        event(new DemandeBesoinDelivered($demande->fresh(), $user));
 
         return response()->json(['data' => $demande->fresh()]);
     }

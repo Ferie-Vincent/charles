@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\ProjectCompleted;
 use App\Http\Requests\StoreProjectRequest;
 use App\Http\Requests\UpdateProjectRequest;
 use App\Models\Project;
@@ -66,7 +67,12 @@ class ProjectController extends Controller
 
         abort_if(empty($data), 403, 'Aucun champ modifiable pour ce rôle.');
 
+        $wasCompleted = $project->status === 'completed';
         $project->update($data);
+
+        if (! $wasCompleted && ($data['status'] ?? null) === 'completed') {
+            event(new ProjectCompleted($project->fresh(), $request->user()));
+        }
 
         return response()->json([
             'data' => $project->fresh(),

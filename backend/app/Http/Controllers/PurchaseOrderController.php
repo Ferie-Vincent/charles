@@ -59,6 +59,11 @@ class PurchaseOrderController extends Controller
             'notes'               => 'nullable|string|max:1000',
         ]);
 
+        if (! empty($data['project_id'])) {
+            $proj = \App\Models\Project::find($data['project_id']);
+            abort_if($proj && $proj->status === 'completed', 422, 'Impossible de créer un BDC sur un projet terminé.');
+        }
+
         $items = collect($data['items'])->map(fn($i) => [
             ...$i,
             'total' => round($i['quantity'] * $i['unit_price'], 2),
