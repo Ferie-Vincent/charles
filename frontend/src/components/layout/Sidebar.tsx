@@ -1,6 +1,6 @@
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../features/auth/stores/auth-store';
-import { getRoleGroup } from '../../lib/roles';
+import { getRoleGroup, canAccess as staticCanAccess } from '../../lib/roles';
 import { usePermissions } from '../../lib/permissions-context';
 
 const navItems = [
@@ -92,9 +92,13 @@ export default function Sidebar({ open, onClose }: { open?: boolean; onClose?: (
   const group = getRoleGroup(user?.role?.name ?? '');
 
   const visibleItems = navItems.filter(item => {
-    const feature = item.to.replace('/', '');
-    if (!feature) return true;
+    // Static ROLE_ACCESS is the hard gate — if role not in allowed list, hide
+    if (!staticCanAccess(item.to, group)) return false;
+    // LOCKED roles see everything they're statically allowed
     if (group === 'direction' || group === 'dt') return true;
+    // Others: additionally filter by DB permissions (direction-configured overrides)
+    const feature = item.to.slice(1);
+    if (!feature) return true; // dashboard '/' always visible
     return canAccess(feature, group);
   });
 
