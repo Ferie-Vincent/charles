@@ -29,7 +29,7 @@ class InvoiceController extends Controller
 
     public function store(Request $request, Project $project): JsonResponse
     {
-        $this->authorize('update', $project);
+        $this->authorize('manageFinances', $project);
 
         $data = $request->validate([
             'reference'          => 'required|string|max:100',
@@ -73,7 +73,7 @@ class InvoiceController extends Controller
 
     public function update(Request $request, Project $project, Invoice $invoice): JsonResponse
     {
-        $this->authorize('update', $project);
+        $this->authorize('manageFinances', $project);
         abort_if($invoice->project_id !== $project->id, 404);
         abort_if($invoice->status === 'payee', 422, 'Une facture payée ne peut pas être modifiée.');
         abort_if($invoice->status === 'disputee', 422, 'Une facture en litige ne peut pas être modifiée directement. Utilisez la transition.');
@@ -122,7 +122,7 @@ class InvoiceController extends Controller
 
     public function destroy(Project $project, Invoice $invoice): Response
     {
-        $this->authorize('update', $project);
+        $this->authorize('manageFinances', $project);
         abort_if($invoice->project_id !== $project->id, 404);
         abort_if($invoice->status === 'payee', 422, 'Une facture payée ne peut pas être supprimée.');
         abort_if($invoice->status === 'disputee', 422, 'Résolvez le litige avant de supprimer cette facture.');
@@ -137,7 +137,7 @@ class InvoiceController extends Controller
 
     public function transition(Request $request, Project $project, Invoice $invoice): JsonResponse
     {
-        $this->authorize('update', $project);
+        $this->authorize('manageFinances', $project);
         abort_if($invoice->project_id !== $project->id, 404);
 
         $data = $request->validate([
@@ -159,7 +159,7 @@ class InvoiceController extends Controller
 
     public function pay(Request $request, Project $project, Invoice $invoice): JsonResponse
     {
-        $this->authorize('update', $project);
+        $this->authorize('manageFinances', $project);
         abort_if($invoice->project_id !== $project->id, 404);
         abort_unless(
             $request->user()->role->name === 'comptable',

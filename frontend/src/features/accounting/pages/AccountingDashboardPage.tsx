@@ -60,7 +60,7 @@ const EMPTY_EXPENSE = {
 export default function AccountingDashboardPage() {
   const { user } = useAuth();
   const isComptable = user?.role?.name === 'comptable';
-  const isApprover = isComptable;
+  const isApprover  = ['direction', 'directeur-technique'].includes(user?.role?.name ?? '');
 
   const queryClient = useQueryClient();
   const [detailItem, setDetailItem] = useState<{ type: string; sourceId: number } | null>(null);

@@ -7,7 +7,7 @@ import {
   createDqeLine,
   updateDqeLine,
   deleteDqeLine,
-  updateDqeVersion,
+  transitionDqeVersion,
   downloadDqePdf,
   duplicateDqeVersion,
 } from '../api/dqe-api';
@@ -52,12 +52,17 @@ export default function DqeEditorPage() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [addForm, setAddForm] = useState<DqeLineInput>({ ...EMPTY_LINE });
   const [editingLine, setEditingLine] = useState<(DqeLine & Partial<DqeLineInput>) | null>(null);
+  const [rejectModal, setRejectModal] = useState(false);
+  const [rejectReason, setRejectReason] = useState('');
 
-  const updateVersion = useMutation({
-    mutationFn: (status: string) => updateDqeVersion(pid, vid, { status: status as any }),
+  const transitionVersion = useMutation({
+    mutationFn: (payload: { status: string; reason?: string }) =>
+      transitionDqeVersion(pid, vid, payload as any),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['dqe-version', pid, vid] });
       qc.invalidateQueries({ queryKey: ['portfolio-operations'] });
+      setRejectModal(false);
+      setRejectReason('');
     },
   });
 
@@ -115,10 +120,10 @@ export default function DqeEditorPage() {
 
   const { version, lots } = data;
   const totalLines  = lots.reduce((acc, l) => acc + l.lines.length, 0);
-  const isDG        = roleGroup === 'direction';
-  const canSubmit   = version.status === 'draft' && !isDG;
-  const canValidate = version.status === 'soumise' && isDG;
-  const canValidateDirect = version.status === 'draft' && isDG;
+  const canManage   = roleGroup === 'direction' || roleGroup === 'dt';
+  const canSubmit   = version.status === 'draft' && !canManage;
+  const canValidate = version.status === 'soumise' && canManage;
+  const canValidateDirect = version.status === 'draft' && canManage;
 
   return (
     <div>
@@ -137,8 +142,8 @@ export default function DqeEditorPage() {
               <button
                 className="btn-primary"
                 style={{ padding: '6px 14px', fontSize: 13 }}
-                onClick={() => updateVersion.mutate('soumise')}
-                disabled={updateVersion.isPending || totalLines === 0}
+                onClick={() => transitionVersion.mutate({ status: 'soumise' })}
+                disabled={transitionVersion.isPending || totalLines === 0}
                 title={totalLines === 0 ? 'Ajoutez des lignes avant de soumettre' : ''}
               >
                 ✉ Soumettre au DG
@@ -148,8 +153,8 @@ export default function DqeEditorPage() {
               <button
                 className="btn-primary"
                 style={{ background: '#16a34a', borderColor: '#16a34a', padding: '6px 14px', fontSize: 13 }}
-                onClick={() => updateVersion.mutate('validated')}
-                disabled={updateVersion.isPending}
+                onClick={() => transitionVersion.mutate({ status: 'validated' })}
+                disabled={transitionVersion.isPending}
               >
                 ✓ Valider
               </button>
@@ -158,9 +163,9 @@ export default function DqeEditorPage() {
               <button
                 className="dqe-back-btn"
                 style={{ color: '#dc2626', borderColor: '#dc2626' }}
-                onClick={() => updateVersion.mutate('draft')}
-                disabled={updateVersion.isPending}
-                title="Renvoyer en brouillon pour corrections"
+                onClick={() => setRejectModal(true)}
+                disabled={transitionVersion.isPending}
+                title="Renvoyer en brouillon avec motif"
               >
                 ✕ Rejeter
               </button>
@@ -413,6 +418,37 @@ export default function DqeEditorPage() {
           <span className="dqe-grand-total__value">{fmtHT(version.total_ht)} FCFA</span>
         </div>
       </div>
+
+      {/* Reject modal */}
+      {rejectModal && (
+        <div className="mr-overlay" onClick={() => setRejectModal(false)}>
+          <div className="mr-modal" style={{ maxWidth: 440 }} onClick={e => e.stopPropagation()}>
+            <h2 className="mr-modal__title">Motif de rejet</h2>
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: 12 }}>
+              Ce motif sera transmis à l'auteur du DQE.
+            </p>
+            <textarea
+              className="form-textarea"
+              rows={4}
+              value={rejectReason}
+              onChange={e => setRejectReason(e.target.value)}
+              placeholder="Expliquer les corrections attendues…"
+              style={{ width: '100%', marginBottom: 12 }}
+            />
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+              <button className="btn btn--secondary" onClick={() => setRejectModal(false)}>Annuler</button>
+              <button
+                className="btn"
+                style={{ background: '#dc2626', color: '#fff', borderColor: '#dc2626' }}
+                disabled={!rejectReason.trim() || transitionVersion.isPending}
+                onClick={() => transitionVersion.mutate({ status: 'draft', reason: rejectReason })}
+              >
+                Confirmer le rejet
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

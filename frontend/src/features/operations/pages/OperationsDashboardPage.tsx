@@ -10,6 +10,7 @@ import {
   type DqePending,
 } from '../api/get-operations';
 import { approvePurchaseOrder } from '../../achats/api/purchase-orders';
+import { transitionDqeVersion } from '../../dqe/api/dqe-api';
 import { api } from '../../../lib/api';
 import SkeletonPage from '../../../components/ui/SkeletonPage';
 import PageHeader from '../../../components/ui/PageHeader';
@@ -392,7 +393,7 @@ export default function OperationsDashboardPage() {
   async function handleValidateDqe(projectId: number, dqeId: number) {
     setValidatingDqeId(dqeId);
     try {
-      await api.patch(`/projects/${projectId}/dqe-versions/${dqeId}/transition`, { to: 'validated' });
+      await transitionDqeVersion(projectId, dqeId, { status: 'validated' });
       qc.invalidateQueries({ queryKey: ['portfolio-operations'] });
     } finally {
       setValidatingDqeId(null);
