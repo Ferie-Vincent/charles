@@ -38,7 +38,7 @@ class BudgetController extends Controller
 
     public function store(Request $request, Project $project): JsonResponse
     {
-        $this->authorize('update', $project);
+        $this->authorize('manageFinances', $project);
 
         $data = $request->validate([
             'type'       => 'required|in:previsionnel,engagement,paiement',
@@ -59,7 +59,7 @@ class BudgetController extends Controller
 
     public function destroy(Project $project, BudgetEntry $budgetEntry): Response
     {
-        $this->authorize('update', $project);
+        $this->authorize('manageFinances', $project);
         abort_if($budgetEntry->project_id !== $project->id, 404);
 
         $linkedDemande = \App\Models\DemandeBesoin::where('budget_entry_id', $budgetEntry->id)->exists();

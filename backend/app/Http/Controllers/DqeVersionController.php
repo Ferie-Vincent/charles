@@ -225,17 +225,17 @@ class DqeVersionController extends Controller
         $role    = $user->role->name;
 
         $submitRoles  = Roles::DQE_SUBMITTERS;
-        $dgRoles      = ['direction'];
+        $dgRoles      = Roles::MANAGEMENT;
         $archiveRoles = Roles::MANAGEMENT;
 
         if ($current === 'draft' && $to === 'soumise') {
             abort_unless(in_array($role, $submitRoles), 403, 'Soumission DQE réservée au DT, conducteur ou métreur.');
         } elseif ($current === 'draft' && $to === 'validated') {
-            abort_unless(in_array($role, $dgRoles), 403, 'Validation directe réservée au Directeur Général.');
+            abort_unless(in_array($role, $dgRoles), 403, 'Validation directe réservée à la direction.');
         } elseif ($current === 'soumise' && $to === 'validated') {
-            abort_unless(in_array($role, $dgRoles), 403, 'Validation DQE réservée au Directeur Général.');
+            abort_unless(in_array($role, $dgRoles), 403, 'Validation DQE réservée à la direction.');
         } elseif ($current === 'soumise' && $to === 'draft') {
-            abort_unless(in_array($role, $dgRoles), 403, 'Rejet DQE réservé au Directeur Général.');
+            abort_unless(in_array($role, $dgRoles), 403, 'Rejet DQE réservé à la direction.');
             abort_unless(!empty($data['reason']), 422, 'Un motif de rejet est obligatoire.');
         } elseif (in_array($current, ['draft', 'soumise', 'validated']) && $to === 'archived') {
             abort_unless(in_array($role, $archiveRoles), 403, 'Archivage réservé à la direction.');
