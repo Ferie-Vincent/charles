@@ -177,16 +177,17 @@ function InvoiceContent({ d }: { d: ActivityDetail }) {
           <span className="mr-amount-chip mr-amount-chip--neutral">{fmtAmount(d.amount)}</span>
         } />
         {d.amount_ttc && <Row label="Montant TTC" value={fmtAmount(d.amount_ttc)} />}
-      </Section>
-      <Section label="Dates" dotColor="#64748b">
         <Row label="Date facture" value={fmtDateShort(d.invoice_date)} />
         <Row label="Échéance"     value={fmtDateShort(d.due_date)} />
-        {d.paid_date && <Row label="Payée le" value={fmtDateShort(d.paid_date)} />}
-      </Section>
-      <Section label="Traçabilité" dotColor="#8b5cf6">
-        <Row label="Chantier"   value={d.project ? <><span style={{ fontWeight: 700, color: 'var(--accent)' }}>{d.project.code}</span> — {d.project.name}</> : null} />
-        <Row label="Créée par"  value={d.creator?.name} />
+        {d.project && <Row label="Chantier" value={<><span style={{ fontWeight: 700, color: 'var(--accent)' }}>{d.project.code}</span> — {d.project.name}</>} />}
         {d.note && <Row label="Note" value={d.note} />}
+      </Section>
+      <Section label="Cycle de validation" dotColor="#10b981">
+        <div className="mr-timeline">
+          <TimelineStep label="Soumise"  user={d.creator}   date={d.invoice_date} done={!!d.invoice_date} />
+          <TimelineStep label="Validée"  user={d.validator} date={d.validated_at} done={!!d.validated_at} />
+          <TimelineStep label="Payée"    user={d.payer}     date={d.paid_at}      done={!!d.paid_at}      isLast />
+        </div>
       </Section>
     </>
   );

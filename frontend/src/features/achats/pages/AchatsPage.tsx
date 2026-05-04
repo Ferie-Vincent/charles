@@ -235,9 +235,9 @@ export default function AchatsPage() {
               {filtered.map(order => {
                 const sc = BDC_STATUS_COLOR[order.status] ?? '#94a3b8';
                 return (
-                  <tr key={order.id} className={order.status === 'soumis' ? 'acct-table__row--pending' : ''}>
+                  <tr key={order.id} className={order.status === 'soumis' ? 'acct-table__row--pending' : ''} style={{ cursor: 'pointer' }} onClick={() => setDetail(order)}>
                     <td>
-                      <button className="bdc-ref-btn" onClick={() => setDetail(order)}>{order.reference}</button>
+                      <span className="bdc-ref-btn">{order.reference}</span>
                     </td>
                     <td>{order.supplier?.name ?? '—'}</td>
                     <td>{order.project ? <span style={{ color: 'var(--accent)', fontWeight: 500 }}>{order.project.code}</span> : '—'}</td>
@@ -262,7 +262,7 @@ export default function AchatsPage() {
                       )}
                     </td>
                     <td style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>{order.requester?.name ?? '—'}</td>
-                    <td>
+                    <td onClick={e => e.stopPropagation()}>
                       <div style={{ display: 'flex', gap: 5 }}>
                         {isApprover && order.status === 'soumis' && (
                           <>
@@ -515,6 +515,38 @@ export default function AchatsPage() {
 
               {detail.notes && <p style={{ fontSize: '0.84rem', color: 'var(--text-muted)', fontStyle: 'italic', marginBottom: 12 }}>Note : {detail.notes}</p>}
               {detail.rejection_reason && <p className="acct-rejection-reason" style={{ marginBottom: 12 }}>Motif rejet : {detail.rejection_reason}</p>}
+
+              {/* Workflow timeline */}
+              {(() => {
+                const steps: { label: string; actor?: string; date?: string | null; color: string; note?: string }[] = [
+                  { label: 'Créé', actor: detail.requester?.name, date: detail.created_at, color: '#64748b' },
+                  ...(detail.status !== 'brouillon' ? [{ label: 'Soumis pour approbation', date: detail.created_at, color: '#f59e0b' }] : []),
+                  ...(detail.approved_at && detail.status !== 'rejete' ? [{ label: 'Approuvé', actor: detail.approver?.name, date: detail.approved_at, color: '#10b981' }] : []),
+                  ...(detail.status === 'rejete' ? [{ label: 'Rejeté', actor: detail.approver?.name, note: detail.rejection_reason, color: '#ef4444' }] : []),
+                  ...(detail.received_at ? [{ label: 'Réceptionné', date: detail.received_at, color: '#3b82f6' }] : []),
+                ];
+                return (
+                  <div style={{ marginTop: 4 }}>
+                    <p style={{ margin: '0 0 10px', fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>Historique</p>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+                      {steps.map((step, i) => (
+                        <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0 }}>
+                            <div style={{ width: 10, height: 10, borderRadius: '50%', background: step.color, marginTop: 4, flexShrink: 0 }} />
+                            {i < steps.length - 1 && <div style={{ width: 2, flex: 1, background: 'var(--border)', minHeight: 18 }} />}
+                          </div>
+                          <div style={{ paddingBottom: 12 }}>
+                            <p style={{ margin: 0, fontSize: '0.83rem', fontWeight: 600, color: 'var(--text-body)' }}>{step.label}</p>
+                            {step.actor && <p style={{ margin: 0, fontSize: '0.76rem', color: 'var(--text-muted)' }}>par {step.actor}</p>}
+                            {step.note && <p style={{ margin: '2px 0 0', fontSize: '0.76rem', color: step.color }}>{step.note}</p>}
+                            {step.date && <p style={{ margin: '2px 0 0', fontSize: '0.74rem', color: 'var(--text-muted)' }}>{fmtDate(step.date)}</p>}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Delivery docs section (only for received orders) */}
               {detail.status === 'recu' && (

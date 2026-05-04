@@ -64,6 +64,8 @@ export interface ActivityDetail {
   invoice_date?: string;
   due_date?: string;
   paid_date?: string;
+  validated_at?: string;
+  paid_at?: string;
   expense_date?: string;
   paid_by?: string;
   note?: string;
@@ -74,6 +76,8 @@ export interface ActivityDetail {
   supplier?: { id: number; name: string };
   creator?: UserRef;
   approver?: UserRef;
+  validator?: UserRef;
+  payer?: UserRef;
   demande?: DemandeDetail;
 }
 
