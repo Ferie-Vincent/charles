@@ -91,6 +91,26 @@ class StockController extends Controller
         return response()->noContent();
     }
 
+    // ── Audit log — ajustement movements across all company stock items ──
+
+    public function adjustmentAudit(Request $request): JsonResponse
+    {
+        abort_unless(
+            in_array($request->user()->role->name, [...Roles::MANAGEMENT, ...Roles::LOGISTICS]),
+            403
+        );
+
+        $movements = StockMovement::query()
+            ->whereHas('stockItem', fn ($q) => $q->where('company_id', $request->user()->company_id))
+            ->where('type', 'ajustement')
+            ->with('stockItem:id,name,reference,unit', 'creator:id,name', 'project:id,name,code')
+            ->orderByDesc('movement_date')
+            ->orderByDesc('id')
+            ->paginate(50);
+
+        return response()->json($movements);
+    }
+
     // ── Movements ─────────────────────────────────────────────────────
 
     public function movements(Request $request, StockItem $stockItem): JsonResponse

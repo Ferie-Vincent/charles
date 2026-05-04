@@ -214,7 +214,10 @@ class DqeVersionController extends Controller
         $this->authorize('update', $project);
         abort_unless($dqeVersion->project_id === $project->id, 404);
 
-        $data = $request->validate(['status' => 'required|in:soumise,validated,archived,draft']);
+        $data = $request->validate([
+            'status' => 'required|in:soumise,validated,archived,draft',
+            'reason' => 'sometimes|nullable|string|max:1000',
+        ]);
 
         $user    = $request->user();
         $current = $dqeVersion->status;
@@ -228,19 +231,27 @@ class DqeVersionController extends Controller
         if ($current === 'draft' && $to === 'soumise') {
             abort_unless(in_array($role, $submitRoles), 403, 'Soumission DQE réservée au DT, conducteur ou métreur.');
         } elseif ($current === 'draft' && $to === 'validated') {
-            // DG peut valider directement (ex: DQE qu'il a créé lui-même)
             abort_unless(in_array($role, $dgRoles), 403, 'Validation directe réservée au Directeur Général.');
         } elseif ($current === 'soumise' && $to === 'validated') {
             abort_unless(in_array($role, $dgRoles), 403, 'Validation DQE réservée au Directeur Général.');
         } elseif ($current === 'soumise' && $to === 'draft') {
             abort_unless(in_array($role, $dgRoles), 403, 'Rejet DQE réservé au Directeur Général.');
+            abort_unless(!empty($data['reason']), 422, 'Un motif de rejet est obligatoire.');
         } elseif (in_array($current, ['draft', 'soumise', 'validated']) && $to === 'archived') {
             abort_unless(in_array($role, $archiveRoles), 403, 'Archivage réservé à la direction.');
         } else {
             abort(422, "Transition {$current} → {$to} non autorisée.");
         }
 
-        $dqeVersion->update(['status' => $to]);
+        $fields = ['status' => $to];
+
+        if ($current === 'soumise' && $to === 'draft') {
+            $fields['rejection_reason'] = $data['reason'];
+        } elseif ($to === 'soumise') {
+            $fields['rejection_reason'] = null;
+        }
+
+        $dqeVersion->update($fields);
 
         return response()->json($dqeVersion);
     }

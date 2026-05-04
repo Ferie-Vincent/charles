@@ -9,7 +9,7 @@ use Illuminate\Database\Seeder;
 
 class RolePermissionSeeder extends Seeder
 {
-    // Matches the hardcoded ROLE_ACCESS in frontend/src/lib/roles.ts
+    // Matches the ROLE_ACCESS in frontend/src/lib/roles.ts
     private const DEFAULTS = [
         'terrain' => [
             'projects'   => true,
@@ -23,23 +23,40 @@ class RolePermissionSeeder extends Seeder
             'reporting'  => false,
             'achats'     => false,
             'stocks'     => false,
+            'suppliers'  => false,
             'besoins'    => true,
             'ged'        => true,
         ],
-        'gestion' => [
+        'metreur' => [
             'projects'   => true,
             'map'        => false,
             'timeline'   => false,
             'dqe'        => true,
             'execution'  => true,
             'costs'      => true,
-            'accounting' => true,
+            'accounting' => false,
             'qse'        => false,
             'reporting'  => true,
+            'achats'     => true,
+            'stocks'     => false,
+            'suppliers'  => true,
+            'besoins'    => true,
+            'ged'        => true,
+        ],
+        'comptable' => [
+            'projects'   => true,
+            'map'        => false,
+            'timeline'   => false,
+            'dqe'        => false,
+            'execution'  => false,
+            'costs'      => true,
+            'accounting' => true,
+            'qse'        => false,
+            'reporting'  => false,
             'achats'     => false,
             'stocks'     => false,
-            'suppliers'  => false,
-            'besoins'    => true,
+            'suppliers'  => true,
+            'besoins'    => false,
             'ged'        => true,
         ],
         'logistique' => [
@@ -70,6 +87,7 @@ class RolePermissionSeeder extends Seeder
             'reporting'  => false,
             'achats'     => false,
             'stocks'     => false,
+            'suppliers'  => false,
             'besoins'    => false,
             'ged'        => true,
         ],
@@ -77,7 +95,8 @@ class RolePermissionSeeder extends Seeder
 
     private const ROLE_GROUPS = [
         'terrain'    => ['conducteur-travaux', 'chef-chantier'],
-        'gestion'    => ['metreur-economiste', 'comptable'],
+        'metreur'    => ['metreur-economiste'],
+        'comptable'  => ['comptable'],
         'logistique' => ['moyens-generaux'],
         'lecture'    => ['lecture-seule'],
     ];

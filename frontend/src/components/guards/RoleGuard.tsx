@@ -17,7 +17,8 @@ export default function RoleGuard({ path, children }: Props) {
   const { canAccess, loaded } = usePermissions();
   const group = getRoleGroup(user?.role?.name ?? '');
 
-  if (OPEN_PATHS.includes(path) || group === 'direction') return <>{children}</>;
+  // direction and dt are LOCKED — bypass loading wait (myFeatures = all-true)
+  if (OPEN_PATHS.includes(path) || group === 'direction' || group === 'dt') return <>{children}</>;
   if (!loaded) return null;
 
   // Extract feature key from path (/map → map, /qse → qse, etc.)

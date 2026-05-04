@@ -26,8 +26,10 @@ export interface Invoice {
   note?: string;
   supplier?: { id: number; name: string };
   supplier_id?: number;
+  purchase_order_id?: number | null;
   attachment_path?: string;
   attachment_name?: string;
+  purchase_order_id?: number | null;
   // workflow
   validated_by?: number;
   validated_at?: string;
@@ -125,7 +127,7 @@ export function invoicePaymentProofUrl(projectId: number, invoiceId: number): st
 }
 
 export async function validateInvoice(projectId: number, invoiceId: number): Promise<Invoice> {
-  const res = await api.post(`/projects/${projectId}/invoices/${invoiceId}/validate`);
+  const res = await api.patch(`/projects/${projectId}/invoices/${invoiceId}/transition`, { status: 'validee' });
   return res.data;
 }
 

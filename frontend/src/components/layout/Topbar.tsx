@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { logout } from '../../features/auth/api/login';
 import { useAuth } from '../../features/auth/stores/auth-store';
 import { getRoleGroup } from '../../lib/roles';
@@ -16,11 +16,13 @@ const fmtAmount = (n: number) =>
 
 export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { user, setUser } = useAuth();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [notifOpen, setNotifOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [validatingId, setValidatingId] = useState<number | null>(null);
 
   const notifRef = useRef<HTMLDivElement>(null);
   const userRef  = useRef<HTMLDivElement>(null);
@@ -39,8 +41,9 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
   const bdcPending      = ops?.bdc_pending      ?? [];
   const stockAlerts     = ops?.stock_alerts     ?? [];
   const criticalProj    = ops?.critical_projects ?? [];
-  const invoicesPending = roleGroup === 'direction' ? (ops?.invoices_pending ?? []) : [];
-  const dqePending      = roleGroup === 'direction' ? (ops?.dqe_pending      ?? []) : [];
+  const isManagement    = roleGroup === 'direction' || roleGroup === 'dt';
+  const invoicesPending = isManagement ? (ops?.invoices_pending ?? []) : [];
+  const dqePending      = isManagement ? (ops?.dqe_pending      ?? []) : [];
   const notifCount      = bdcPending.length + stockAlerts.length + criticalProj.length + invoicesPending.length + dqePending.length;
 
   useEffect(() => {
@@ -56,6 +59,17 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
     await logout();
     setUser(null);
     navigate('/login');
+  }
+
+  async function handleInlineValidate(e: React.MouseEvent, projectId: number, invoiceId: number) {
+    e.stopPropagation();
+    setValidatingId(invoiceId);
+    try {
+      await api.patch(`/projects/${projectId}/invoices/${invoiceId}/transition`, { status: 'validee' });
+      queryClient.invalidateQueries({ queryKey: ['portfolio-operations'] });
+    } finally {
+      setValidatingId(null);
+    }
   }
 
   function handleSearch(e: React.FormEvent) {
@@ -208,11 +222,13 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
                     ))}
 
                     {invoicesPending.map((inv: any) => (
-                      <button
+                      <div
                         key={`inv-${inv.id}`}
-                        type="button"
                         className="topbar-notif-item topbar-notif-item--warning"
+                        role="button"
+                        tabIndex={0}
                         onClick={() => { navigate(`/projects/${inv.project_id}/accounting`); setNotifOpen(false); }}
+                        onKeyDown={e => { if (e.key === 'Enter') { navigate(`/projects/${inv.project_id}/accounting`); setNotifOpen(false); } }}
                       >
                         <span className="topbar-notif-item__dot topbar-notif-item__dot--warning" />
                         <div className="topbar-notif-item__body">
@@ -221,7 +237,16 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
                             {inv.project_code} · {inv.supplier}{inv.amount_ht ? ` · ${fmtAmount(inv.amount_ht)}` : ''}{` · ${inv.age_days}j`}
                           </div>
                         </div>
-                      </button>
+                        <button
+                          type="button"
+                          className="topbar-notif-item__action"
+                          disabled={validatingId === inv.id}
+                          onClick={e => handleInlineValidate(e, inv.project_id, inv.id)}
+                          title="Valider cette facture"
+                        >
+                          {validatingId === inv.id ? '…' : 'Valider'}
+                        </button>
+                      </div>
                     ))}
                   </div>
                 )}

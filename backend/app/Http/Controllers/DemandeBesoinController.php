@@ -27,9 +27,9 @@ class DemandeBesoinController extends Controller
         if (in_array($role, Roles::TERRAIN)) {
             $query->where('requested_by', $user->id);
         }
-        // Logistique: only approved/en_preparation
+        // Logistique: soumis (read-only preview) + their own workflow statuses
         elseif (in_array($role, Roles::LOGISTICS)) {
-            $query->whereIn('status', ['approuve', 'en_preparation', 'livre', 'comptabilise']);
+            $query->whereIn('status', ['soumis', 'approuve', 'en_preparation', 'livre', 'comptabilise']);
         }
         // Comptable: only livré (ready to record)
         elseif ($role === 'comptable') {

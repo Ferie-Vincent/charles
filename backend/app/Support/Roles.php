@@ -30,7 +30,7 @@ class Roles
 
     /** Peut créer/modifier des BDC */
     const BDC_CREATORS = [
-        'conducteur-travaux', 'chef-chantier', 'metreur-economiste',
+        'conducteur-travaux', 'metreur-economiste',
         'moyens-generaux', 'direction', 'directeur-technique',
     ];
 

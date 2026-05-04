@@ -10,6 +10,7 @@ import {
   type DqePending,
 } from '../api/get-operations';
 import { approvePurchaseOrder } from '../../achats/api/purchase-orders';
+import { api } from '../../../lib/api';
 import SkeletonPage from '../../../components/ui/SkeletonPage';
 import PageHeader from '../../../components/ui/PageHeader';
 
@@ -58,17 +59,11 @@ function CardShell({
   style?: React.CSSProperties;
 }) {
   return (
-    <div
-      className="card"
-      style={{ overflow: 'hidden', marginBottom: 0, ...style }}
-    >
+    <div className="card" style={{ overflow: 'hidden', marginBottom: 0, ...style }}>
       <div className="card-head">
         <span className="card-title" style={{ marginBottom: 0 }}>{title}</span>
         {linkLabel && linkTo && (
-          <Link
-            to={linkTo}
-            style={{ fontSize: '0.82rem', color: 'var(--accent)', textDecoration: 'none' }}
-          >
+          <Link to={linkTo} style={{ fontSize: '0.82rem', color: 'var(--accent)', textDecoration: 'none' }}>
             {linkLabel} →
           </Link>
         )}
@@ -114,20 +109,13 @@ function BdcTable({
             <td>{bdc.supplier}</td>
             <td>
               {bdc.project ? (
-                <Link
-                  to={`/projects/${bdc.project.id}`}
-                  style={{ color: 'var(--accent)', fontWeight: 500, textDecoration: 'none' }}
-                >
+                <Link to={`/projects/${bdc.project.id}`} style={{ color: 'var(--accent)', fontWeight: 500, textDecoration: 'none' }}>
                   {bdc.project.code}
                 </Link>
-              ) : (
-                '—'
-              )}
+              ) : '—'}
             </td>
             <td style={{ textAlign: 'right', fontWeight: 700 }}>{fmtAmount(bdc.total_amount)}</td>
-            <td>
-              <AgeBadge days={bdc.age_days} />
-            </td>
+            <td><AgeBadge days={bdc.age_days} /></td>
             <td>
               <button
                 className="btn btn--sm acct-btn--approve"
@@ -145,7 +133,15 @@ function BdcTable({
 }
 
 /* ─── Factures table ────────────────────────────────────────────── */
-function InvoicesTable({ rows }: { rows: InvoicePending[] }) {
+function InvoicesTable({
+  rows,
+  validatingId,
+  onValidate,
+}: {
+  rows: InvoicePending[];
+  validatingId: number | null;
+  onValidate: (projectId: number, invoiceId: number) => void;
+}) {
   if (rows.length === 0)
     return <p style={{ padding: '20px 18px', color: 'var(--text-muted)', textAlign: 'center', fontSize: '0.85rem' }}>Aucune facture en attente.</p>;
 
@@ -171,25 +167,20 @@ function InvoicesTable({ rows }: { rows: InvoicePending[] }) {
             </td>
             <td>{inv.supplier}</td>
             <td>
-              <Link
-                to={`/projects/${inv.project_id}`}
-                style={{ color: 'var(--accent)', fontWeight: 500, textDecoration: 'none' }}
-              >
+              <Link to={`/projects/${inv.project_id}`} style={{ color: 'var(--accent)', fontWeight: 500, textDecoration: 'none' }}>
                 {inv.project_code}
               </Link>
             </td>
             <td style={{ textAlign: 'right', fontWeight: 700 }}>{fmtAmount(inv.amount_ht)}</td>
+            <td><AgeBadge days={inv.age_days} /></td>
             <td>
-              <AgeBadge days={inv.age_days} />
-            </td>
-            <td>
-              <Link
-                to={`/projects/${inv.project_id}/accounting`}
-                className="btn btn--sm"
-                style={{ textDecoration: 'none' }}
+              <button
+                className="btn btn--sm acct-btn--approve"
+                disabled={validatingId === inv.id}
+                onClick={() => onValidate(inv.project_id, inv.id)}
               >
-                Voir
-              </Link>
+                {validatingId === inv.id ? '…' : 'Valider'}
+              </button>
             </td>
           </tr>
         ))}
@@ -217,17 +208,10 @@ function StocksTable({ rows }: { rows: StockAlert[] }) {
         {rows.map(s => (
           <tr key={s.id}>
             <td style={{ fontWeight: 600, color: 'var(--text-body)' }}>{s.name}</td>
-            <td style={{ color: 'var(--danger)', fontWeight: 600 }}>
-              {s.quantity} {s.unit}
-            </td>
-            <td style={{ color: 'var(--text-muted)' }}>
-              {s.threshold} {s.unit}
-            </td>
+            <td style={{ color: 'var(--danger)', fontWeight: 600 }}>{s.quantity} {s.unit}</td>
+            <td style={{ color: 'var(--text-muted)' }}>{s.threshold} {s.unit}</td>
             <td>
-              <span
-                className="badge"
-                style={{ background: '#ef444415', color: 'var(--danger)', borderColor: '#ef444435' }}
-              >
+              <span className="badge" style={{ background: '#ef444415', color: 'var(--danger)', borderColor: '#ef444435' }}>
                 −{s.deficit} {s.unit}
               </span>
             </td>
@@ -256,17 +240,12 @@ function CriticalProjectsTable({ rows }: { rows: CriticalProject[] }) {
         {rows.map(p => (
           <tr key={p.id}>
             <td>
-              <Link
-                to={`/projects/${p.id}`}
-                style={{ color: 'var(--accent)', fontWeight: 700, textDecoration: 'none', fontSize: '0.82rem' }}
-              >
+              <Link to={`/projects/${p.id}`} style={{ color: 'var(--accent)', fontWeight: 700, textDecoration: 'none', fontSize: '0.82rem' }}>
                 {p.code}
               </Link>
             </td>
             <td style={{ fontWeight: 500, color: 'var(--text-body)' }}>{p.name}</td>
-            <td>
-              <HealthBadge score={p.health_score} />
-            </td>
+            <td><HealthBadge score={p.health_score} /></td>
           </tr>
         ))}
       </tbody>
@@ -275,7 +254,15 @@ function CriticalProjectsTable({ rows }: { rows: CriticalProject[] }) {
 }
 
 /* ─── DQE pending table ─────────────────────────────────────────── */
-function DqeTable({ rows }: { rows: DqePending[] }) {
+function DqeTable({
+  rows,
+  validatingId,
+  onValidate,
+}: {
+  rows: DqePending[];
+  validatingId: number | null;
+  onValidate: (projectId: number, dqeId: number) => void;
+}) {
   if (rows.length === 0)
     return <p style={{ padding: '20px 18px', color: 'var(--text-muted)', textAlign: 'center', fontSize: '0.85rem' }}>Aucun DQE en attente de validation.</p>;
 
@@ -296,28 +283,21 @@ function DqeTable({ rows }: { rows: DqePending[] }) {
           <tr key={dqe.id}>
             <td style={{ fontWeight: 600, color: 'var(--text-body)' }}>{dqe.name}</td>
             <td>
-              <Link
-                to={`/projects/${dqe.project_id}`}
-                style={{ color: 'var(--accent)', fontWeight: 500, textDecoration: 'none' }}
-              >
+              <Link to={`/projects/${dqe.project_id}`} style={{ color: 'var(--accent)', fontWeight: 500, textDecoration: 'none' }}>
                 {dqe.project_code}
               </Link>
             </td>
-            <td>
-              <span className="badge">v{dqe.version_number}</span>
-            </td>
+            <td><span className="badge">v{dqe.version_number}</span></td>
             <td style={{ textAlign: 'right', fontWeight: 700 }}>{fmtAmount(dqe.total_ht)}</td>
+            <td><AgeBadge days={dqe.age_days} /></td>
             <td>
-              <AgeBadge days={dqe.age_days} />
-            </td>
-            <td>
-              <Link
-                to={`/projects/${dqe.project_id}/dqe/${dqe.id}`}
-                className="btn btn--sm"
-                style={{ textDecoration: 'none' }}
+              <button
+                className="btn btn--sm acct-btn--approve"
+                disabled={validatingId === dqe.id}
+                onClick={() => onValidate(dqe.project_id, dqe.id)}
               >
-                Valider
-              </Link>
+                {validatingId === dqe.id ? '…' : 'Valider'}
+              </button>
             </td>
           </tr>
         ))}
@@ -388,6 +368,8 @@ const ACTION_TYPE_LABEL: Record<ActionType, string> = {
 export default function OperationsDashboardPage() {
   const qc = useQueryClient();
   const [approvingId, setApprovingId] = useState<number | null>(null);
+  const [validatingDqeId, setValidatingDqeId] = useState<number | null>(null);
+  const [validatingInvId, setValidatingInvId] = useState<number | null>(null);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['portfolio-operations'],
@@ -401,10 +383,30 @@ export default function OperationsDashboardPage() {
     onSettled: () => setApprovingId(null),
   });
 
-  function handleApprove(id: number) {
+  function handleApproveBdc(id: number) {
     if (!confirm('Approuver ce bon de commande ?')) return;
     setApprovingId(id);
     approveMutation.mutate(id);
+  }
+
+  async function handleValidateDqe(projectId: number, dqeId: number) {
+    setValidatingDqeId(dqeId);
+    try {
+      await api.patch(`/projects/${projectId}/dqe-versions/${dqeId}/transition`, { to: 'validated' });
+      qc.invalidateQueries({ queryKey: ['portfolio-operations'] });
+    } finally {
+      setValidatingDqeId(null);
+    }
+  }
+
+  async function handleValidateInvoice(projectId: number, invoiceId: number) {
+    setValidatingInvId(invoiceId);
+    try {
+      await api.patch(`/projects/${projectId}/invoices/${invoiceId}/transition`, { status: 'validee' });
+      qc.invalidateQueries({ queryKey: ['portfolio-operations'] });
+    } finally {
+      setValidatingInvId(null);
+    }
   }
 
   if (isLoading) return <div className="page-content"><SkeletonPage rows={3} /></div>;
@@ -434,7 +436,6 @@ export default function OperationsDashboardPage() {
 
       {/* ── KPI row ── */}
       <div className="proj-kpi-row">
-        {/* Score santé moyen */}
         <div className="proj-kpi">
           <div className="proj-kpi__icon proj-kpi__icon--green">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -450,12 +451,10 @@ export default function OperationsDashboardPage() {
           </div>
         </div>
 
-        {/* Budget engagé */}
         <div className="proj-kpi">
           <div className="proj-kpi__icon proj-kpi__icon--blue">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <rect x="2" y="3" width="20" height="14" rx="2" />
-              <path d="M8 21h8M12 17v4" />
+              <rect x="2" y="3" width="20" height="14" rx="2" /><path d="M8 21h8M12 17v4" />
             </svg>
           </div>
           <div className="proj-kpi__body">
@@ -470,39 +469,43 @@ export default function OperationsDashboardPage() {
           </div>
         </div>
 
-        {/* BDC en attente */}
         <div className="proj-kpi">
           <div className="proj-kpi__icon proj-kpi__icon--orange">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <circle cx="12" cy="12" r="10" />
-              <polyline points="12 6 12 12 16 14" />
+              <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
             </svg>
           </div>
           <div className="proj-kpi__body">
-            <div
-              className="proj-kpi__value"
-              style={{ color: bdc_pending.length > 0 ? '#ef4444' : undefined }}
-            >
+            <div className="proj-kpi__value" style={{ color: bdc_pending.length > 0 ? '#ef4444' : undefined }}>
               {bdc_pending.length}
             </div>
             <div className="proj-kpi__label">BDC en attente d'approbation</div>
           </div>
         </div>
 
-        {/* Stocks en alerte */}
+        <div className="proj-kpi">
+          <div className="proj-kpi__icon" style={{ background: '#6366f115', color: '#6366f1' }}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+            </svg>
+          </div>
+          <div className="proj-kpi__body">
+            <div className="proj-kpi__value" style={{ color: dqe_pending.length > 0 ? '#6366f1' : undefined }}>
+              {dqe_pending.length}
+            </div>
+            <div className="proj-kpi__label">DQE en attente de validation</div>
+          </div>
+        </div>
+
         <div className="proj-kpi">
           <div className="proj-kpi__icon proj-kpi__icon--red">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
               <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-              <line x1="12" y1="9" x2="12" y2="13" />
-              <line x1="12" y1="17" x2="12.01" y2="17" />
+              <line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
             </svg>
           </div>
           <div className="proj-kpi__body">
-            <div
-              className="proj-kpi__value"
-              style={{ color: stock_alerts.length > 0 ? '#ef4444' : undefined }}
-            >
+            <div className="proj-kpi__value" style={{ color: stock_alerts.length > 0 ? '#ef4444' : undefined }}>
               {stock_alerts.length}
             </div>
             <div className="proj-kpi__label">Stocks en alerte</div>
@@ -515,8 +518,7 @@ export default function OperationsDashboardPage() {
         <div className="ops-banner ops-banner--danger">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
             <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-            <line x1="12" y1="9" x2="12" y2="13" />
-            <line x1="12" y1="17" x2="12.01" y2="17" />
+            <line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
           </svg>
           <strong>{urgentBdcCount} BDC en attente +48h</strong>
           <span>— approbation urgente requise</span>
@@ -527,8 +529,7 @@ export default function OperationsDashboardPage() {
         <div className="ops-banner ops-banner--warning">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
             <circle cx="12" cy="12" r="10" />
-            <line x1="12" y1="8" x2="12" y2="12" />
-            <line x1="12" y1="16" x2="12.01" y2="16" />
+            <line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
           </svg>
           <strong>Budget engagé à {budget_summary.tauxEngage}%</strong>
           <span>— seuil critique dépassé</span>
@@ -546,10 +547,7 @@ export default function OperationsDashboardPage() {
               <Link key={i} to={action.href} className="ops-action-item">
                 <span className={`ops-action-dot ops-action-dot--${action.type}`} />
                 <span style={{ flex: 1 }}>{action.label}</span>
-                <span
-                  className="badge"
-                  style={{ background: 'var(--border)', color: 'var(--text-muted)', borderColor: 'var(--border)', flexShrink: 0 }}
-                >
+                <span className="badge" style={{ background: 'var(--border)', color: 'var(--text-muted)', borderColor: 'var(--border)', flexShrink: 0 }}>
                   {ACTION_TYPE_LABEL[action.type]}
                 </span>
               </Link>
@@ -560,18 +558,16 @@ export default function OperationsDashboardPage() {
 
       {/* ── 2-col grid ── */}
       <div className="ops-grid">
-        {/* Left column: BDC + Factures */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <CardShell title="BDC en attente d'approbation" linkLabel="Voir tous" linkTo="/achats">
-            <BdcTable rows={bdc_pending} approvingId={approvingId} onApprove={handleApprove} />
+            <BdcTable rows={bdc_pending} approvingId={approvingId} onApprove={handleApproveBdc} />
           </CardShell>
 
           <CardShell title="Factures en attente de validation">
-            <InvoicesTable rows={invoices_pending} />
+            <InvoicesTable rows={invoices_pending} validatingId={validatingInvId} onValidate={handleValidateInvoice} />
           </CardShell>
         </div>
 
-        {/* Right column: Chantiers critiques + Stocks */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <CardShell title="Chantiers score santé < 50">
             <CriticalProjectsTable rows={critical_projects} />
@@ -584,8 +580,8 @@ export default function OperationsDashboardPage() {
       </div>
 
       {/* ── DQE en attente — full width ── */}
-      <CardShell title="DQE en attente de validation" style={{ marginBottom: 16 }}>
-        <DqeTable rows={dqe_pending} />
+      <CardShell title="DQE en attente de validation" linkLabel="Portfolio DQE" linkTo="/portfolio/dqe" style={{ marginBottom: 16 }}>
+        <DqeTable rows={dqe_pending} validatingId={validatingDqeId} onValidate={handleValidateDqe} />
       </CardShell>
     </div>
   );

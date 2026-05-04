@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { getDashboard, type DashboardData } from '../api/get-dashboard';
 import SkeletonPage from '../../../components/ui/SkeletonPage';
 import { useAuth } from '../../auth/stores/auth-store';
-import { getRoleGroup } from '../../../lib/roles';
+import { getRoleGroup, type RoleGroup } from '../../../lib/roles';
 import PageHeader from '../../../components/ui/PageHeader';
 import KpiBar from '../components/KpiBar';
 import SynthesePortefeuille from '../components/SynthesePortefeuille';
@@ -16,19 +16,34 @@ import AiAnalysisWidget from '../components/AiAnalysisWidget';
 
 const ROLE_HEADER: Record<RoleGroup, { breadcrumb: string; title: string; subtitle: string }> = {
   direction: {
-    breadcrumb: 'DIRECTION TRAVAUX · 2026',
+    breadcrumb: 'DIRECTION GÉNÉRALE · 2026',
     title: 'Portefeuille chantiers',
     subtitle: 'Vue consolidée des chantiers actifs, budgets et alertes terrain.',
+  },
+  dt: {
+    breadcrumb: 'DIRECTION TECHNIQUE · 2026',
+    title: 'Tableau de bord — DT',
+    subtitle: 'Vue opérationnelle : DQE, achats, avancements et alertes chantier.',
   },
   terrain: {
     breadcrumb: 'TERRAIN · 2026',
     title: 'Mes chantiers',
     subtitle: 'Alertes actives, positions et accès rapide au journal du jour.',
   },
-  gestion: {
-    breadcrumb: 'GESTION FINANCIÈRE · 2026',
-    title: 'Tableau de bord — Gestion',
-    subtitle: 'Synthèse budgétaire et indicateurs financiers du portefeuille.',
+  metreur: {
+    breadcrumb: 'MÉTREUR-ÉCONOMISTE · 2026',
+    title: 'Tableau de bord — Métreur',
+    subtitle: 'Synthèse DQE, avancements et indicateurs chantiers.',
+  },
+  comptable: {
+    breadcrumb: 'COMPTABILITÉ · 2026',
+    title: 'Tableau de bord — Comptabilité',
+    subtitle: 'Synthèse budgétaire, factures et indicateurs financiers.',
+  },
+  logistique: {
+    breadcrumb: 'LOGISTIQUE · 2026',
+    title: 'Tableau de bord — Logistique',
+    subtitle: 'Achats, stocks et demandes de matériaux en cours.',
   },
   lecture: {
     breadcrumb: 'LECTURE SEULE · 2026',
@@ -123,6 +138,20 @@ function MapCard({ projects }: { projects: DashboardData['active_projects'] }) {
   );
 }
 
+function QuickActions({ links }: { links: { label: string; sub: string; to: string; icon: JSX.Element }[] }) {
+  return (
+    <div className="db-quick-actions">
+      {links.map(l => (
+        <Link key={l.to} to={l.to} className="db-quick-action-card">
+          <span className="db-quick-action-card__icon">{l.icon}</span>
+          <span className="db-quick-action-card__label">{l.label}</span>
+          <span className="db-quick-action-card__sub">{l.sub}</span>
+        </Link>
+      ))}
+    </div>
+  );
+}
+
 function TerrainProjectList({ projects }: { projects: DashboardData['active_projects'] }) {
   const today = new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
   const HEALTH_COLOR: Record<string, string> = { green: '#10b981', orange: '#f59e0b', red: '#ef4444' };
@@ -209,6 +238,20 @@ export default function DashboardPage() {
         </>
       )}
 
+      {roleGroup === 'dt' && (
+        <>
+          <div className="db-top-row">
+            <SynthesePortefeuille stats={stats} />
+            <AlertsPanel alerts={alerts ?? []} />
+            <IndicateursChantiers projects={active_projects} />
+          </div>
+          <DashboardCharts stats={stats} activeProjects={active_projects} />
+          <MapCard projects={active_projects} />
+          <ActivityFeed activities={recent_activities} />
+          <TimelineCard projects={active_projects} />
+        </>
+      )}
+
       {roleGroup === 'terrain' && (
         <>
           <AlertsPanel alerts={alerts ?? []} />
@@ -217,14 +260,46 @@ export default function DashboardPage() {
         </>
       )}
 
-      {roleGroup === 'gestion' && (
+      {roleGroup === 'metreur' && (
         <>
           <div className="db-top-row">
             <SynthesePortefeuille stats={stats} />
             <AlertsPanel alerts={alerts ?? []} />
             <IndicateursChantiers projects={active_projects} />
           </div>
+          <QuickActions links={[
+            { label: 'DQE Portefeuille', sub: 'Versions & lots', to: '/portfolio/dqe', icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="20" height="20"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg> },
+            { label: 'Achats / BDC', sub: 'Commandes en cours', to: '/achats', icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="20" height="20"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg> },
+            { label: 'Chantiers', sub: 'Voir tous les projets', to: '/projects', icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="20" height="20"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg> },
+          ]} />
           <DashboardCharts stats={stats} activeProjects={active_projects} />
+          <ActivityFeed activities={recent_activities} />
+        </>
+      )}
+
+      {roleGroup === 'comptable' && (
+        <>
+          <div className="db-top-row">
+            <SynthesePortefeuille stats={stats} />
+            <AlertsPanel alerts={alerts ?? []} />
+          </div>
+          <QuickActions links={[
+            { label: 'Comptabilité', sub: 'Factures & fournisseurs', to: '/accounting', icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="20" height="20"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> },
+            { label: 'Demandes besoin', sub: 'À comptabiliser', to: '/achats', icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="20" height="20"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg> },
+            { label: 'Dépenses générales', sub: 'Charges & frais', to: '/accounting', icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="20" height="20"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg> },
+          ]} />
+          <ActivityFeed activities={recent_activities} />
+        </>
+      )}
+
+      {roleGroup === 'logistique' && (
+        <>
+          <AlertsPanel alerts={alerts ?? []} />
+          <QuickActions links={[
+            { label: 'Bons de commande', sub: 'Préparer & livrer', to: '/achats', icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="20" height="20"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg> },
+            { label: 'Stocks', sub: 'Niveaux & mouvements', to: '/stocks', icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="20" height="20"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg> },
+            { label: 'Demandes besoin', sub: 'À préparer & livrer', to: '/achats', icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="20" height="20"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg> },
+          ]} />
           <ActivityFeed activities={recent_activities} />
         </>
       )}

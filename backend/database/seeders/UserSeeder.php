@@ -55,6 +55,11 @@ class UserSeeder extends Seeder
                 'email'      => 'comptable@charles.ci',
                 'role'       => 'comptable',
             ],
+            [
+                'name'       => 'Koné Moyens Généraux',
+                'email'      => 'logistique@charles.ci',
+                'role'       => 'moyens-generaux',
+            ],
         ];
 
         foreach ($users as $data) {

@@ -50,6 +50,7 @@ export default function ProjectAccountingPage() {
   const [paymentModal, setPaymentModal]   = useState<Invoice | null>(null);
   const [deleteTarget, setDeleteTarget]   = useState<{ type: 'supplier' | 'invoice'; id: number } | null>(null);
   const [workflowBusy, setWorkflowBusy]  = useState<number | null>(null);
+  const [workflowError, setWorkflowError] = useState<string | null>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ['project-accounting', projectId],
@@ -59,9 +60,13 @@ export default function ProjectAccountingPage() {
 
   async function handleValidate(inv: Invoice) {
     setWorkflowBusy(inv.id);
+    setWorkflowError(null);
     try {
       await validateInvoice(projectId, inv.id);
       queryClient.invalidateQueries({ queryKey: ['project-accounting', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['portfolio-operations'] });
+    } catch (e: any) {
+      setWorkflowError(e?.response?.data?.message ?? 'Erreur lors de la validation.');
     } finally {
       setWorkflowBusy(null);
     }
@@ -236,6 +241,13 @@ export default function ProjectAccountingPage() {
                 <button className="btn btn--primary" onClick={() => setInvoiceModal('new')}>+ Nouvelle facture</button>
               )}
             </div>
+            {workflowError && (
+              <div className="inv-workflow-error" role="alert">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="14" height="14"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                {workflowError}
+                <button type="button" onClick={() => setWorkflowError(null)} style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', color: 'inherit' }}>×</button>
+              </div>
+            )}
             <table className="data-table">
               <thead>
                 <tr>
@@ -304,15 +316,27 @@ export default function ProjectAccountingPage() {
                             </button>
                           )}
                           {/* Workflow: comptable enregistre paiement sur validee */}
-                          {isComptable && inv.status === 'validee' && (
-                            <button
-                              className="btn btn--primary"
-                              style={{ fontSize: 11, padding: '3px 10px', height: 'auto', whiteSpace: 'nowrap' }}
-                              onClick={() => setPaymentModal(inv)}
-                            >
-                              Paiement
-                            </button>
-                          )}
+                          {isComptable && inv.status === 'validee' && (() => {
+                            const blockers: string[] = [];
+                            if (!inv.attachment_path) blockers.push('PJ manquante');
+                            if (!inv.purchase_order_id) blockers.push('BDC non lié');
+                            return blockers.length > 0 ? (
+                              <span
+                                className="inv-blocker-badge"
+                                title={`Paiement bloqué : ${blockers.join(' · ')}`}
+                              >
+                                ⚠ {blockers.join(' · ')}
+                              </span>
+                            ) : (
+                              <button
+                                className="btn btn--primary"
+                                style={{ fontSize: 11, padding: '3px 10px', height: 'auto', whiteSpace: 'nowrap' }}
+                                onClick={() => setPaymentModal(inv)}
+                              >
+                                Paiement
+                              </button>
+                            );
+                          })()}
                           {/* Preuve paiement */}
                           {inv.status === 'payee' && inv.payment_proof_path && (
                             <a
