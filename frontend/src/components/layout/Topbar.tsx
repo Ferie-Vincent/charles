@@ -1,10 +1,25 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { logout } from '../../features/auth/api/login';
 import { useAuth } from '../../features/auth/stores/auth-store';
 import { getRoleGroup } from '../../lib/roles';
 import { api } from '../../lib/api';
+
+const DISMISSED_KEY = 'topbar_dismissed_notifs';
+
+function loadDismissed(): Set<string> {
+  try {
+    const raw = localStorage.getItem(DISMISSED_KEY);
+    return raw ? new Set(JSON.parse(raw) as string[]) : new Set();
+  } catch {
+    return new Set();
+  }
+}
+
+function saveDismissed(s: Set<string>) {
+  localStorage.setItem(DISMISSED_KEY, JSON.stringify([...s]));
+}
 
 async function getOps() {
   const res = await api.get('/portfolio/operations');
@@ -23,6 +38,16 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
   const [notifOpen, setNotifOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [validatingId, setValidatingId] = useState<number | null>(null);
+  const [dismissed, setDismissed] = useState<Set<string>>(() => loadDismissed());
+
+  const dismiss = useCallback((key: string) => {
+    setDismissed(prev => {
+      const next = new Set(prev);
+      next.add(key);
+      saveDismissed(next);
+      return next;
+    });
+  }, []);
 
   const notifRef = useRef<HTMLDivElement>(null);
   const userRef  = useRef<HTMLDivElement>(null);
@@ -38,12 +63,43 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
     enabled: canSeeOps,
   });
 
-  const bdcPending      = ops?.bdc_pending      ?? [];
-  const stockAlerts     = ops?.stock_alerts     ?? [];
-  const criticalProj    = ops?.critical_projects ?? [];
-  const isManagement    = roleGroup === 'direction' || roleGroup === 'dt';
-  const invoicesPending = isManagement ? (ops?.invoices_pending ?? []) : [];
-  const dqePending      = isManagement ? (ops?.dqe_pending      ?? []) : [];
+  const isManagement = roleGroup === 'direction' || roleGroup === 'dt';
+
+  const dismissAll = useCallback(() => {
+    setDismissed(prev => {
+      const next = new Set(prev);
+      [...(ops?.bdc_pending ?? [])].forEach((b: any) => next.add(`bdc-${b.id}`));
+      [...(ops?.stock_alerts ?? [])].forEach((s: any) => next.add(`stock-${s.id}`));
+      [...(ops?.critical_projects ?? [])].forEach((p: any) => next.add(`proj-${p.id}`));
+      [...(ops?.dqe_pending ?? [])].forEach((d: any) => next.add(`dqe-${d.id}`));
+      [...(ops?.invoices_pending ?? [])].forEach((i: any) => next.add(`inv-${i.id}`));
+      saveDismissed(next);
+      return next;
+    });
+  }, [ops]);
+
+  // Auto-prune dismissed keys that no longer exist in the API (item resolved)
+  useEffect(() => {
+    if (!ops) return;
+    const validKeys = new Set<string>([
+      ...(ops.bdc_pending      ?? []).map((b: any) => `bdc-${b.id}`),
+      ...(ops.stock_alerts     ?? []).map((s: any) => `stock-${s.id}`),
+      ...(ops.critical_projects ?? []).map((p: any) => `proj-${p.id}`),
+      ...(ops.dqe_pending      ?? []).map((d: any) => `dqe-${d.id}`),
+      ...(ops.invoices_pending ?? []).map((i: any) => `inv-${i.id}`),
+    ]);
+    setDismissed(prev => {
+      const next = new Set([...prev].filter(k => validKeys.has(k)));
+      saveDismissed(next);
+      return next;
+    });
+  }, [ops]);
+
+  const bdcPending      = (ops?.bdc_pending      ?? []).filter((b: any) => !dismissed.has(`bdc-${b.id}`));
+  const stockAlerts     = (ops?.stock_alerts     ?? []).filter((s: any) => !dismissed.has(`stock-${s.id}`));
+  const criticalProj    = (ops?.critical_projects ?? []).filter((p: any) => !dismissed.has(`proj-${p.id}`));
+  const invoicesPending = isManagement ? (ops?.invoices_pending ?? []).filter((i: any) => !dismissed.has(`inv-${i.id}`)) : [];
+  const dqePending      = isManagement ? (ops?.dqe_pending      ?? []).filter((d: any) => !dismissed.has(`dqe-${d.id}`)) : [];
   const notifCount      = bdcPending.length + stockAlerts.length + criticalProj.length + invoicesPending.length + dqePending.length;
 
   useEffect(() => {
@@ -140,7 +196,19 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
               <div className="topbar-notif-panel" role="dialog" aria-label="Notifications">
                 <div className="topbar-notif-panel__head">
                   <span>Notifications</span>
-                  {notifCount > 0 && <span className="topbar-notif-panel__count">{notifCount}</span>}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    {notifCount > 0 && <span className="topbar-notif-panel__count">{notifCount}</span>}
+                    {notifCount > 0 && (
+                      <button
+                        type="button"
+                        style={{ fontSize: '11px', color: 'var(--color-text-muted)', background: 'none', border: 'none', cursor: 'pointer', padding: '0' }}
+                        onClick={dismissAll}
+                        title="Tout marquer comme lu"
+                      >
+                        Tout lire
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 {notifCount === 0 ? (
@@ -158,7 +226,7 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
                         key={`bdc-${bdc.id}`}
                         type="button"
                         className="topbar-notif-item topbar-notif-item--warning"
-                        onClick={() => { navigate('/achats'); setNotifOpen(false); }}
+                        onClick={() => { dismiss(`bdc-${bdc.id}`); navigate('/achats'); setNotifOpen(false); }}
                       >
                         <span className="topbar-notif-item__dot topbar-notif-item__dot--warning" />
                         <div className="topbar-notif-item__body">
@@ -177,7 +245,7 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
                         key={`stock-${s.id}`}
                         type="button"
                         className="topbar-notif-item topbar-notif-item--danger"
-                        onClick={() => { navigate('/stocks'); setNotifOpen(false); }}
+                        onClick={() => { dismiss(`stock-${s.id}`); navigate('/stocks'); setNotifOpen(false); }}
                       >
                         <span className="topbar-notif-item__dot topbar-notif-item__dot--danger" />
                         <div className="topbar-notif-item__body">
@@ -194,7 +262,7 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
                         key={`proj-${p.id}`}
                         type="button"
                         className="topbar-notif-item topbar-notif-item--critical"
-                        onClick={() => { navigate(`/projects/${p.id}`); setNotifOpen(false); }}
+                        onClick={() => { dismiss(`proj-${p.id}`); navigate(`/projects/${p.id}`); setNotifOpen(false); }}
                       >
                         <span className="topbar-notif-item__dot topbar-notif-item__dot--critical" />
                         <div className="topbar-notif-item__body">
@@ -209,7 +277,7 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
                         key={`dqe-${dqe.id}`}
                         type="button"
                         className="topbar-notif-item topbar-notif-item--warning"
-                        onClick={() => { navigate(`/projects/${dqe.project_id}/dqe/${dqe.id}`); setNotifOpen(false); }}
+                        onClick={() => { dismiss(`dqe-${dqe.id}`); navigate(`/projects/${dqe.project_id}/dqe/${dqe.id}`); setNotifOpen(false); }}
                       >
                         <span className="topbar-notif-item__dot topbar-notif-item__dot--warning" />
                         <div className="topbar-notif-item__body">
@@ -227,8 +295,8 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
                         className="topbar-notif-item topbar-notif-item--warning"
                         role="button"
                         tabIndex={0}
-                        onClick={() => { navigate(`/projects/${inv.project_id}/accounting`); setNotifOpen(false); }}
-                        onKeyDown={e => { if (e.key === 'Enter') { navigate(`/projects/${inv.project_id}/accounting`); setNotifOpen(false); } }}
+                        onClick={() => { dismiss(`inv-${inv.id}`); navigate(`/projects/${inv.project_id}/accounting`); setNotifOpen(false); }}
+                        onKeyDown={e => { if (e.key === 'Enter') { dismiss(`inv-${inv.id}`); navigate(`/projects/${inv.project_id}/accounting`); setNotifOpen(false); } }}
                       >
                         <span className="topbar-notif-item__dot topbar-notif-item__dot--warning" />
                         <div className="topbar-notif-item__body">
