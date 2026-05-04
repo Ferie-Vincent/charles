@@ -43,4 +43,14 @@ class Invoice extends Model
     {
         return $this->belongsTo(User::class, 'created_by');
     }
+
+    public function validator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'validated_by');
+    }
+
+    public function payer(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'paid_by');
+    }
 }

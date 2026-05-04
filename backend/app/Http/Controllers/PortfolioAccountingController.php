@@ -208,6 +208,8 @@ class PortfolioAccountingController extends Controller
                 'project:id,name,code',
                 'supplier:id,name',
                 'creator:id,name',
+                'validator:id,name',
+                'payer:id,name',
             ])->whereHas('project', fn($q) => $q->where('company_id', $companyId))
               ->findOrFail($id);
 
@@ -222,10 +224,14 @@ class PortfolioAccountingController extends Controller
                 'invoice_date' => $invoice->invoice_date,
                 'due_date'     => $invoice->due_date,
                 'paid_date'    => $invoice->paid_date,
+                'validated_at' => $invoice->validated_at,
+                'paid_at'      => $invoice->paid_at,
                 'note'         => $invoice->note,
                 'project'      => $invoice->project,
                 'supplier'     => $invoice->supplier,
                 'creator'      => $invoice->creator,
+                'validator'    => $invoice->validator,
+                'payer'        => $invoice->payer,
             ]);
         }
 
