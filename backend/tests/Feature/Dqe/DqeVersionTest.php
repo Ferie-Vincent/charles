@@ -207,12 +207,13 @@ it('direction can validate draft dqe directly', function () {
         ->assertJsonFragment(['status' => 'validated']);
 });
 
-it('directeur-technique cannot validate draft dqe directly', function () {
+it('directeur-technique can validate draft dqe directly', function () {
     $v = dqeVersion($this->project, $this->dt);
 
     $this->actingAs($this->dt)
         ->patchJson("/api/projects/{$this->project->id}/dqe-versions/{$v->id}/transition", ['status' => 'validated'])
-        ->assertForbidden();
+        ->assertOk()
+        ->assertJsonFragment(['status' => 'validated']);
 });
 
 it('metreur cannot validate draft dqe directly', function () {
@@ -234,12 +235,13 @@ it('direction validates submitted dqe', function () {
         ->assertJsonFragment(['status' => 'validated']);
 });
 
-it('directeur-technique cannot validate submitted dqe', function () {
+it('directeur-technique can validate submitted dqe', function () {
     $v = dqeVersion($this->project, $this->metr, 'soumise');
 
     $this->actingAs($this->dt)
         ->patchJson("/api/projects/{$this->project->id}/dqe-versions/{$v->id}/transition", ['status' => 'validated'])
-        ->assertForbidden();
+        ->assertOk()
+        ->assertJsonFragment(['status' => 'validated']);
 });
 
 it('metreur cannot validate submitted dqe', function () {
@@ -294,7 +296,7 @@ it('rejection reason is cleared on resubmission', function () {
         ->assertJsonFragment(['rejection_reason' => null]);
 });
 
-it('directeur-technique cannot reject submitted dqe', function () {
+it('directeur-technique can reject submitted dqe', function () {
     $v = dqeVersion($this->project, $this->metr, 'soumise');
 
     $this->actingAs($this->dt)
@@ -302,7 +304,8 @@ it('directeur-technique cannot reject submitted dqe', function () {
             'status' => 'draft',
             'reason' => 'Motif.',
         ])
-        ->assertForbidden();
+        ->assertOk()
+        ->assertJsonFragment(['status' => 'draft']);
 });
 
 // ── Transitions : archivage ───────────────────────────────────

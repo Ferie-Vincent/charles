@@ -25,7 +25,7 @@ class SupplierController extends Controller
 
     public function store(Request $request, Project $project): JsonResponse
     {
-        $this->authorize('update', $project);
+        $this->authorize('manageFinances', $project);
 
         $data = $request->validate([
             'name'            => 'required|string|max:255',
@@ -48,7 +48,7 @@ class SupplierController extends Controller
 
     public function update(Request $request, Project $project, Supplier $supplier): JsonResponse
     {
-        $this->authorize('update', $project);
+        $this->authorize('manageFinances', $project);
         abort_if($supplier->project_id !== $project->id, 404);
 
         $data = $request->validate([
@@ -68,7 +68,7 @@ class SupplierController extends Controller
 
     public function destroy(Project $project, Supplier $supplier): Response
     {
-        $this->authorize('update', $project);
+        $this->authorize('manageFinances', $project);
         abort_if($supplier->project_id !== $project->id, 404);
 
         $hasFinalisedInvoices = $supplier->invoices()
