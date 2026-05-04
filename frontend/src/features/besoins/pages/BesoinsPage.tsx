@@ -52,6 +52,7 @@ export default function BesoinsPage() {
   const [saving, setSaving]     = useState(false);
   const [rejectModal, setRejectModal] = useState<{ id: number; reason: string } | null>(null);
   const [recordModal, setRecordModal] = useState<{ id: number; cost: string } | null>(null);
+  const [detailModal, setDetailModal] = useState<import('../api/besoins').DemandeBesoin | null>(null);
 
   const { data: besoins = [], isLoading: loading } = useQuery({
     queryKey: ['besoins'],
@@ -234,7 +235,7 @@ export default function BesoinsPage() {
                 <tr><td colSpan={8} className="acct-empty">Aucune demande trouvée</td></tr>
               )}
               {filtered.map(b => (
-                <tr key={b.id}>
+                <tr key={b.id} style={{ cursor: 'pointer' }} onClick={() => setDetailModal(b)}>
                   <td>
                     <span style={{ fontWeight: 600, color: 'var(--text-body)' }}>{b.title}</span>
                     {b.requester && <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--text-muted)' }}>par {b.requester.name}</p>}
@@ -256,7 +257,7 @@ export default function BesoinsPage() {
                   </td>
                   <td><span className={`badge ${STATUS_BADGE[b.status]}`}>{STATUS_LABEL[b.status]}</span></td>
                   <td style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>{fmtDate(b.created_at)}</td>
-                  <td>
+                  <td onClick={e => e.stopPropagation()}>
                     <div style={{ display: 'flex', gap: 4, flexWrap: 'nowrap' }}>
                       {/* Direction: approve / reject */}
                       {isDirection && b.status === 'soumis' && (
@@ -374,6 +375,112 @@ export default function BesoinsPage() {
           </div>
         </div>
       )}
+
+      {/* Detail modal */}
+      {detailModal && (() => {
+        const b = detailModal;
+        const timeline: { label: string; actor?: string; date?: string | null; note?: string | null; color: string }[] = [
+          { label: 'Demande soumise', actor: b.requester?.name, date: b.created_at, color: '#64748b' },
+          ...(b.approved_at ? [{ label: 'Approuvée', actor: b.approver?.name, date: b.approved_at, color: '#10b981' }] : []),
+          ...(b.rejection_reason ? [{ label: 'Rejetée', note: b.rejection_reason, date: b.approved_at, color: '#ef4444' }] : []),
+          ...(b.prepared_at ? [{ label: 'En préparation', actor: b.preparer?.name, date: b.prepared_at, color: '#f59e0b' }] : []),
+          ...(b.delivered_at ? [{ label: 'Livrée', date: b.delivered_at, color: '#3b82f6' }] : []),
+          ...(b.recorded_at ? [{ label: 'Comptabilisée', actor: b.recorder?.name, date: b.recorded_at, note: b.actual_cost ? `Montant réel : ${fmt(b.actual_cost)}` : null, color: '#8b5cf6' }] : []),
+        ];
+
+        return (
+          <div className="mr-modal-overlay" onClick={() => setDetailModal(null)}>
+            <div className="mr-modal" style={{ maxWidth: 620, width: '95vw' }} onClick={e => e.stopPropagation()}>
+              <div className="mr-modal__head">
+                <div>
+                  <h2 className="mr-modal__title" style={{ marginBottom: 4 }}>{b.title}</h2>
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+                    <span className={`badge ${STATUS_BADGE[b.status]}`}>{STATUS_LABEL[b.status]}</span>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 700, color: URGENCY_COLOR[b.urgency], textTransform: 'uppercase' }}>{b.urgency}</span>
+                    <span className="badge badge-draft">{CATEGORY_LABEL[b.category]}</span>
+                  </div>
+                </div>
+                <button className="mr-modal__close" aria-label="Fermer" onClick={() => setDetailModal(null)}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+              </div>
+
+              <div className="mr-modal__body" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+
+                {/* Infos principales */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem 1.5rem' }}>
+                  <div>
+                    <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Chantier</p>
+                    <p style={{ margin: 0, fontWeight: 600 }}>
+                      {b.project ? <>{b.project.code} — {b.project.name}</> : '—'}
+                    </p>
+                  </div>
+                  <div>
+                    <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Demandeur</p>
+                    <p style={{ margin: 0, fontWeight: 600 }}>{b.requester?.name ?? '—'}</p>
+                  </div>
+                  <div>
+                    <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Quantité</p>
+                    <p style={{ margin: 0, fontWeight: 600 }}>{b.quantity ? `${b.quantity} ${b.unit ?? ''}`.trim() : '—'}</p>
+                  </div>
+                  <div>
+                    <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Coût estimé</p>
+                    <p style={{ margin: 0, fontWeight: 600 }}>{b.estimated_cost ? fmt(b.estimated_cost) : '—'}</p>
+                  </div>
+                  {b.actual_cost && (
+                    <div>
+                      <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Coût réel</p>
+                      <p style={{ margin: 0, fontWeight: 600, color: 'var(--success)' }}>{fmt(b.actual_cost)}</p>
+                    </div>
+                  )}
+                  {b.budget_entry_id && (
+                    <div>
+                      <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Entrée budget</p>
+                      <p style={{ margin: 0, fontWeight: 600, color: 'var(--brand)' }}># {b.budget_entry_id}</p>
+                    </div>
+                  )}
+                </div>
+
+                {b.description && (
+                  <div>
+                    <p style={{ margin: '0 0 4px', fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Description</p>
+                    <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--text-body)', lineHeight: 1.5 }}>{b.description}</p>
+                  </div>
+                )}
+
+                {b.notes && (
+                  <div>
+                    <p style={{ margin: '0 0 4px', fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Notes</p>
+                    <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--text-body)', lineHeight: 1.5 }}>{b.notes}</p>
+                  </div>
+                )}
+
+                {/* Timeline historique */}
+                <div>
+                  <p style={{ margin: '0 0 12px', fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>Historique du workflow</p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+                    {timeline.map((step, i) => (
+                      <div key={i} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0 }}>
+                          <div style={{ width: 10, height: 10, borderRadius: '50%', background: step.color, marginTop: 4, flexShrink: 0 }} />
+                          {i < timeline.length - 1 && <div style={{ width: 2, flex: 1, background: 'var(--border)', minHeight: 20 }} />}
+                        </div>
+                        <div style={{ paddingBottom: 14 }}>
+                          <p style={{ margin: 0, fontSize: '0.84rem', fontWeight: 600, color: 'var(--text-body)' }}>{step.label}</p>
+                          {step.actor && <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--text-muted)' }}>par {step.actor}</p>}
+                          {step.note && <p style={{ margin: '2px 0 0', fontSize: '0.78rem', color: step.color }}>{step.note}</p>}
+                          {step.date && <p style={{ margin: '2px 0 0', fontSize: '0.75rem', color: 'var(--text-muted)' }}>{fmtDate(step.date)}</p>}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Record cost modal */}
       {recordModal && (
