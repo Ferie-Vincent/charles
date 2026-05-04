@@ -33,6 +33,18 @@ export async function updateDqeVersion(
   return data;
 }
 
+export async function transitionDqeVersion(
+  projectId: number,
+  versionId: number,
+  payload: { status: DqeStatus; reason?: string },
+): Promise<DqeVersion> {
+  const { data } = await api.patch<DqeVersion>(
+    `/projects/${projectId}/dqe-versions/${versionId}/transition`,
+    payload,
+  );
+  return data;
+}
+
 export async function deleteDqeVersion(projectId: number, versionId: number): Promise<void> {
   await api.delete(`/projects/${projectId}/dqe-versions/${versionId}`);
 }

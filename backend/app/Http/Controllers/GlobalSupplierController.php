@@ -14,7 +14,11 @@ class GlobalSupplierController extends Controller
 
     public function index(Request $request): JsonResponse
     {
-        abort_unless(in_array($request->user()->role->name, Roles::ALL_WRITE), 403, 'Accès aux fournisseurs non autorisé.');
+        abort_unless(
+            in_array($request->user()->role->name, [...Roles::MANAGEMENT, ...Roles::FINANCE, ...Roles::LOGISTICS]),
+            403,
+            'Accès aux fournisseurs non autorisé.'
+        );
 
         $suppliers = Supplier::where('company_id', $request->user()->company_id)
             ->withCount('invoices')
@@ -55,7 +59,11 @@ class GlobalSupplierController extends Controller
 
     public function show(Request $request, Supplier $supplier): JsonResponse
     {
-        abort_unless(in_array($request->user()->role->name, Roles::ALL_WRITE), 403, 'Accès aux fournisseurs non autorisé.');
+        abort_unless(
+            in_array($request->user()->role->name, [...Roles::MANAGEMENT, ...Roles::FINANCE, ...Roles::LOGISTICS]),
+            403,
+            'Accès aux fournisseurs non autorisé.'
+        );
 
         abort_if($supplier->company_id !== $request->user()->company_id, 404);
 

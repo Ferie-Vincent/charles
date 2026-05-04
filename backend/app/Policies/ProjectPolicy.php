@@ -36,7 +36,7 @@ class ProjectPolicy
             return false;
         }
 
-        $allowedRoles = ['direction', 'directeur-technique', 'conducteur-travaux', 'metreur-economiste', 'comptable'];
+        $allowedRoles = ['direction', 'directeur-technique', 'conducteur-travaux', 'metreur-economiste'];
         if (in_array($user->role->name, $allowedRoles)) {
             return true;
         }
@@ -46,6 +46,15 @@ class ProjectPolicy
         }
 
         return false;
+    }
+
+    public function manageFinances(User $user, Project $project): bool
+    {
+        if ($user->company_id !== $project->company_id) {
+            return false;
+        }
+
+        return in_array($user->role->name, ['direction', 'directeur-technique', 'comptable', 'metreur-economiste']);
     }
 
     public function delete(User $user, Project $project): bool

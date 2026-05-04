@@ -24,7 +24,8 @@ interface ReceiveForm { deliveryNote: File | null; photos: File[]; notes: string
 
 export default function AchatsPage() {
   const { user } = useAuth();
-  const isApprover = user?.role?.name === 'comptable';
+  const isApprover   = ['direction', 'directeur-technique'].includes(user?.role?.name ?? '');
+  const isLogistique = ['moyens-generaux', 'direction', 'directeur-technique'].includes(user?.role?.name ?? '');
 
   const queryClient = useQueryClient();
   const [statusFilter, setStatusFilter] = useState('');
@@ -275,7 +276,7 @@ export default function AchatsPage() {
                             </button>
                           </>
                         )}
-                        {order.status === 'approuve' && (
+                        {isLogistique && order.status === 'approuve' && (
                           <button className="btn btn--sm btn--secondary" onClick={() => openReceive(order)}>
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="11" height="11"><polyline points="20 6 9 17 4 12"/></svg>
                             Réceptionner
