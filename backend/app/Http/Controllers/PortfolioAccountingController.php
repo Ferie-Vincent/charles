@@ -86,6 +86,9 @@ class PortfolioAccountingController extends Controller
             ->orderByDesc('expense_date')
             ->get();
 
+        $totals['depenses_generales'] = (float) $expenses->sum('amount');
+        $totals['decaissements_total'] = $totals['realise'] + $totals['depenses_generales'];
+
         // Unified activity feed (last 40 entries across invoices + budget entries + expenses)
         $invoiceItems = $projectData->flatMap(function ($proj) {
             return collect($proj['invoices'])->map(fn($inv) => [

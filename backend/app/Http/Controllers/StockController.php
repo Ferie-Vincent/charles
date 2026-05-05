@@ -88,6 +88,12 @@ class StockController extends Controller
             403,
             'Gestion des articles réservée à la logistique.'
         );
+        abort_if(
+            $stockItem->movements()->exists(),
+            422,
+            'Impossible de supprimer un article ayant un historique de mouvements. Désactivez-le plutôt.'
+        );
+
         $stockItem->delete();
         return response()->noContent();
     }
@@ -137,6 +143,8 @@ class StockController extends Controller
             'Mouvement de stock non autorisé pour ce rôle.'
         );
 
+        $roleSlug = $request->user()->role->name;
+
         $data = $request->validate([
             'type'          => 'required|in:entree,sortie,ajustement',
             'quantity'      => 'required|numeric|min:0.01',
@@ -145,6 +153,10 @@ class StockController extends Controller
             'project_id'    => ['nullable', \Illuminate\Validation\Rule::exists('projects', 'id')->where('company_id', $request->user()->company_id)],
             'notes'         => 'nullable|string|max:500',
         ]);
+
+        if (in_array($roleSlug, Roles::TERRAIN) && $data['type'] !== 'sortie') {
+            abort(403, 'Les rôles terrain ne peuvent enregistrer que des sorties de stock.');
+        }
 
         $movement = null;
         $insufficientStock = false;

@@ -20,6 +20,9 @@ class GedController extends Controller
             ->orderByDesc('created_at');
 
         if ($request->filled('project_id')) {
+            $request->validate([
+                'project_id' => ['integer', Rule::exists('projects', 'id')->where('company_id', $request->user()->company_id)],
+            ]);
             $query->where('project_id', $request->project_id);
         }
 
