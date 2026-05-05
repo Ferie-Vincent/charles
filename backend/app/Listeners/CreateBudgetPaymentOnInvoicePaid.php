@@ -27,14 +27,7 @@ class CreateBudgetPaymentOnInvoicePaid
             'entry_date'  => $invoice->paid_date ?? now()->toDateString(),
             'note'        => "Paiement auto-enregistré – facture #{$invoice->reference}",
         ]);
-
-        // Remove the BDC engagement entry to avoid double-counting.
-        if ($invoice->purchase_order_id) {
-            $bdc = PurchaseOrder::find($invoice->purchase_order_id);
-            if ($bdc?->engagement_entry_id) {
-                BudgetEntry::find($bdc->engagement_entry_id)?->delete();
-                $bdc->updateQuietly(['engagement_entry_id' => null]);
-            }
-        }
+        // BDC engagement already reduced at invoice validation (ClearBdcEngagementOnInvoiceValidated).
+        // No further action needed here — remaining uncommitted balance must be preserved.
     }
 }
