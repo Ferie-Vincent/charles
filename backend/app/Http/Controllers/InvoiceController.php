@@ -32,7 +32,7 @@ class InvoiceController extends Controller
     {
         $this->authorize('manageFinances', $project);
 
-        if ($project->status === 'termine') {
+        if ($project->status === 'completed') {
             abort_unless(
                 in_array($request->user()->role->name, ['direction', 'comptable']),
                 403,
