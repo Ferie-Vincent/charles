@@ -240,6 +240,13 @@ class DqeVersionController extends Controller
             abort_unless(!empty($data['reason']), 422, 'Un motif de rejet est obligatoire.');
         } elseif (in_array($current, ['draft', 'soumise', 'validated']) && $to === 'archived') {
             abort_unless(in_array($role, $archiveRoles), 403, 'Archivage réservé à la direction.');
+            if ($current === 'validated') {
+                $remainingValidated = $project->dqeVersions()
+                    ->where('status', 'validated')
+                    ->where('id', '!=', $dqeVersion->id)
+                    ->count();
+                abort_if($remainingValidated === 0, 422, 'Impossible d\'archiver le seul DQE validé du chantier. Validez d\'abord une version de remplacement.');
+            }
         } else {
             abort(422, "Transition {$current} → {$to} non autorisée.");
         }

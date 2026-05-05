@@ -142,7 +142,7 @@ class StockController extends Controller
             'quantity'      => 'required|numeric|min:0.01',
             'reason'        => 'required|string|max:255',
             'movement_date' => 'required|date',
-            'project_id'    => 'nullable|exists:projects,id',
+            'project_id'    => ['nullable', \Illuminate\Validation\Rule::exists('projects', 'id')->where('company_id', $request->user()->company_id)],
             'notes'         => 'nullable|string|max:500',
         ]);
 
