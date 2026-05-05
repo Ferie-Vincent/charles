@@ -13,7 +13,7 @@ class ProjectFactory extends Factory
             'company_id' => Company::factory(),
             'code' => 'CH-' . strtoupper($this->faker->lexify('????')) . '-' . $this->faker->year() . '-' . $this->faker->numberBetween(1, 999),
             'name' => $this->faker->sentence(4),
-            'status' => $this->faker->randomElement(['draft', 'active', 'completed', 'on_hold']),
+            'status' => $this->faker->randomElement(['draft', 'active']),
             'location' => $this->faker->city(),
             'budget_amount' => $this->faker->randomFloat(2, 1000000, 500000000),
             'start_date' => $this->faker->dateTimeBetween('-1 year', 'now'),

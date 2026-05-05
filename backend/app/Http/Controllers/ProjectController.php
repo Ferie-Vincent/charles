@@ -67,6 +67,25 @@ class ProjectController extends Controller
 
         abort_if(empty($data), 403, 'Aucun champ modifiable pour ce rôle.');
 
+        if (($data['status'] ?? null) === 'completed' && $project->status !== 'completed') {
+            abort_unless(
+                in_array($role, Roles::MANAGEMENT),
+                403,
+                'Clôture de chantier réservée à la direction et au directeur technique.'
+            );
+
+            $openIncidents = $project->incidents()->whereIn('status', ['ouvert', 'en_cours'])->count();
+            abort_if($openIncidents > 0, 422, "Impossible de clôturer : {$openIncidents} incident(s) non résolu(s).");
+
+            $bdcOpen = \App\Models\PurchaseOrder::where('project_id', $project->id)
+                ->whereIn('status', ['pending', 'approved'])
+                ->count();
+            abort_if($bdcOpen > 0, 422, "Impossible de clôturer : {$bdcOpen} BDC en attente ou non reçu(s).");
+
+            $facValide = $project->invoices()->where('status', 'validee')->count();
+            abort_if($facValide > 0, 422, "Impossible de clôturer : {$facValide} facture(s) validée(s) non payée(s).");
+        }
+
         $wasCompleted = $project->status === 'completed';
         $project->update($data);
 

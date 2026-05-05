@@ -15,6 +15,7 @@ beforeEach(function () {
     ]);
     $this->project = Project::factory()->create([
         'company_id' => $this->company->id,
+        'status'     => 'active',
     ]);
 });
 

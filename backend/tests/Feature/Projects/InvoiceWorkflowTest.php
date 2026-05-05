@@ -199,3 +199,138 @@ it('cannot pay an invoice that is not yet validated', function () {
 
     $res->assertUnprocessable();
 });
+
+// ── BDC partial invoicing / dispute cycle ─────────────────────────────────────
+
+function makeBdcWithEngagement(Company $company, Project $project, User $approver, float $totalAmount): PurchaseOrder
+{
+    $bdc = PurchaseOrder::create([
+        'company_id'   => $company->id,
+        'project_id'   => $project->id,
+        'requested_by' => $approver->id,
+        'reference'    => 'BDC-' . uniqid(),
+        'status'       => 'approuve',
+        'items'        => json_encode([['description' => 'Matériaux', 'quantity' => 1, 'unit_price' => $totalAmount]]),
+        'total_amount' => $totalAmount,
+    ]);
+
+    $entry = \App\Models\BudgetEntry::create([
+        'project_id' => $project->id,
+        'created_by' => $approver->id,
+        'type'       => 'engagement',
+        'category'   => 'Matériaux',
+        'label'      => "BDC #{$bdc->reference}",
+        'amount'     => $totalAmount,
+        'entry_date' => now()->toDateString(),
+    ]);
+
+    $bdc->updateQuietly(['engagement_entry_id' => $entry->id]);
+
+    return $bdc->fresh();
+}
+
+it('partial invoice validation reduces BDC engagement, not zeroes it', function () {
+    $company   = Company::factory()->create();
+    $direction = makeUser($company, 'direction');
+    $comptable = makeUser($company, 'comptable');
+    $project   = makeProject($company);
+
+    $bdc = makeBdcWithEngagement($company, $project, $direction, 10_000_000);
+
+    $invoice = Invoice::create([
+        'project_id'        => $project->id,
+        'created_by'        => $comptable->id,
+        'reference'         => 'FACT-' . uniqid(),
+        'category'          => 'Matériaux',
+        'amount_ht'         => 3_000_000,
+        'invoice_date'      => now()->toDateString(),
+        'status'            => 'soumise',
+        'purchase_order_id' => $bdc->id,
+    ]);
+
+    $this->actingAs($direction)
+        ->patchJson("/api/projects/{$project->id}/invoices/{$invoice->id}/transition", ['status' => 'validee'])
+        ->assertOk();
+
+    $bdc->refresh();
+    $entry = \App\Models\BudgetEntry::find($bdc->engagement_entry_id);
+
+    expect($entry)->not->toBeNull()
+        ->and((float) $entry->amount)->toBe(7_000_000.0);
+});
+
+it('disputee after validee restores BDC engagement to full partial amount', function () {
+    $company   = Company::factory()->create();
+    $direction = makeUser($company, 'direction');
+    $comptable = makeUser($company, 'comptable');
+    $project   = makeProject($company);
+
+    $bdc = makeBdcWithEngagement($company, $project, $direction, 10_000_000);
+
+    $invoice = Invoice::create([
+        'project_id'        => $project->id,
+        'created_by'        => $comptable->id,
+        'reference'         => 'FACT-' . uniqid(),
+        'category'          => 'Matériaux',
+        'amount_ht'         => 3_000_000,
+        'invoice_date'      => now()->toDateString(),
+        'status'            => 'soumise',
+        'purchase_order_id' => $bdc->id,
+    ]);
+
+    $this->actingAs($direction)
+        ->patchJson("/api/projects/{$project->id}/invoices/{$invoice->id}/transition", ['status' => 'validee'])
+        ->assertOk();
+
+    $this->actingAs($direction)
+        ->patchJson("/api/projects/{$project->id}/invoices/{$invoice->id}/transition", ['status' => 'disputee'])
+        ->assertOk();
+
+    $bdc->refresh();
+    $entry = \App\Models\BudgetEntry::find($bdc->engagement_entry_id);
+
+    expect($entry)->not->toBeNull()
+        ->and((float) $entry->amount)->toBe(10_000_000.0);
+});
+
+it('revalidation after dispute cycle reduces engagement correctly', function () {
+    $company   = Company::factory()->create();
+    $direction = makeUser($company, 'direction');
+    $comptable = makeUser($company, 'comptable');
+    $project   = makeProject($company);
+
+    $bdc = makeBdcWithEngagement($company, $project, $direction, 10_000_000);
+
+    $invoice = Invoice::create([
+        'project_id'        => $project->id,
+        'created_by'        => $comptable->id,
+        'reference'         => 'FACT-' . uniqid(),
+        'category'          => 'Matériaux',
+        'amount_ht'         => 3_000_000,
+        'invoice_date'      => now()->toDateString(),
+        'status'            => 'soumise',
+        'purchase_order_id' => $bdc->id,
+    ]);
+
+    $this->actingAs($direction)
+        ->patchJson("/api/projects/{$project->id}/invoices/{$invoice->id}/transition", ['status' => 'validee'])
+        ->assertOk();
+
+    $this->actingAs($direction)
+        ->patchJson("/api/projects/{$project->id}/invoices/{$invoice->id}/transition", ['status' => 'disputee'])
+        ->assertOk();
+
+    $this->actingAs($direction)
+        ->patchJson("/api/projects/{$project->id}/invoices/{$invoice->id}/transition", ['status' => 'soumise'])
+        ->assertOk();
+
+    $this->actingAs($direction)
+        ->patchJson("/api/projects/{$project->id}/invoices/{$invoice->id}/transition", ['status' => 'validee'])
+        ->assertOk();
+
+    $bdc->refresh();
+    $entry = \App\Models\BudgetEntry::find($bdc->engagement_entry_id);
+
+    expect($entry)->not->toBeNull()
+        ->and((float) $entry->amount)->toBe(7_000_000.0);
+});

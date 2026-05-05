@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateProjectRequest extends FormRequest
 {
@@ -16,7 +17,7 @@ class UpdateProjectRequest extends FormRequest
         return [
             'code'            => ['sometimes', 'required', 'string', 'max:255'],
             'name'            => ['sometimes', 'required', 'string', 'max:255'],
-            'status'          => ['sometimes', 'required', 'string', 'max:50'],
+            'status'          => ['sometimes', 'required', Rule::in(['draft', 'active', 'completed', 'archived'])],
             'location'        => ['sometimes', 'nullable', 'string', 'max:255'],
             'latitude'        => ['sometimes', 'nullable', 'numeric', 'between:-90,90'],
             'longitude'       => ['sometimes', 'nullable', 'numeric', 'between:-180,180'],

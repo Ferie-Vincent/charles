@@ -11,6 +11,7 @@ class DailyLogPolicy
     public function create(User $user, Project $project): bool
     {
         if ($user->company_id !== $project->company_id) return false;
+        if ($project->status === 'completed') return false;
 
         $terrainRoles = ['conducteur-travaux', 'chef-chantier', 'direction', 'directeur-technique'];
         if (!in_array($user->role->name, $terrainRoles)) return false;
