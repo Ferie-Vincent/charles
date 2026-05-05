@@ -13,11 +13,13 @@ class ProjectAccountingController extends Controller
 
         $project->load(['budgetEntries', 'invoices.supplier', 'suppliers', 'dqeVersions.lines']);
 
-        // Budget de référence : DQE validé ou budget_amount du projet
-        $dqeTotal = $project->dqeVersions
+        // Budget de référence : dernière version DQE validée ou budget_amount du projet
+        $lastValidatedDqe = $project->dqeVersions
             ->where('status', 'validated')
-            ->sum('total_ht');
+            ->sortByDesc('version_number')
+            ->first();
 
+        $dqeTotal  = $lastValidatedDqe ? (float) $lastValidatedDqe->total_ht : 0.0;
         $budgetRef = $dqeTotal > 0 ? $dqeTotal : (float) $project->budget_amount;
 
         // Depuis budget_entries (ancienne méthode)
@@ -28,7 +30,7 @@ class ProjectAccountingController extends Controller
         // Depuis factures (nouvelle méthode)
         $factures        = $project->invoices;
         $realiseFactures = (float) $factures->where('status', 'payee')->sum('amount_ht');
-        $engageFact      = (float) $factures->where('status', 'soumise')->sum('amount_ht');
+        $engageFact      = (float) $factures->where('status', 'validee')->sum('amount_ht');
 
         // Métriques consolidées
         // FIX M9: use invoices (canonical source) for realise — avoid max() double-counting
@@ -43,11 +45,11 @@ class ProjectAccountingController extends Controller
 
         // Breakdown par catégorie (depuis factures validées)
         $byCategory = $factures
-            ->whereIn('status', ['payee', 'soumise'])
+            ->whereIn('status', ['payee', 'validee'])
             ->groupBy('category')
             ->map(fn($grp) => [
                 'realise' => (float) $grp->where('status', 'payee')->sum('amount_ht'),
-                'engage'  => (float) $grp->where('status', 'soumise')->sum('amount_ht'),
+                'engage'  => (float) $grp->where('status', 'validee')->sum('amount_ht'),
                 'count'   => $grp->count(),
             ])
             ->sortByDesc(fn($v) => $v['realise'] + $v['engage'])

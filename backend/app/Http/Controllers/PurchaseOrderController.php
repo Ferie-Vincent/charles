@@ -418,6 +418,7 @@ class PurchaseOrderController extends Controller
                     'movement_date'     => now()->toDateString(),
                     'created_by'        => $by->id,
                     'purchase_order_id' => $order->id,
+                    'project_id'        => $order->project_id,
                 ]);
                 $stockItem->increment('quantity', $qty);
                 $created++;

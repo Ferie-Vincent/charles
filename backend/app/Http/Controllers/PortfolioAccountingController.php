@@ -32,20 +32,21 @@ class PortfolioAccountingController extends Controller
             $dqeTotal  = (float) $project->dqeVersions->where('status', 'validated')->sum('total_ht');
             $budgetRef = $dqeTotal > 0 ? $dqeTotal : (float) $project->budget_amount;
 
+            // BDC engagements (approved BDC without invoice = pré-engagement ferme)
             $engagement = (float) $project->budgetEntries->where('type', 'engagement')->sum('amount');
-            $paiementBE = (float) $project->budgetEntries->where('type', 'paiement')->sum('amount');
 
-            $invoices      = $project->invoices;
-            $invoicesPayee = (float) $invoices->whereIn('status', ['validee', 'payee'])->sum('amount_ht');
-            $invoicesSoumis = (float) $invoices->where('status', 'soumise')->sum('amount_ht');
+            $invoices       = $project->invoices;
+            // réalisé = décaissé = factures payées uniquement (source canonique, évite double-comptage avec paiementBE)
+            $invoicesPayee  = (float) $invoices->where('status', 'payee')->sum('amount_ht');
+            // engagé = factures validées non encore payées (engagement ferme)
+            $invoicesValidee = (float) $invoices->where('status', 'validee')->sum('amount_ht');
 
-            // Sum both sources: BudgetEntries (besoins comptabilisés + saisies manuelles) + Invoices
-            $realise = $paiementBE + $invoicesPayee;
-            $engage  = $engagement + $invoicesSoumis;
+            $realise = $invoicesPayee;
+            $engage  = $engagement + $invoicesValidee;
 
             $rac   = max(0, $budgetRef - $engage - $realise);
             $cat   = $realise + $engage + $rac;
-            $ecart = $budgetRef - $realise; // positif = reste à dépenser, négatif = dépassement
+            $ecart = $budgetRef - $realise - $engage; // positif = disponible, négatif = dépassement
 
             return [
                 'id'          => $project->id,
