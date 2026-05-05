@@ -19,8 +19,16 @@ class ClearBdcEngagementOnInvoiceValidated
         $bdc = PurchaseOrder::find($invoice->purchase_order_id);
 
         if ($bdc?->engagement_entry_id) {
-            BudgetEntry::find($bdc->engagement_entry_id)?->delete();
-            $bdc->updateQuietly(['engagement_entry_id' => null]);
+            $entry = BudgetEntry::find($bdc->engagement_entry_id);
+            if ($entry) {
+                $remaining = (float) $entry->amount - $invoice->amount_ht;
+                if ($remaining <= 0) {
+                    $entry->delete();
+                    $bdc->updateQuietly(['engagement_entry_id' => null]);
+                } else {
+                    $entry->updateQuietly(['amount' => round($remaining, 2)]);
+                }
+            }
         }
     }
 }

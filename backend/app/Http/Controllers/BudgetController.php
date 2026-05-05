@@ -40,6 +40,14 @@ class BudgetController extends Controller
     {
         $this->authorize('manageFinances', $project);
 
+        if ($project->status === 'termine') {
+            abort_unless(
+                in_array($request->user()->role->name, ['direction', 'comptable']),
+                403,
+                'Chantier terminé — seuls direction et comptable peuvent saisir des régularisations.'
+            );
+        }
+
         $data = $request->validate([
             'type'       => 'required|in:previsionnel,engagement,paiement',
             'category'   => 'required|string|max:100',

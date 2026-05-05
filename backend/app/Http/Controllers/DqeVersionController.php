@@ -258,6 +258,17 @@ class DqeVersionController extends Controller
             event(new DqeValidated($dqeVersion, $user));
         }
 
+        if ($to === 'archived' && $current === 'validated') {
+            $newRef = $project->dqeVersions()
+                ->where('status', 'validated')
+                ->where('id', '!=', $dqeVersion->id)
+                ->orderByDesc('version_number')
+                ->first();
+            if ($newRef) {
+                $project->updateQuietly(['budget_amount' => $newRef->total_ht]);
+            }
+        }
+
         return response()->json($dqeVersion);
     }
 

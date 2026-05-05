@@ -32,6 +32,14 @@ class InvoiceController extends Controller
     {
         $this->authorize('manageFinances', $project);
 
+        if ($project->status === 'termine') {
+            abort_unless(
+                in_array($request->user()->role->name, ['direction', 'comptable']),
+                403,
+                'Chantier terminé — seuls direction et comptable peuvent saisir des régularisations.'
+            );
+        }
+
         $data = $request->validate([
             'reference'          => 'required|string|max:100',
             'category'           => 'required|string|max:100',
@@ -42,10 +50,24 @@ class InvoiceController extends Controller
             'invoice_date'       => 'required|date',
             'due_date'           => 'nullable|date',
             'supplier_id'        => ['nullable', Rule::exists('suppliers', 'id')->where('project_id', $project->id)],
-            'purchase_order_id'  => ['nullable', Rule::exists('purchase_orders', 'id')->where('company_id', $project->company_id)],
+            'purchase_order_id'  => ['nullable', Rule::exists('purchase_orders', 'id')->where('project_id', $project->id)],
             'note'               => 'nullable|string|max:1000',
             'attachment'         => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
         ]);
+
+        if (! empty($data['purchase_order_id'])) {
+            $bdc = \App\Models\PurchaseOrder::find($data['purchase_order_id']);
+            if ($bdc) {
+                $alreadyInvoiced = Invoice::where('purchase_order_id', $bdc->id)
+                    ->whereIn('status', ['soumise', 'validee', 'payee'])
+                    ->sum('amount_ht');
+                abort_if(
+                    $alreadyInvoiced + $data['amount_ht'] > $bdc->total_amount,
+                    422,
+                    'Montant facturé dépasse le montant du BDC (' . number_format($bdc->total_amount, 0, ',', ' ') . ' XOF HT).'
+                );
+            }
+        }
 
         $vatRate   = $data['vat_rate'] ?? 18;
         $vatAmount = round($data['amount_ht'] * $vatRate / 100, 2);
@@ -89,10 +111,29 @@ class InvoiceController extends Controller
             'invoice_date'      => 'sometimes|required|date',
             'due_date'          => 'nullable|date',
             'supplier_id'       => ['nullable', Rule::exists('suppliers', 'id')->where('project_id', $project->id)],
-            'purchase_order_id' => ['nullable', Rule::exists('purchase_orders', 'id')->where('company_id', $project->company_id)],
+            'purchase_order_id' => ['nullable', Rule::exists('purchase_orders', 'id')->where('project_id', $project->id)],
             'note'              => 'nullable|string|max:1000',
             'attachment'        => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
         ]);
+
+        if (isset($data['amount_ht']) || isset($data['purchase_order_id'])) {
+            $bdcId = $data['purchase_order_id'] ?? $invoice->purchase_order_id;
+            if ($bdcId) {
+                $bdc = \App\Models\PurchaseOrder::find($bdcId);
+                if ($bdc) {
+                    $alreadyInvoiced = Invoice::where('purchase_order_id', $bdc->id)
+                        ->where('id', '!=', $invoice->id)
+                        ->whereIn('status', ['soumise', 'validee', 'payee'])
+                        ->sum('amount_ht');
+                    $newAmount = $data['amount_ht'] ?? $invoice->amount_ht;
+                    abort_if(
+                        $alreadyInvoiced + $newAmount > $bdc->total_amount,
+                        422,
+                        'Montant facturé dépasse le montant du BDC (' . number_format($bdc->total_amount, 0, ',', ' ') . ' XOF HT).'
+                    );
+                }
+            }
+        }
 
         // Recalculate TVA if amount_ht or vat_rate changed
         if (isset($data['amount_ht']) || isset($data['vat_rate'])) {
