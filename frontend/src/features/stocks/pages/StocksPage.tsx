@@ -1,6 +1,7 @@
 import SkeletonPage from '../../../components/ui/SkeletonPage';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useAuth } from '../../auth/stores/auth-store';
 import {
   getStockItems, createStockItem, updateStockItem, deleteStockItem,
   getMovements, addMovement,
@@ -18,8 +19,12 @@ const CAT_COLOR: Record<string, string> = {
   consommables: '#10b981', autre: '#94a3b8',
 };
 
+const TERRAIN_ROLES = ['chef-chantier', 'conducteur-travaux'];
+
 export default function StocksPage() {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const isTerrain = TERRAIN_ROLES.includes(user?.role?.name ?? '');
   const [search, setSearch]       = useState('');
   const [catFilter, setCatFilter] = useState('');
   const [itemModal, setItemModal] = useState<Partial<StockItem> | null>(null);
@@ -27,7 +32,7 @@ export default function StocksPage() {
   const [saving, setSaving]       = useState(false);
   const [movModal, setMovModal]   = useState<StockItem | null>(null);
   const [movements, setMovements] = useState<StockMovement[]>([]);
-  const [movForm, setMovForm]     = useState({ type: 'entree' as StockMovement['type'], quantity: 0, reason: '', movement_date: new Date().toISOString().slice(0, 10), notes: '' });
+  const [movForm, setMovForm]     = useState({ type: (isTerrain ? 'sortie' : 'entree') as StockMovement['type'], quantity: 0, reason: '', movement_date: new Date().toISOString().slice(0, 10), notes: '' });
 
   const { data: items = [], isLoading: loading } = useQuery({
     queryKey: ['stock-items'],
@@ -321,9 +326,9 @@ export default function StocksPage() {
                   <div className="form-field">
                     <label className="form-label">Type</label>
                     <select className="form-select" value={movForm.type} onChange={e => setMovForm({ ...movForm, type: e.target.value as StockMovement['type'] })}>
-                      <option value="entree">Entrée (+)</option>
+                      {!isTerrain && <option value="entree">Entrée (+)</option>}
                       <option value="sortie">Sortie (−)</option>
-                      <option value="ajustement">Ajustement</option>
+                      {!isTerrain && <option value="ajustement">Ajustement</option>}
                     </select>
                   </div>
                   <div className="form-field">
@@ -381,7 +386,7 @@ export default function StocksPage() {
         <div className="mr-modal-overlay" onClick={() => setDeleteId(null)}>
           <div className="mr-modal" style={{ maxWidth: 380 }} onClick={e => e.stopPropagation()}>
             <div className="mr-modal__head"><h2 className="mr-modal__title">Supprimer cet article ?</h2><button className="mr-modal__close" aria-label="Fermer" onClick={() => setDeleteId(null)}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
-            <div className="mr-modal__body"><p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>L'historique des mouvements sera également supprimé.</p></div>
+            <div className="mr-modal__body"><p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Cette action est irréversible. La suppression sera bloquée si l'article a des mouvements enregistrés.</p></div>
             <div className="mr-modal__actions">
               <button className="btn btn--secondary" onClick={() => setDeleteId(null)}>Annuler</button>
               <button className="btn btn--danger" onClick={handleDelete}>Supprimer</button>

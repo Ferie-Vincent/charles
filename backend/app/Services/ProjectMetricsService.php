@@ -60,7 +60,7 @@ class ProjectMetricsService
         // --- Budget score (max 25, corrigé — plus de placeholder fixe) ---
         [$budgetScore, $realise, $engage, $previsionnel] = $this->computeBudgetScore($project);
 
-        $ecart = $previsionnel - $engage;
+        $ecart = $previsionnel - $realise - $engage; // budget_ref − réalisé − engagé = disponible
 
         // --- Total ---
         $total = (int) round($planningScore + $regularityScore + $budgetScore + $safetyScore);
@@ -124,11 +124,16 @@ class ProjectMetricsService
             ? $project->invoices
             : $project->invoices()->get();
 
+        $budgetEntries = $project->relationLoaded('budgetEntries')
+            ? $project->budgetEntries
+            : $project->budgetEntries()->get();
+
         // Réalisé = factures payées uniquement (décaissé).
         $realise = (float) $invoices->where('status', 'payee')->sum('amount_ht');
 
-        // Engagé = validées non encore payées (engagement ferme non décaissé).
-        $engage = (float) $invoices->where('status', 'validee')->sum('amount_ht');
+        // Engagé = BDC entries + factures validées (engagement ferme total, source canonique).
+        $engagement = (float) $budgetEntries->where('type', 'engagement')->sum('amount');
+        $engage     = $engagement + (float) $invoices->where('status', 'validee')->sum('amount_ht');
 
         // Pas de référence budgétaire → score neutre.
         if ($budgetRef <= 0) {

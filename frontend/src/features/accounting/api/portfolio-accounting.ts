@@ -110,6 +110,9 @@ export interface AccountingTotals {
   ecart: number;
   taux_realise: number;
   taux_engage: number;
+  realise_chantiers: number;
+  depenses_generales: number;
+  decaissements_total: number;
 }
 
 export interface PortfolioAccounting {

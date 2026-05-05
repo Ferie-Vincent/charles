@@ -6,11 +6,14 @@ use App\Models\BudgetEntry;
 use App\Models\GeneralExpense;
 use App\Models\Invoice;
 use App\Models\Project;
+use App\Services\ProjectFinancialMetricsService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class PortfolioAccountingController extends Controller
 {
+    public function __construct(private ProjectFinancialMetricsService $metricsService) {}
+
     public function index(Request $request): JsonResponse
     {
         abort_unless(
@@ -29,40 +32,22 @@ class PortfolioAccountingController extends Controller
 
 
         $projectData = $projects->map(function (Project $project) {
-            $lastDqe   = $project->dqeVersions->where('status', 'validated')->sortByDesc('version_number')->first();
-            $dqeTotal  = $lastDqe ? (float) $lastDqe->total_ht : 0.0;
-            $budgetRef = $dqeTotal > 0 ? $dqeTotal : (float) $project->budget_amount;
-
-            // BDC engagements (approved BDC without invoice = pré-engagement ferme)
-            $engagement = (float) $project->budgetEntries->where('type', 'engagement')->sum('amount');
-
-            $invoices       = $project->invoices;
-            // réalisé = décaissé = factures payées uniquement (source canonique, évite double-comptage avec paiementBE)
-            $invoicesPayee  = (float) $invoices->where('status', 'payee')->sum('amount_ht');
-            // engagé = factures validées non encore payées (engagement ferme)
-            $invoicesValidee = (float) $invoices->where('status', 'validee')->sum('amount_ht');
-
-            $realise = $invoicesPayee;
-            $engage  = $engagement + $invoicesValidee;
-
-            $rac   = max(0, $budgetRef - $engage - $realise);
-            $cat   = $realise + $engage + $rac;
-            $ecart = $budgetRef - $realise - $engage; // positif = disponible, négatif = dépassement
+            $metrics = $this->metricsService->compute($project);
 
             return [
                 'id'          => $project->id,
                 'name'        => $project->name,
                 'code'        => $project->code,
                 'status'      => $project->status,
-                'budget_ref'  => $budgetRef,
-                'engage'      => $engage,
-                'realise'     => $realise,
-                'rac'         => $rac,
-                'cat'         => $cat,
-                'ecart'       => $ecart,
-                'taux_realise'=> $budgetRef > 0 ? round($realise / $budgetRef * 100, 1) : 0,
-                'taux_engage' => $budgetRef > 0 ? round($engage  / $budgetRef * 100, 1) : 0,
-                'invoices'    => $invoices, // kept for activity feed below
+                'budget_ref'  => $metrics['budget_ref'],
+                'engage'      => $metrics['engage'],
+                'realise'     => $metrics['realise'],
+                'rac'         => $metrics['rac'],
+                'cat'         => $metrics['cat'],
+                'ecart'       => $metrics['ecart'],
+                'taux_realise'=> $metrics['taux_realise'],
+                'taux_engage' => $metrics['taux_engage'],
+                'invoices'    => $project->invoices, // kept for activity feed below
             ];
         });
 
