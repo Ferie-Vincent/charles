@@ -178,7 +178,7 @@ export default function AccountingDashboardPage() {
           </div>
           <div className="proj-kpi__body">
             <div className="proj-kpi__value" style={{ fontSize: 15 }}>{fmt(totals.realise)}</div>
-            <div className="proj-kpi__label">Réalisé · {totals.taux_realise}%</div>
+            <div className="proj-kpi__label">Réalisé chantiers · {totals.taux_realise}%</div>
           </div>
         </div>
 

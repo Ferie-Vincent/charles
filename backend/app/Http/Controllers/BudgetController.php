@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\BudgetEntry;
 use App\Models\Project;
+use App\Services\ProjectFinancialMetricsService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -14,17 +15,22 @@ class BudgetController extends Controller
     {
         $this->authorize('view', $project);
 
-        $entries = $project->budgetEntries()->orderBy('entry_date')->get();
+        $project->load(['budgetEntries', 'invoices', 'dqeVersions']);
+        $entries = $project->budgetEntries->sortBy('entry_date');
 
         $totals = [
             'previsionnel' => $entries->where('type', 'previsionnel')->sum('amount'),
             'engagement'   => $entries->where('type', 'engagement')->sum('amount'),
             'paiement'     => $entries->where('type', 'paiement')->sum('amount'),
         ];
-        $totals['solde'] = $totals['previsionnel'] - $totals['paiement'];
         $totals['taux_engagement'] = $totals['previsionnel'] > 0
             ? round(($totals['engagement'] / $totals['previsionnel']) * 100, 1)
             : 0;
+
+        // Source canonique : mêmes métriques que ProjectAccountingController
+        $canonical            = app(ProjectFinancialMetricsService::class)->compute($project);
+        $totals['realise']    = $canonical['realise'];     // factures payées uniquement
+        $totals['solde']      = $canonical['budget_ref'] - $canonical['realise'] - $canonical['engage'];
 
         // 90-day monthly buckets from today
         $buckets = $this->build90jBuckets($entries);

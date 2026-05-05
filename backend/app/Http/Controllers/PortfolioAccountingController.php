@@ -76,8 +76,9 @@ class PortfolioAccountingController extends Controller
             'ecart'       => $projectData->sum('ecart'),
         ];
         $bRef = $totals['budget_ref'];
-        $totals['taux_realise'] = $bRef > 0 ? round($totals['realise'] / $bRef * 100, 1) : 0;
-        $totals['taux_engage']  = $bRef > 0 ? round($totals['engage']  / $bRef * 100, 1) : 0;
+        $totals['taux_realise']       = $bRef > 0 ? round($totals['realise'] / $bRef * 100, 1) : 0;
+        $totals['taux_engage']        = $bRef > 0 ? round($totals['engage']  / $bRef * 100, 1) : 0;
+        $totals['realise_chantiers']  = $totals['realise']; // alias explicite — périmètre chantiers uniquement
 
         // General expenses (hors projet) — seules les approuvées intègrent les totaux de décaissement
         $expenses = GeneralExpense::where('company_id', $companyId)

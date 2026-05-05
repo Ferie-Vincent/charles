@@ -41,8 +41,6 @@ export default function ProjectForm({ onSubmit, isLoading }: ProjectFormProps) {
           <select id="status" value={status} onChange={(e) => setStatus(e.target.value)}>
             <option value="draft">Brouillon</option>
             <option value="active">Actif</option>
-            <option value="completed">Terminé</option>
-            <option value="archived">Archivé</option>
           </select>
         </div>
       </div>

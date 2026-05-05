@@ -61,11 +61,21 @@ class ProjectIncidentController extends Controller
 
         $this->authorize('update', $incident);
 
+        $targetStatus = $request->input('status', $incident->status);
+
         $data = $request->validate([
             'status'            => 'sometimes|in:ouvert,en_cours,resolu,ferme',
             'corrective_action' => 'sometimes|nullable|string|max:2000',
-            'resolved_at'       => 'sometimes|nullable|date',
+            'resolved_at'       => [
+                'sometimes',
+                $targetStatus === 'resolu' ? 'required' : 'nullable',
+                'date',
+            ],
         ]);
+
+        if ($targetStatus === 'resolu' && empty($data['resolved_at'])) {
+            abort(422, 'La date de résolution est obligatoire pour passer un incident en résolu.');
+        }
 
         $incident->update($data);
 

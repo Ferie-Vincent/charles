@@ -49,7 +49,7 @@ class InvoiceController extends Controller
             'status'             => 'required|in:brouillon,soumise',
             'invoice_date'       => 'required|date',
             'due_date'           => 'nullable|date',
-            'supplier_id'        => ['nullable', Rule::exists('suppliers', 'id')->where('project_id', $project->id)],
+            'supplier_id'        => ['nullable', Rule::exists('suppliers', 'id')->where('company_id', $request->user()->company_id)],
             'purchase_order_id'  => ['nullable', Rule::exists('purchase_orders', 'id')->where('project_id', $project->id)],
             'note'               => 'nullable|string|max:1000',
             'attachment'         => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
