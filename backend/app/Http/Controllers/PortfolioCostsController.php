@@ -26,19 +26,19 @@ class PortfolioCostsController extends Controller
             ->get();
 
         $projectData = $projects->map(function (Project $project) {
-            $dqeTotal     = (float) $project->dqeVersions->where('status', 'validated')->sum('total_ht');
+            $lastDqe      = $project->dqeVersions->where('status', 'validated')->sortByDesc('version_number')->first();
+            $dqeTotal     = $lastDqe ? (float) $lastDqe->total_ht : 0.0;
             $budgetRef    = $dqeTotal > 0 ? $dqeTotal : (float) $project->budget_amount;
 
             $engagement   = (float) $project->budgetEntries->where('type', 'engagement')->sum('amount');
-            $paiementBE   = (float) $project->budgetEntries->where('type', 'paiement')->sum('amount');
 
             $invoices     = $project->invoices;
-            $realise      = max($paiementBE, (float) $invoices->where('status', 'payee')->sum('amount_ht'));
-            $engage       = max($engagement, (float) $invoices->where('status', 'soumise')->sum('amount_ht'));
+            $realise      = (float) $invoices->where('status', 'payee')->sum('amount_ht');
+            $engage       = $engagement + (float) $invoices->where('status', 'validee')->sum('amount_ht');
 
             $rac          = max(0, $budgetRef - $engage - $realise);
             $cat          = $realise + $engage + $rac;
-            $ecart        = $budgetRef - $realise; // positif = reste à dépenser, négatif = dépassement
+            $ecart        = $budgetRef - $realise - $engage;
 
             $tauxRealise  = $budgetRef > 0 ? round($realise / $budgetRef * 100, 1) : 0;
             $tauxEngage   = $budgetRef > 0 ? round($engage / $budgetRef * 100, 1) : 0;
@@ -65,7 +65,7 @@ class PortfolioCostsController extends Controller
                 'previsionnel'   => (float) $project->budgetEntries->where('type', 'previsionnel')->sum('amount'),
                 'engagement'     => $engage,
                 'paiement'       => $realise,
-                'solde'          => $budgetRef - $realise,
+                'solde'          => $budgetRef - $realise - $engage,
                 'taux_engagement'=> $tauxEngage,
                 'taux_paiement'  => $tauxRealise,
             ];

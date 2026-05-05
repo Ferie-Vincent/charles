@@ -68,7 +68,7 @@ class PortfolioAnalysisController extends Controller
             $logCount    = $p->dailyLogs->count();
             $openIncidents = $p->incidents->where('status', 'ouvert')->count();
             $budgetTotal = $p->budgetEntries->sum('amount');
-            $dqeTotal    = $p->dqeVersions->where('status', 'validated')->sum('total_ht');
+            $dqeTotal    = (float) ($p->dqeVersions->where('status', 'validated')->sortByDesc('version_number')->first()?->total_ht ?? 0);
             $budgetRatio = $dqeTotal > 0 ? round($budgetTotal / $dqeTotal * 100, 1) : 0;
 
             $regularity  = $daysElapsed > 0
