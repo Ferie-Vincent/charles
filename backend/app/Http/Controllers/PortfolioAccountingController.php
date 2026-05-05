@@ -79,8 +79,9 @@ class PortfolioAccountingController extends Controller
         $totals['taux_realise'] = $bRef > 0 ? round($totals['realise'] / $bRef * 100, 1) : 0;
         $totals['taux_engage']  = $bRef > 0 ? round($totals['engage']  / $bRef * 100, 1) : 0;
 
-        // General expenses (hors projet)
+        // General expenses (hors projet) — seules les approuvées intègrent les totaux de décaissement
         $expenses = GeneralExpense::where('company_id', $companyId)
+            ->where('status', 'approuvee')
             ->with('creator:id,name', 'approver:id,name')
             ->orderByDesc('expense_date')
             ->get();

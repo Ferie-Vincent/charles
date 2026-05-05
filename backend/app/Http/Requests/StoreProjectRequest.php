@@ -17,7 +17,7 @@ class StoreProjectRequest extends FormRequest
         return [
             'code' => ['required', 'string', 'max:255'],
             'name' => ['required', 'string', 'max:255'],
-            'status' => ['required', Rule::in(['draft', 'active', 'completed', 'archived'])],
+            'status' => ['required', Rule::in(['draft', 'active'])],
             'location' => ['nullable', 'string', 'max:255'],
             'budget_amount' => ['nullable', 'numeric', 'min:0'],
             'start_date' => ['nullable', 'date'],

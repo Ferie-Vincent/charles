@@ -67,6 +67,14 @@ class ProjectController extends Controller
 
         abort_if(empty($data), 403, 'Aucun champ modifiable pour ce rôle.');
 
+        if (isset($data['status']) && in_array($data['status'], ['completed', 'archived'], true)) {
+            abort_unless(
+                in_array($role, Roles::MANAGEMENT),
+                403,
+                'Les statuts "completed" et "archived" sont réservés à la direction et au directeur technique.'
+            );
+        }
+
         if (($data['status'] ?? null) === 'completed' && $project->status !== 'completed') {
             abort_unless(
                 in_array($role, Roles::MANAGEMENT),

@@ -106,11 +106,15 @@ class ProjectIncidentController extends Controller
             'assigned_by'  => $incident->reported_by,
             'title'        => "Action corrective – Incident {$incident->severity} #{$incident->id} – {$project->name}",
             'detail'       => "Description : {$incident->description}\nType : {$incident->type}\nLieu : " . ($incident->location ?? 'N/A'),
-            'priority'     => $incident->severity === 'critique' ? 'haute' : 'normale',
+            'priority'     => match($incident->severity) {
+                'critique' => 'urgent',
+                'majeur'   => 'high',
+                default    => 'normal',
+            },
             'role_target'  => 'directeur-technique',
             'project_code' => $project->code,
-            'status'       => 'a_faire',
-            'source'       => 'auto',
+            'status'       => 'todo',
+            'source'       => 'ai',
             'due_date'     => now()->addDays($dueDays)->toDateString(),
         ]);
     }
