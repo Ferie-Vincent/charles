@@ -243,12 +243,17 @@ class DemandeBesoinController extends Controller
                 'note'        => "Demande de besoin #" . $locked->id . ($locked->notes ? ' — ' . $locked->notes : ''),
             ]);
 
+            if ($locked->preengagement_entry_id) {
+                BudgetEntry::find($locked->preengagement_entry_id)?->delete();
+            }
+
             $locked->update([
-                'status'          => 'comptabilise',
-                'actual_cost'     => $actualCost,
-                'recorded_by'     => $user->id,
-                'recorded_at'     => now(),
-                'budget_entry_id' => $entry->id,
+                'status'                 => 'comptabilise',
+                'actual_cost'            => $actualCost,
+                'recorded_by'            => $user->id,
+                'recorded_at'            => now(),
+                'budget_entry_id'        => $entry->id,
+                'preengagement_entry_id' => null,
             ]);
 
             return ['demande' => $locked, 'entry' => $entry];

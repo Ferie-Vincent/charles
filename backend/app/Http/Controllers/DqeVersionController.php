@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\DqeValidated;
 use App\Models\DqeLine;
 use App\Models\DqeVersion;
 use App\Models\Project;
@@ -252,6 +253,10 @@ class DqeVersionController extends Controller
         }
 
         $dqeVersion->update($fields);
+
+        if ($to === 'validated') {
+            event(new DqeValidated($dqeVersion, $user));
+        }
 
         return response()->json($dqeVersion);
     }
