@@ -78,7 +78,7 @@ class ProjectController extends Controller
             abort_if($openIncidents > 0, 422, "Impossible de clôturer : {$openIncidents} incident(s) non résolu(s).");
 
             $bdcOpen = \App\Models\PurchaseOrder::where('project_id', $project->id)
-                ->whereIn('status', ['pending', 'approved'])
+                ->whereIn('status', ['soumis', 'approuve'])
                 ->count();
             abort_if($bdcOpen > 0, 422, "Impossible de clôturer : {$bdcOpen} BDC en attente ou non reçu(s).");
 
