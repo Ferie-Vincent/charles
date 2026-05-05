@@ -129,10 +129,12 @@ class PortfolioOperationsController extends Controller
         $realise      = 0.0;
 
         foreach ($projects as $project) {
-            $dqeTotal     = (float) $project->dqeVersions->where('status', 'validated')->sum('total_ht');
+            $lastDqe   = $project->dqeVersions->where('status', 'validated')->sortByDesc('version_number')->first();
+            $dqeTotal  = $lastDqe ? (float) $lastDqe->total_ht : 0.0;
             $budgetRef    = $dqeTotal > 0 ? $dqeTotal : (float) $project->budget_amount;
             $previsionnel += $budgetRef;
-            $engage       += (float) $project->budgetEntries->where('type', 'engagement')->sum('amount');
+            $engage       += (float) $project->budgetEntries->where('type', 'engagement')->sum('amount')
+                           + (float) $project->invoices->where('status', 'validee')->sum('amount_ht');
             $realise      += (float) $project->invoices->where('status', 'payee')->sum('amount_ht');
         }
 

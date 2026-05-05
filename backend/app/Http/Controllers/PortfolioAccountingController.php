@@ -29,7 +29,8 @@ class PortfolioAccountingController extends Controller
 
 
         $projectData = $projects->map(function (Project $project) {
-            $dqeTotal  = (float) $project->dqeVersions->where('status', 'validated')->sum('total_ht');
+            $lastDqe   = $project->dqeVersions->where('status', 'validated')->sortByDesc('version_number')->first();
+            $dqeTotal  = $lastDqe ? (float) $lastDqe->total_ht : 0.0;
             $budgetRef = $dqeTotal > 0 ? $dqeTotal : (float) $project->budget_amount;
 
             // BDC engagements (approved BDC without invoice = pré-engagement ferme)

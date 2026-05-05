@@ -127,8 +127,8 @@ class ProjectMetricsService
         // Réalisé = factures payées uniquement (décaissé).
         $realise = (float) $invoices->where('status', 'payee')->sum('amount_ht');
 
-        // Engagé = validées + payées (engagements fermes, décaissés ou non).
-        $engage = (float) $invoices->whereIn('status', ['validee', 'payee'])->sum('amount_ht');
+        // Engagé = validées non encore payées (engagement ferme non décaissé).
+        $engage = (float) $invoices->where('status', 'validee')->sum('amount_ht');
 
         // Pas de référence budgétaire → score neutre.
         if ($budgetRef <= 0) {
