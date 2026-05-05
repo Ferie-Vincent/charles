@@ -310,8 +310,9 @@ it('directeur-technique can reject submitted dqe', function () {
 
 // ── Transitions : archivage ───────────────────────────────────
 
-it('direction can archive a validated dqe', function () {
+it('direction can archive a validated dqe when another validated version exists', function () {
     $v = dqeVersion($this->project, $this->dg, 'validated');
+    dqeVersion($this->project, $this->dg, 'validated'); // replacement version
 
     $this->actingAs($this->dg)
         ->patchJson("/api/projects/{$this->project->id}/dqe-versions/{$v->id}/transition", ['status' => 'archived'])
@@ -319,8 +320,17 @@ it('direction can archive a validated dqe', function () {
         ->assertJsonFragment(['status' => 'archived']);
 });
 
-it('directeur-technique can archive a validated dqe', function () {
+it('cannot archive the only validated dqe', function () {
     $v = dqeVersion($this->project, $this->dg, 'validated');
+
+    $this->actingAs($this->dg)
+        ->patchJson("/api/projects/{$this->project->id}/dqe-versions/{$v->id}/transition", ['status' => 'archived'])
+        ->assertUnprocessable();
+});
+
+it('directeur-technique can archive a validated dqe when another validated version exists', function () {
+    $v = dqeVersion($this->project, $this->dg, 'validated');
+    dqeVersion($this->project, $this->dg, 'validated'); // replacement version
 
     $this->actingAs($this->dt)
         ->patchJson("/api/projects/{$this->project->id}/dqe-versions/{$v->id}/transition", ['status' => 'archived'])

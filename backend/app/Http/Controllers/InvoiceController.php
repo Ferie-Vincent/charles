@@ -98,7 +98,8 @@ class InvoiceController extends Controller
     {
         $this->authorize('manageFinances', $project);
         abort_if($invoice->project_id !== $project->id, 404);
-        abort_if($invoice->status === 'payee', 422, 'Une facture payée ne peut pas être modifiée.');
+        abort_if($invoice->status === 'validee',  422, 'Une facture validée est verrouillée. Passez-la en litige pour corriger.');
+        abort_if($invoice->status === 'payee',    422, 'Une facture payée ne peut pas être modifiée.');
         abort_if($invoice->status === 'disputee', 422, 'Une facture en litige ne peut pas être modifiée directement. Utilisez la transition.');
 
         $data = $request->validate([
@@ -166,7 +167,8 @@ class InvoiceController extends Controller
     {
         $this->authorize('manageFinances', $project);
         abort_if($invoice->project_id !== $project->id, 404);
-        abort_if($invoice->status === 'payee', 422, 'Une facture payée ne peut pas être supprimée.');
+        abort_if($invoice->status === 'validee',  422, 'Une facture validée ne peut pas être supprimée. Passez-la en litige d\'abord.');
+        abort_if($invoice->status === 'payee',    422, 'Une facture payée ne peut pas être supprimée.');
         abort_if($invoice->status === 'disputee', 422, 'Résolvez le litige avant de supprimer cette facture.');
 
         if ($invoice->attachment_path) {

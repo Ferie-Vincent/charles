@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Events\DqeValidated;
+use App\Events\InvoiceDisputee;
 use App\Events\InvoiceValidated;
 use App\Models\DqeVersion;
 use App\Models\Invoice;
@@ -82,6 +83,10 @@ class WorkflowService
 
         if ($to === 'validee') {
             event(new InvoiceValidated($invoice, $by));
+        }
+
+        if ($to === 'disputee') {
+            event(new InvoiceDisputee($invoice, $by, $from));
         }
     }
 
