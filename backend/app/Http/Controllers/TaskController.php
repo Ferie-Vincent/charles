@@ -50,7 +50,7 @@ class TaskController extends Controller
         abort_if($task->company_id !== $request->user()->company_id, 403);
 
         $data = $request->validate([
-            'status'      => 'sometimes|in:todo,in_progress,done',
+            'status'      => 'sometimes|in:todo,in_progress,blocked,done,cancelled',
             'assigned_to' => 'sometimes|nullable|exists:users,id',
             'due_date'    => 'sometimes|nullable|date',
         ]);
