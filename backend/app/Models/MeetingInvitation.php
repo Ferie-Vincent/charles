@@ -17,6 +17,8 @@ class MeetingInvitation extends Model
         'scheduled_at',
         'location',
         'notes',
+        'alert_type',
+        'alert_message',
     ];
 
     protected $casts = [

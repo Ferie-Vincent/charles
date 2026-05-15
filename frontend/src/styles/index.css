@@ -9168,3 +9168,61 @@ code {
   .tc-backdrop { align-items: flex-end; padding: 0; }
   .tc-row { flex-direction: column; }
 }
+
+/* ── Snooze dropdown (AlertsPanel) ────────────────────────────────────────── */
+.ap-snooze-wrap { position: relative; }
+.ap-snooze-menu {
+  position: absolute; right: 0; top: calc(100% + 4px); z-index: 200;
+  background: #fff; border: 1.5px solid #e2e8f0; border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  min-width: 160px; overflow: hidden;
+  animation: tc-fade-in 0.12s ease;
+}
+.ap-snooze-menu__label {
+  display: block; padding: 8px 12px 4px;
+  font-size: 11px; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: .04em;
+}
+.ap-snooze-menu__item {
+  display: block; width: 100%; padding: 8px 12px; text-align: left;
+  font-size: 13px; color: #374151; background: none; border: none; cursor: pointer;
+  transition: background 0.1s;
+}
+.ap-snooze-menu__item:hover { background: #f8fafc; }
+.ap-snooze-menu__item--permanent { color: #ef4444; }
+.ap-snooze-menu__item--permanent:hover { background: #fef2f2; }
+
+/* ── TakeCharge Modal extras ───────────────────────────────────────────────── */
+.tc-warn {
+  background: #fef3c7; border: 1.5px solid #fbbf24; border-radius: 8px;
+  padding: 8px 12px; font-size: 12.5px; color: #92400e;
+}
+.tc-member--no-contact { opacity: 0.75; }
+.tc-member__contact { font-size: 14px; flex-shrink: 0; }
+.tc-member__no-contact { color: #f59e0b; }
+
+/* ── RSVP inline dans notification bell ────────────────────────────────────── */
+.topbar-rsvp {
+  display: flex; gap: 6px; margin-top: 6px;
+}
+.topbar-rsvp__btn {
+  padding: 3px 10px; border-radius: 6px; font-size: 11.5px; font-weight: 600;
+  border: 1.5px solid; cursor: pointer; transition: all 0.12s;
+}
+.topbar-rsvp__btn--accept {
+  color: #166534; border-color: #86efac; background: #f0fdf4;
+}
+.topbar-rsvp__btn--accept:hover { background: #dcfce7; }
+.topbar-rsvp__btn--decline {
+  color: #991b1b; border-color: #fca5a5; background: #fef2f2;
+}
+.topbar-rsvp__btn--decline:hover { background: #fee2e2; }
+
+/* Kanban RSVP mini-indicator */
+.kb-rsvp { display: flex; gap: 3px; align-items: center; }
+.kb-rsvp__pill {
+  font-size: 10px; font-weight: 700; padding: 1px 5px;
+  border-radius: 10px; line-height: 1.4;
+}
+.kb-rsvp__pill--yes     { background: #dcfce7; color: #166534; }
+.kb-rsvp__pill--no      { background: #fee2e2; color: #991b1b; }
+.kb-rsvp__pill--pending { background: #f1f5f9; color: #475569; }

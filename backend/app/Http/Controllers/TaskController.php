@@ -12,10 +12,13 @@ class TaskController extends Controller
     public function index(Request $request): JsonResponse
     {
         $tasks = Task::where('company_id', $request->user()->company_id)
-            ->with('assignee:id,name', 'creator:id,name')
+            ->with('assignee:id,name', 'creator:id,name', 'meeting:id,task_id')
             ->orderByRaw("FIELD(priority,'urgent','high','normal')")
             ->orderByDesc('created_at')
-            ->get();
+            ->get()
+            ->map(fn($t) => array_merge($t->toArray(), [
+                'meeting_id' => $t->meeting?->id,
+            ]));
 
         return response()->json($tasks);
     }

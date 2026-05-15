@@ -210,30 +210,36 @@ class DashboardController extends Controller
 
     public function dismissAlert(Request $request): JsonResponse
     {
-        $alertKey = $request->string('alert_key')->toString();
-        if (! $alertKey) {
-            return response()->json(['error' => 'alert_key required'], 422);
-        }
+        $data = $request->validate([
+            'alert_key'      => 'required|string|max:100',
+            // 0 = permanent, 24/72/168 = hours; default 24
+            'duration_hours' => 'nullable|integer|in:0,24,72,168',
+        ]);
+
+        $alertKey      = $data['alert_key'];
+        $durationHours = $data['duration_hours'] ?? 24;
+        // reappears_at = NULL means permanent suppression
+        $reappearsAt   = $durationHours === 0 ? null : now()->addHours($durationHours);
 
         DB::table('dismissed_alerts')->upsert(
             [
                 'user_id'      => $request->user()->id,
                 'alert_key'    => $alertKey,
                 'dismissed_at' => now(),
-                'reappears_at' => now()->addHours(24),
+                'reappears_at' => $reappearsAt,
             ],
             ['user_id', 'alert_key'],
             ['dismissed_at', 'reappears_at']
         );
 
-        return response()->json(['dismissed' => $alertKey]);
+        return response()->json(['dismissed' => $alertKey, 'duration_hours' => $durationHours]);
     }
 
     private function loadDismissedKeys(int $userId): array
     {
         return DB::table('dismissed_alerts')
             ->where('user_id', $userId)
-            ->where('reappears_at', '>', now())
+            ->where(fn($q) => $q->whereNull('reappears_at')->orWhere('reappears_at', '>', now()))
             ->pluck('alert_key')
             ->all();
     }

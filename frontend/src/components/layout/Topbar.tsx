@@ -5,7 +5,7 @@ import { logout } from '../../features/auth/api/login';
 import { useAuth } from '../../features/auth/stores/auth-store';
 import { getRoleGroup } from '../../lib/roles';
 import { api } from '../../lib/api';
-import { getUserNotifications, markNotificationRead, markAllNotificationsRead } from '../../features/meetings/api/meetings-api';
+import { getUserNotifications, markNotificationRead, markAllNotificationsRead, respondToMeeting } from '../../features/meetings/api/meetings-api';
 import type { UserNotification } from '../../features/meetings/api/meetings-api';
 
 const DISMISSED_KEY = 'topbar_dismissed_notifs';
@@ -239,25 +239,46 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
                       const when = d.scheduled_at
                         ? new Date(d.scheduled_at).toLocaleString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
                         : '';
+                      const contextLine = d.alert_message
+                        ? d.alert_message
+                        : d.project_name;
                       return (
-                        <button
+                        <div
                           key={notif.id}
-                          type="button"
                           className="topbar-notif-item topbar-notif-item--meeting"
-                          onClick={async () => {
-                            await markNotificationRead(notif.id);
-                            queryClient.invalidateQueries({ queryKey: ['user-notifications'] });
-                            setNotifOpen(false);
-                          }}
                         >
                           <span className="topbar-notif-item__dot topbar-notif-item__dot--meeting" />
                           <div className="topbar-notif-item__body">
                             <div className="topbar-notif-item__title">📅 {d.title}</div>
                             <div className="topbar-notif-item__sub">
-                              {d.project_name} · {when}{d.organizer_name ? ` · ${d.organizer_name}` : ''}
+                              {contextLine} · {when}
+                              {d.organizer_name ? ` · ${d.organizer_name}` : ''}
                             </div>
+                            {/* RSVP inline */}
+                            {d.meeting_id && (
+                              <div className="topbar-rsvp">
+                                <button
+                                  type="button"
+                                  className="topbar-rsvp__btn topbar-rsvp__btn--accept"
+                                  onClick={async () => {
+                                    await respondToMeeting(d.meeting_id, 'accepted');
+                                    await markNotificationRead(notif.id);
+                                    queryClient.invalidateQueries({ queryKey: ['user-notifications'] });
+                                  }}
+                                >✓ Confirmer</button>
+                                <button
+                                  type="button"
+                                  className="topbar-rsvp__btn topbar-rsvp__btn--decline"
+                                  onClick={async () => {
+                                    await respondToMeeting(d.meeting_id, 'declined');
+                                    await markNotificationRead(notif.id);
+                                    queryClient.invalidateQueries({ queryKey: ['user-notifications'] });
+                                  }}
+                                >✗ Décliner</button>
+                              </div>
+                            )}
                           </div>
-                        </button>
+                        </div>
                       );
                     })}
 

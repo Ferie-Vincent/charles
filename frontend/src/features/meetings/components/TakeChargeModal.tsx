@@ -19,21 +19,25 @@ type Props = {
 };
 
 const MEETING_TITLE_BY_TYPE: Record<string, string> = {
-  overdue:          'Réunion rattrapage planning',
-  no_journal:       'Point chantier — journaux manquants',
-  planning_lag:     'Réunion rattrapage retard',
-  open_incident:    'Réunion sécurité — incidents ouverts',
-  health_critical:  'Réunion urgence — santé critique',
+  overdue:         'Réunion rattrapage planning',
+  no_journal:      'Point chantier — journaux manquants',
+  planning_lag:    'Réunion rattrapage retard',
+  open_incident:   'Réunion sécurité — incidents ouverts',
+  health_critical: 'Réunion urgence — santé critique',
 };
+
+function hasContact(m: ProjectMember): boolean {
+  return !!(m.email || m.phone);
+}
 
 export default function TakeChargeModal({ alert, onClose, onSuccess }: Props) {
   const queryClient = useQueryClient();
-  const [title, setTitle]       = useState(MEETING_TITLE_BY_TYPE[alert.type] ?? 'Réunion chantier');
+  const [title, setTitle]           = useState(MEETING_TITLE_BY_TYPE[alert.type] ?? 'Réunion chantier');
   const [scheduledAt, setScheduledAt] = useState(suggestMeetingDateTime());
-  const [location, setLocation] = useState('');
-  const [notes, setNotes]       = useState('');
-  const [selected, setSelected] = useState<Set<number>>(new Set());
-  const [done, setDone]         = useState(false);
+  const [location, setLocation]     = useState('');
+  const [notes, setNotes]           = useState('');
+  const [selected, setSelected]     = useState<Set<number>>(new Set());
+  const [done, setDone]             = useState(false);
 
   const { data: members = [], isLoading: loadingMembers } = useQuery({
     queryKey: ['project-members', alert.project_id],
@@ -42,10 +46,11 @@ export default function TakeChargeModal({ alert, onClose, onSuccess }: Props) {
     staleTime: 60_000,
   });
 
-  // Auto-select all members on load
   useEffect(() => {
     if (members.length > 0) setSelected(new Set(members.map((m: ProjectMember) => m.id)));
   }, [members]);
+
+  const noContactCount = members.filter((m: ProjectMember) => selected.has(m.id) && !hasContact(m)).length;
 
   const mutation = useMutation({
     mutationFn: () => createMeeting({
@@ -53,8 +58,9 @@ export default function TakeChargeModal({ alert, onClose, onSuccess }: Props) {
       title,
       scheduled_at: new Date(scheduledAt).toISOString(),
       location: location || undefined,
-      notes: notes || `Alerte: ${alert.message}`,
+      notes: notes || undefined,
       invitee_ids: [...selected],
+      alert_key: alert.id,
       alert_type: alert.type,
       alert_detail: alert.message,
     }),
@@ -85,7 +91,6 @@ export default function TakeChargeModal({ alert, onClose, onSuccess }: Props) {
     <div className="tc-backdrop" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="tc-modal" role="dialog" aria-modal="true">
 
-        {/* Header */}
         <div className="tc-modal__header">
           <div>
             <span className="tc-modal__badge">📋 {alert.project_code}</span>
@@ -94,7 +99,6 @@ export default function TakeChargeModal({ alert, onClose, onSuccess }: Props) {
           <button className="tc-modal__close" onClick={onClose} aria-label="Fermer">×</button>
         </div>
 
-        {/* Alert context */}
         <div className="tc-modal__alert-ctx">
           <span className={`tc-modal__sev tc-modal__sev--${alert.severity}`}>
             {alert.severity === 'critical' ? '🚨' : '⚠️'} {alert.message}
@@ -102,7 +106,6 @@ export default function TakeChargeModal({ alert, onClose, onSuccess }: Props) {
         </div>
 
         <div className="tc-modal__body">
-          {/* Meeting title */}
           <label className="tc-label">Objet de la réunion</label>
           <input
             className="tc-input"
@@ -112,7 +115,6 @@ export default function TakeChargeModal({ alert, onClose, onSuccess }: Props) {
             placeholder="Titre de la réunion"
           />
 
-          {/* Date/time */}
           <div className="tc-row">
             <div className="tc-field">
               <label className="tc-label">Date et heure</label>
@@ -123,9 +125,7 @@ export default function TakeChargeModal({ alert, onClose, onSuccess }: Props) {
                 min={new Date().toISOString().slice(0, 16)}
                 onChange={e => setScheduledAt(e.target.value)}
               />
-              {scheduledAt && (
-                <span className="tc-hint">📅 {fmtScheduled()}</span>
-              )}
+              {scheduledAt && <span className="tc-hint">📅 {fmtScheduled()}</span>}
             </div>
             <div className="tc-field">
               <label className="tc-label">Lieu (optionnel)</label>
@@ -139,7 +139,6 @@ export default function TakeChargeModal({ alert, onClose, onSuccess }: Props) {
             </div>
           </div>
 
-          {/* Notes */}
           <label className="tc-label">Notes (optionnel)</label>
           <textarea
             className="tc-input tc-textarea"
@@ -150,13 +149,19 @@ export default function TakeChargeModal({ alert, onClose, onSuccess }: Props) {
             maxLength={1000}
           />
 
-          {/* Members */}
           <label className="tc-label">
             Personnes à inviter
             <span className="tc-label__sub">
               {selected.size}/{members.length} sélectionné{selected.size > 1 ? 's' : ''}
             </span>
           </label>
+
+          {/* Warning : membres sans contact */}
+          {noContactCount > 0 && (
+            <div className="tc-warn">
+              ⚠️ {noContactCount} personne{noContactCount > 1 ? 's' : ''} sélectionnée{noContactCount > 1 ? 's' : ''} sans email ni téléphone — l'invitation ne leur parviendra pas.
+            </div>
+          )}
 
           {loadingMembers ? (
             <div className="tc-members-loading">Chargement des membres…</div>
@@ -167,30 +172,39 @@ export default function TakeChargeModal({ alert, onClose, onSuccess }: Props) {
             </div>
           ) : (
             <div className="tc-members">
-              {members.map((m: ProjectMember) => (
-                <label key={m.id} className={`tc-member${selected.has(m.id) ? ' tc-member--checked' : ''}`}>
-                  <input
-                    type="checkbox"
-                    checked={selected.has(m.id)}
-                    onChange={() => toggleMember(m.id)}
-                    className="tc-member__check"
-                  />
-                  <span className="tc-member__avatar" style={{ background: avatarColor(m.name) }}>
-                    {initials(m.name)}
-                  </span>
-                  <span className="tc-member__info">
-                    <span className="tc-member__name">{m.name}</span>
-                    {m.role && <span className="tc-member__role">{m.role}</span>}
-                  </span>
-                  <span className="tc-member__email">{m.email}</span>
-                  {selected.has(m.id) && <span className="tc-member__tick">✓</span>}
-                </label>
-              ))}
+              {members.map((m: ProjectMember) => {
+                const contact = hasContact(m);
+                return (
+                  <label key={m.id} className={`tc-member${selected.has(m.id) ? ' tc-member--checked' : ''}${!contact ? ' tc-member--no-contact' : ''}`}>
+                    <input
+                      type="checkbox"
+                      checked={selected.has(m.id)}
+                      onChange={() => toggleMember(m.id)}
+                      className="tc-member__check"
+                    />
+                    <span className="tc-member__avatar" style={{ background: avatarColor(m.name) }}>
+                      {initials(m.name)}
+                    </span>
+                    <span className="tc-member__info">
+                      <span className="tc-member__name">{m.name}</span>
+                      {m.role && <span className="tc-member__role">{m.role}</span>}
+                    </span>
+                    <span className="tc-member__contact">
+                      {m.phone
+                        ? <span title="WhatsApp disponible">📱</span>
+                        : m.email
+                          ? <span title={m.email}>✉️</span>
+                          : <span className="tc-member__no-contact" title="Aucun moyen de contact">⚠️</span>
+                      }
+                    </span>
+                    {selected.has(m.id) && <span className="tc-member__tick">✓</span>}
+                  </label>
+                );
+              })}
             </div>
           )}
         </div>
 
-        {/* Footer */}
         <div className="tc-modal__footer">
           <button className="tc-btn tc-btn--ghost" onClick={onClose} disabled={mutation.isPending || done}>
             Annuler
@@ -204,7 +218,7 @@ export default function TakeChargeModal({ alert, onClose, onSuccess }: Props) {
               ? '✓ Invitations envoyées !'
               : mutation.isPending
                 ? 'Envoi en cours…'
-                : `Valider & inviter ${selected.size > 0 ? `(${selected.size})` : ''}`}
+                : `Valider & Inviter ${selected.size > 0 ? `(${selected.size})` : ''}`}
           </button>
         </div>
 

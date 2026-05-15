@@ -1,7 +1,7 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
-import { api } from '../../../lib/api';
+import { dismissAlert } from '../../meetings/api/meetings-api';
 import TakeChargeModal from '../../meetings/components/TakeChargeModal';
 import type { ProjectAlert } from '../api/get-dashboard';
 
@@ -21,40 +21,46 @@ const ACTION_LABEL: Record<ProjectAlert['type'], string> = {
   health_critical:'Définir un plan correctif',
 };
 
+const SNOOZE_OPTIONS: { label: string; hours: 0 | 24 | 72 | 168 }[] = [
+  { label: '24 heures',     hours: 24 },
+  { label: '3 jours',       hours: 72 },
+  { label: '1 semaine',     hours: 168 },
+  { label: 'Ne plus afficher', hours: 0 },
+];
+
 const VISIBLE_LIMIT = 6;
 
 type Props = { alerts: ProjectAlert[] };
 
 export default function AlertsPanel({ alerts }: Props) {
-  const queryClient                       = useQueryClient();
-  const [optimisticDismissed, setOpt]     = useState<Set<string>>(new Set());
-  const [taken, setTaken]                 = useState<Set<string>>(new Set());
-  const [expanded, setExpanded]           = useState(false);
-  const [modalAlert, setModalAlert]       = useState<ProjectAlert | null>(null);
+  const queryClient                     = useQueryClient();
+  const [optimisticDismissed, setOpt]   = useState<Set<string>>(new Set());
+  const [taken, setTaken]               = useState<Set<string>>(new Set());
+  const [expanded, setExpanded]         = useState(false);
+  const [modalAlert, setModalAlert]     = useState<ProjectAlert | null>(null);
+  const [snoozeOpen, setSnoozeOpen]     = useState<string | null>(null);
+  const snoozeRef                       = useRef<HTMLDivElement>(null);
 
-  const dismiss = useCallback(async (id: string) => {
+  const dismiss = useCallback(async (id: string, hours: 0 | 24 | 72 | 168 = 24) => {
     setOpt(prev => new Set([...prev, id]));
+    setSnoozeOpen(null);
     try {
-      await api.post('/dashboard/alerts/dismiss', { alert_key: id });
+      await dismissAlert(id, hours);
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-    } catch {
-      // Optimistic dismiss stands; backend re-shows after 24h
-    }
+    } catch { /* optimistic dismiss stands */ }
   }, [queryClient]);
 
   const handleModalSuccess = useCallback((alertId: string) => {
     setTaken(prev => new Set([...prev, alertId]));
     setModalAlert(null);
-    dismiss(alertId);
+    dismiss(alertId, 168); // réunion planifiée → snooze 1 semaine
   }, [dismiss]);
 
   const visible   = alerts.filter(a => !optimisticDismissed.has(a.id));
   const displayed = expanded ? visible : visible.slice(0, VISIBLE_LIMIT);
   const extra     = visible.length - VISIBLE_LIMIT;
-
-  const total    = visible.length;
-  const critical = visible.filter(a => a.severity === 'critical').length;
-
+  const total     = visible.length;
+  const critical  = visible.filter(a => a.severity === 'critical').length;
   const criticalIds = new Set(visible.filter(a => a.severity === 'critical').map(a => a.id));
 
   return (
@@ -90,13 +96,34 @@ export default function AlertsPanel({ alerts }: Props) {
                       <span className="ap-item__msg">{alert.message}</span>
                     </div>
                     <Link to={alert.action_url} className="ap-item__link">→</Link>
-                    <button
-                      type="button"
-                      className="ap-item__close"
-                      onClick={() => dismiss(alert.id)}
-                      aria-label="Masquer"
-                    >×</button>
+
+                    {/* Snooze dropdown */}
+                    <div className="ap-snooze-wrap" ref={snoozeRef}>
+                      <button
+                        type="button"
+                        className="ap-item__close"
+                        onClick={() => setSnoozeOpen(snoozeOpen === alert.id ? null : alert.id)}
+                        aria-label="Reporter"
+                        title="Reporter"
+                      >×</button>
+                      {snoozeOpen === alert.id && (
+                        <div className="ap-snooze-menu">
+                          <span className="ap-snooze-menu__label">Reporter pour…</span>
+                          {SNOOZE_OPTIONS.map(opt => (
+                            <button
+                              key={opt.hours}
+                              type="button"
+                              className={`ap-snooze-menu__item${opt.hours === 0 ? ' ap-snooze-menu__item--permanent' : ''}`}
+                              onClick={() => dismiss(alert.id, opt.hours)}
+                            >
+                              {opt.label}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
+
                   {isDecision && (
                     <div className="ap-item__action-row">
                       <span className="ap-item__action-label">→ {ACTION_LABEL[alert.type]}</span>

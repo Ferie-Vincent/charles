@@ -16,6 +16,7 @@ export type Task = {
   assigned_to: number | null;
   assigned_by: number;
   created_at: string;
+  meeting_id: number | null;
   assignee: { id: number; name: string } | null;
   creator: { id: number; name: string };
 };

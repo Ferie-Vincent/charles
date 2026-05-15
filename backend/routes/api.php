@@ -243,7 +243,14 @@ Route::middleware('auth')->group(function () {
 
     // ── Réunions / Invitations ─────────────────────────────────────────────────
     Route::post('/meetings', [\App\Http\Controllers\MeetingController::class, 'store']);
+    Route::patch('/meeting-invitations/{meetingId}/respond', [\App\Http\Controllers\MeetingController::class, 'respond']);
+    Route::get('/meetings/{meetingId}/rsvp-status', [\App\Http\Controllers\MeetingController::class, 'rsvpStatus']);
+
+    // ── Notifications utilisateur ──────────────────────────────────────────────
     Route::get('/notifications', [\App\Http\Controllers\MeetingController::class, 'userNotifications']);
     Route::patch('/notifications/{id}/read', [\App\Http\Controllers\MeetingController::class, 'markRead']);
     Route::post('/notifications/read-all', [\App\Http\Controllers\MeetingController::class, 'markAllRead']);
 });
+
+// ── RSVP sans auth (lien email tokenisé) ──────────────────────────────────────
+Route::get('/meetings/rsvp/{token}/{status}', [\App\Http\Controllers\MeetingController::class, 'rsvpViaToken']);

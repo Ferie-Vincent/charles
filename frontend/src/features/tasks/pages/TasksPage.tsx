@@ -7,6 +7,7 @@ import type { DragEndEvent, DragStartEvent } from '@dnd-kit/core';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getTasks, updateTask, deleteTask } from '../api/tasks-api';
 import type { Task, TaskStatus } from '../api/tasks-api';
+import { getMeetingRsvpStatus } from '../../meetings/api/meetings-api';
 import PageHeader from '../../../components/ui/PageHeader';
 import SkeletonPage from '../../../components/ui/SkeletonPage';
 
@@ -41,6 +42,26 @@ function fmtDate(d: string): string {
 
 function initials(name: string): string {
   return name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
+}
+
+// ── RSVP mini-indicator ───────────────────────────────────────────────────────
+function RsvpBadge({ meetingId }: { meetingId: number }) {
+  const { data } = useQuery({
+    queryKey: ['rsvp-status', meetingId],
+    queryFn: () => getMeetingRsvpStatus(meetingId),
+    staleTime: 60_000,
+    enabled: !!meetingId,
+  });
+
+  if (!data) return null;
+
+  return (
+    <div className="kb-rsvp">
+      {data.accepted > 0  && <span className="kb-rsvp__pill kb-rsvp__pill--yes">✓{data.accepted}</span>}
+      {data.declined > 0  && <span className="kb-rsvp__pill kb-rsvp__pill--no">✗{data.declined}</span>}
+      {data.invited  > 0  && <span className="kb-rsvp__pill kb-rsvp__pill--pending">?{data.invited}</span>}
+    </div>
+  );
 }
 
 // ── Card content ──────────────────────────────────────────────────────────────
@@ -104,6 +125,7 @@ function TaskCardContent({
               </div>
             )}
           </div>
+          {task.meeting_id && !isDragging && <RsvpBadge meetingId={task.meeting_id} />}
           <span className="kb-card__date">{fmtDate(task.created_at)}</span>
         </div>
 
