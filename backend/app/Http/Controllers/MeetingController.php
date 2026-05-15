@@ -120,18 +120,38 @@ class MeetingController extends Controller
 
         abort_if(! $pivot, 404, 'Invitation introuvable.');
 
+        $meeting = MeetingInvitation::find($pivot->meeting_invitation_id);
+        abort_if(! $meeting || $meeting->scheduled_at->isPast(), 410, 'Cette réunion est déjà passée.');
+
         DB::table('meeting_invitation_users')
             ->where('rsvp_token', $token)
             ->update(['status' => $status, 'updated_at' => now()]);
 
-        $label = $status === 'accepted' ? '✓ Présence confirmée' : '✗ Absence notifiée';
+        $label   = $status === 'accepted' ? '✓ Présence confirmée' : '✗ Absence notifiée';
+        $date    = $meeting->scheduled_at->locale('fr')->isoFormat('dddd D MMMM [à] HH:mm');
+        $project = optional($meeting->project)->name ?? '';
+        $appUrl  = config('app.url');
 
         return response(
-            "<html><body style='font-family:sans-serif;text-align:center;padding:60px'>
-              <h2>{$label}</h2><p>Vous pouvez fermer cette fenêtre.</p>
-            </body></html>",
+            "<!DOCTYPE html><html lang='fr'><head><meta charset='UTF-8'>
+             <meta name='viewport' content='width=device-width,initial-scale=1'>
+             <title>RSVP — Chantier Platform</title>
+             <style>
+               body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#f8fafc;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0}
+               .card{background:#fff;border-radius:12px;padding:48px 40px;max-width:440px;width:90%;box-shadow:0 4px 24px rgba(0,0,0,.08);text-align:center}
+               .icon{font-size:48px;margin-bottom:16px}
+               h2{margin:0 0 8px;font-size:22px;color:#111828}
+               .meta{color:#64748b;font-size:14px;margin-bottom:24px;line-height:1.6}
+               .btn{display:inline-block;background:#2F60B0;color:#fff;text-decoration:none;padding:12px 28px;border-radius:8px;font-weight:600;font-size:15px}
+             </style></head>
+             <body><div class='card'>
+               <div class='icon'>" . ($status === 'accepted' ? '✅' : '👋') . "</div>
+               <h2>{$label}</h2>
+               <div class='meta'>" . ($project ? "<strong>{$project}</strong><br>" : '') . "{$date}</div>
+               <a class='btn' href='{$appUrl}'>Voir dans l'app →</a>
+             </div></body></html>",
             200,
-            ['Content-Type' => 'text/html']
+            ['Content-Type' => 'text/html; charset=UTF-8']
         );
     }
 

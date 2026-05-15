@@ -51,6 +51,7 @@ export default function TakeChargeModal({ alert, onClose, onSuccess }: Props) {
   }, [members]);
 
   const noContactCount = members.filter((m: ProjectMember) => selected.has(m.id) && !hasContact(m)).length;
+  const [confirmNoContact, setConfirmNoContact] = useState(false);
 
   const mutation = useMutation({
     mutationFn: () => createMeeting({
@@ -156,10 +157,18 @@ export default function TakeChargeModal({ alert, onClose, onSuccess }: Props) {
             </span>
           </label>
 
-          {/* Warning : membres sans contact */}
+          {/* Warning : membres sans contact — friction explicite */}
           {noContactCount > 0 && (
-            <div className="tc-warn">
-              ⚠️ {noContactCount} personne{noContactCount > 1 ? 's' : ''} sélectionnée{noContactCount > 1 ? 's' : ''} sans email ni téléphone — l'invitation ne leur parviendra pas.
+            <div className="tc-warn tc-warn--active">
+              <span>⚠️ {noContactCount} personne{noContactCount > 1 ? 's' : ''} sélectionnée{noContactCount > 1 ? 's' : ''} sans email ni téléphone — l'invitation ne leur parviendra pas.</span>
+              <label className="tc-warn__confirm">
+                <input
+                  type="checkbox"
+                  checked={confirmNoContact}
+                  onChange={e => setConfirmNoContact(e.target.checked)}
+                />
+                Continuer sans inviter ces personnes
+              </label>
             </div>
           )}
 
@@ -212,7 +221,7 @@ export default function TakeChargeModal({ alert, onClose, onSuccess }: Props) {
           <button
             className={`tc-btn tc-btn--primary${done ? ' tc-btn--done' : ''}`}
             onClick={() => mutation.mutate()}
-            disabled={mutation.isPending || done || selected.size === 0 || !title || !scheduledAt}
+            disabled={mutation.isPending || done || selected.size === 0 || !title || !scheduledAt || (noContactCount > 0 && !confirmNoContact)}
           >
             {done
               ? '✓ Invitations envoyées !'

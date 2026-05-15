@@ -89,6 +89,45 @@ export default function AlertsPanel({ alerts }: Props) {
               const isTaken    = taken.has(alert.id);
               return (
                 <li key={alert.id} className={`ap-item ap-item--${alert.severity}${isDecision ? ' ap-item--decision' : ''}`}>
+
+                  {/* Critical: CTA first, snooze secondary */}
+                  {isDecision && (
+                    <div className="ap-item__cta-row">
+                      <button
+                        type="button"
+                        className={`ap-item__take-charge ap-item__take-charge--primary${isTaken ? ' ap-item__take-charge--done' : ''}`}
+                        onClick={() => !isTaken && setModalAlert(alert)}
+                        disabled={isTaken}
+                      >
+                        {isTaken ? '✓ Réunion planifiée' : '🚨 Prendre en charge'}
+                      </button>
+                      <div className="ap-snooze-wrap" ref={snoozeRef}>
+                        <button
+                          type="button"
+                          className="ap-item__snooze-secondary"
+                          onClick={() => setSnoozeOpen(snoozeOpen === alert.id ? null : alert.id)}
+                          aria-label="Reporter"
+                          title="Reporter"
+                        >Reporter ▾</button>
+                        {snoozeOpen === alert.id && (
+                          <div className="ap-snooze-menu">
+                            <span className="ap-snooze-menu__label">Reporter pour…</span>
+                            {SNOOZE_OPTIONS.map(opt => (
+                              <button
+                                key={opt.hours}
+                                type="button"
+                                className={`ap-snooze-menu__item${opt.hours === 0 ? ' ap-snooze-menu__item--permanent' : ''}`}
+                                onClick={() => dismiss(alert.id, opt.hours)}
+                              >
+                                {opt.label}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
                   <div className="ap-item__main">
                     <span className="ap-item__type-icon">{TYPE_ICON[alert.type] ?? '•'}</span>
                     <div className="ap-item__body">
@@ -97,44 +136,38 @@ export default function AlertsPanel({ alerts }: Props) {
                     </div>
                     <Link to={alert.action_url} className="ap-item__link">→</Link>
 
-                    {/* Snooze dropdown */}
-                    <div className="ap-snooze-wrap" ref={snoozeRef}>
-                      <button
-                        type="button"
-                        className="ap-item__close"
-                        onClick={() => setSnoozeOpen(snoozeOpen === alert.id ? null : alert.id)}
-                        aria-label="Reporter"
-                        title="Reporter"
-                      >×</button>
-                      {snoozeOpen === alert.id && (
-                        <div className="ap-snooze-menu">
-                          <span className="ap-snooze-menu__label">Reporter pour…</span>
-                          {SNOOZE_OPTIONS.map(opt => (
-                            <button
-                              key={opt.hours}
-                              type="button"
-                              className={`ap-snooze-menu__item${opt.hours === 0 ? ' ap-snooze-menu__item--permanent' : ''}`}
-                              onClick={() => dismiss(alert.id, opt.hours)}
-                            >
-                              {opt.label}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
+                    {/* Non-critical: snooze dropdown on × */}
+                    {!isDecision && (
+                      <div className="ap-snooze-wrap" ref={snoozeRef}>
+                        <button
+                          type="button"
+                          className="ap-item__close"
+                          onClick={() => setSnoozeOpen(snoozeOpen === alert.id ? null : alert.id)}
+                          aria-label="Reporter"
+                          title="Reporter"
+                        >×</button>
+                        {snoozeOpen === alert.id && (
+                          <div className="ap-snooze-menu">
+                            <span className="ap-snooze-menu__label">Reporter pour…</span>
+                            {SNOOZE_OPTIONS.map(opt => (
+                              <button
+                                key={opt.hours}
+                                type="button"
+                                className={`ap-snooze-menu__item${opt.hours === 0 ? ' ap-snooze-menu__item--permanent' : ''}`}
+                                onClick={() => dismiss(alert.id, opt.hours)}
+                              >
+                                {opt.label}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   {isDecision && (
                     <div className="ap-item__action-row">
                       <span className="ap-item__action-label">→ {ACTION_LABEL[alert.type]}</span>
-                      <button
-                        type="button"
-                        className={`ap-item__take-charge${isTaken ? ' ap-item__take-charge--done' : ''}`}
-                        onClick={() => !isTaken && setModalAlert(alert)}
-                        disabled={isTaken}
-                      >
-                        {isTaken ? '✓ Réunion planifiée' : 'Prendre en charge'}
-                      </button>
                     </div>
                   )}
                 </li>

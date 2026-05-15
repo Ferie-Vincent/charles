@@ -19,6 +19,7 @@ class SendMeetingReminders extends Command
         $windowEnd   = now()->addMinutes(35);
 
         $meetings = MeetingInvitation::whereBetween('scheduled_at', [$windowStart, $windowEnd])
+            ->where('reminder_sent', false)
             ->with(['project', 'organizer', 'invitees'])
             ->get();
 
@@ -50,6 +51,9 @@ class SendMeetingReminders extends Command
                     ]);
                 }
             }
+
+            // Mark as sent to guarantee idempotence across scheduler runs
+            $meeting->update(['reminder_sent' => true]);
 
             $this->info("Reminders sent for meeting #{$meeting->id} — {$invitees->count()} invitees");
         }

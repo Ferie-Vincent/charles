@@ -41,6 +41,8 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [validatingId, setValidatingId] = useState<number | null>(null);
   const [dismissed, setDismissed] = useState<Set<string>>(() => loadDismissed());
+  const [rsvpToast, setRsvpToast] = useState<{ notifId: string; meetingId: number; status: 'accepted' | 'declined' } | null>(null);
+  const rsvpTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const dismiss = useCallback((key: string) => {
     setDismissed(prev => {
@@ -122,6 +124,22 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
     }
     document.addEventListener('mousedown', handleOutside);
     return () => document.removeEventListener('mousedown', handleOutside);
+  }, []);
+
+  const handleRsvp = useCallback((notifId: string, meetingId: number, status: 'accepted' | 'declined') => {
+    if (rsvpTimerRef.current) clearTimeout(rsvpTimerRef.current);
+    setRsvpToast({ notifId, meetingId, status });
+    rsvpTimerRef.current = setTimeout(async () => {
+      await respondToMeeting(meetingId, status);
+      await markNotificationRead(notifId);
+      queryClient.invalidateQueries({ queryKey: ['user-notifications'] });
+      setRsvpToast(null);
+    }, 5000);
+  }, [queryClient]);
+
+  const cancelRsvp = useCallback(() => {
+    if (rsvpTimerRef.current) clearTimeout(rsvpTimerRef.current);
+    setRsvpToast(null);
   }, []);
 
   async function handleLogout() {
@@ -254,26 +272,18 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
                               {contextLine} · {when}
                               {d.organizer_name ? ` · ${d.organizer_name}` : ''}
                             </div>
-                            {/* RSVP inline */}
+                            {/* RSVP inline avec undo 5s */}
                             {d.meeting_id && (
                               <div className="topbar-rsvp">
                                 <button
                                   type="button"
                                   className="topbar-rsvp__btn topbar-rsvp__btn--accept"
-                                  onClick={async () => {
-                                    await respondToMeeting(d.meeting_id, 'accepted');
-                                    await markNotificationRead(notif.id);
-                                    queryClient.invalidateQueries({ queryKey: ['user-notifications'] });
-                                  }}
+                                  onClick={() => handleRsvp(notif.id, d.meeting_id, 'accepted')}
                                 >✓ Confirmer</button>
                                 <button
                                   type="button"
                                   className="topbar-rsvp__btn topbar-rsvp__btn--decline"
-                                  onClick={async () => {
-                                    await respondToMeeting(d.meeting_id, 'declined');
-                                    await markNotificationRead(notif.id);
-                                    queryClient.invalidateQueries({ queryKey: ['user-notifications'] });
-                                  }}
+                                  onClick={() => handleRsvp(notif.id, d.meeting_id, 'declined')}
                                 >✗ Décliner</button>
                               </div>
                             )}
@@ -469,6 +479,18 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
           </Link>
         )}
       </div>
+
+      {/* Toast undo RSVP */}
+      {rsvpToast && (
+        <div className="rsvp-toast" role="status" aria-live="polite">
+          <span>
+            {rsvpToast.status === 'accepted' ? '✓ Présence confirmée' : '✗ Absence notifiée'} — envoi dans 5s
+          </span>
+          <button type="button" className="rsvp-toast__undo" onClick={cancelRsvp}>
+            Annuler
+          </button>
+        </div>
+      )}
     </header>
   );
 }

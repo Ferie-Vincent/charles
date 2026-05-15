@@ -3,6 +3,12 @@ import { api } from '../../../lib/api';
 export type TaskStatus   = 'todo' | 'in_progress' | 'blocked' | 'done' | 'cancelled';
 export type TaskPriority = 'urgent' | 'high' | 'normal';
 
+export type RsvpSummary = {
+  accepted: number;
+  declined: number;
+  invited: number;
+};
+
 export type Task = {
   id: number;
   title: string;
@@ -17,6 +23,7 @@ export type Task = {
   assigned_by: number;
   created_at: string;
   meeting_id: number | null;
+  rsvp_summary: RsvpSummary | null;
   assignee: { id: number; name: string } | null;
   creator: { id: number; name: string };
 };

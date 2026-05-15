@@ -12,12 +12,25 @@ class TaskController extends Controller
     public function index(Request $request): JsonResponse
     {
         $tasks = Task::where('company_id', $request->user()->company_id)
-            ->with('assignee:id,name', 'creator:id,name', 'meeting:id,task_id')
+            ->with([
+                'assignee:id,name',
+                'creator:id,name',
+                'meeting' => fn($q) => $q->select('id', 'task_id')->withCount([
+                    'invitees as rsvp_accepted' => fn($q) => $q->wherePivot('status', 'accepted'),
+                    'invitees as rsvp_declined' => fn($q) => $q->wherePivot('status', 'declined'),
+                    'invitees as rsvp_invited'  => fn($q) => $q->wherePivot('status', 'invited'),
+                ]),
+            ])
             ->orderByRaw("FIELD(priority,'urgent','high','normal')")
             ->orderByDesc('created_at')
             ->get()
             ->map(fn($t) => array_merge($t->toArray(), [
-                'meeting_id' => $t->meeting?->id,
+                'meeting_id'   => $t->meeting?->id,
+                'rsvp_summary' => $t->meeting ? [
+                    'accepted' => $t->meeting->rsvp_accepted,
+                    'declined' => $t->meeting->rsvp_declined,
+                    'invited'  => $t->meeting->rsvp_invited,
+                ] : null,
             ]));
 
         return response()->json($tasks);

@@ -19,6 +19,7 @@ class MeetingInvitation extends Model
         'notes',
         'alert_type',
         'alert_message',
+        'reminder_sent',
     ];
 
     protected $casts = [
