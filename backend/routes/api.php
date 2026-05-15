@@ -231,4 +231,19 @@ Route::middleware('auth')->group(function () {
         Route::get('/projects/{project}/situation-travaux/versions', [SituationTravauxController::class, 'versions']);
         Route::post('/projects/{project}/situation-travaux', [SituationTravauxController::class, 'generate'])->middleware('throttle:10,60');
     });
+
+    // ── Membres projet ────────────────────────────────────────────────────────
+    Route::get('/projects/{project}/members', function (\Illuminate\Http\Request $req, \App\Models\Project $project) {
+        abort_if($project->company_id !== $req->user()->company_id, 403);
+        return response()->json(
+            $project->members()->with('user:id,name,email')->get()
+                ->map(fn($m) => ['id' => $m->user->id, 'name' => $m->user->name, 'email' => $m->user->email, 'role' => $m->assignment_role])
+        );
+    });
+
+    // ── Réunions / Invitations ─────────────────────────────────────────────────
+    Route::post('/meetings', [\App\Http\Controllers\MeetingController::class, 'store']);
+    Route::get('/notifications', [\App\Http\Controllers\MeetingController::class, 'userNotifications']);
+    Route::patch('/notifications/{id}/read', [\App\Http\Controllers\MeetingController::class, 'markRead']);
+    Route::post('/notifications/read-all', [\App\Http\Controllers\MeetingController::class, 'markAllRead']);
 });
