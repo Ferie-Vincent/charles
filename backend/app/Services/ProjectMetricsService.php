@@ -47,12 +47,18 @@ class ProjectMetricsService
         $target = $project->target_progress ?? 100;
 
         // --- Planning score (max 25) ---
-        $planningScore = $latestProgress >= $target
-            ? 25
-            : max(0, 25 - ($target - $latestProgress) * 1.25);
+        // Grace period: projects < 30 days can't be penalized — target_progress defaults to 100
+        // and early-stage progress will always appear behind, producing unfair score of 0.
+        $planningScore = $daysSinceStart <= 30
+            ? 25.0
+            : ($latestProgress >= $target
+                ? 25
+                : max(0, 25 - ($target - $latestProgress) * 1.25));
 
-        // --- Regularity score (max 25) ---
-        $regularityScore = min($totalLogs / max(1, $daysSinceStart), 1) * 25;
+        // --- Regularity score (max 25) — 7-day grace to avoid perfect J+1 score ---
+        $regularityScore = $daysSinceStart <= 7
+            ? 25.0
+            : min($totalLogs / $daysSinceStart, 1) * 25;
 
         // --- Safety score (max 25) ---
         $safetyScore = max(0, 25 - $incidentCount * 5);

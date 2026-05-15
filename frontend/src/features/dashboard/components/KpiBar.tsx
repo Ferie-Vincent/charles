@@ -1,42 +1,70 @@
 import type { DashboardStats } from '../api/get-dashboard';
-
-function formatShort(amount: number): string {
-  if (amount >= 1_000_000_000)
-    return (amount / 1_000_000_000).toLocaleString('fr-FR', { maximumFractionDigits: 1 }) + ' Mds FCFA';
-  if (amount >= 1_000_000)
-    return (amount / 1_000_000).toLocaleString('fr-FR', { maximumFractionDigits: 0 }) + ' M FCFA';
-  return amount.toLocaleString('fr-FR') + ' FCFA';
-}
+import { fmtFCFA, fmtKpi } from '../../../lib/formatters';
+import { type RoleGroup, KPI_HIDDEN_FOR } from '../../../lib/roles';
 
 type KpiItem = {
   label: string;
   value: string;
   sub: string;
+  valueColor?: string;
+  valueNode?: React.ReactNode;
   trend?: { label: string; positive: boolean };
   icon: React.ReactNode;
 };
 
-type Props = { stats: DashboardStats };
+type Props = { stats: DashboardStats; roleGroup: RoleGroup };
 
-export default function KpiBar({ stats }: Props) {
+export default function KpiBar({ stats, roleGroup }: Props) {
+  const tauxEngagement = stats.budget_total > 0
+    ? Math.round((stats.budget_active / stats.budget_total) * 100)
+    : 0;
+
+  const engagementGap = tauxEngagement - stats.avg_progress;
+  const engagementSub = stats.avg_progress === 0
+    ? tauxEngagement >= 80 ? 'À surveiller' : tauxEngagement >= 60 ? 'Vigilance' : 'Sous contrôle'
+    : engagementGap > 15
+      ? `⚠️ Sur-engagement vs ${stats.avg_progress}% avancé`
+      : engagementGap < -15
+        ? stats.avg_progress < 20
+          ? `Normal — phase démarrage (${stats.avg_progress}% avancé)`
+          : `Sous-consommation vs ${stats.avg_progress}% avancé`
+        : `Cohérent avec ${stats.avg_progress}% d'avancement`;
+
+  // Health-first order: signal d'abord, contexte en dernier
   const items: KpiItem[] = [
     {
-      label: 'Chantiers actifs',
-      value: String(stats.active_count),
-      sub: `vs ${stats.active_count + 4} au portefeuille`,
-      trend: { label: '+2', positive: true },
+      label: 'Santé portefeuille',
+      value: `${stats.health_avg}/100`,
+      valueColor: stats.health_avg >= 75 ? '#059669' : stats.health_avg >= 50 ? '#ea580c' : '#dc2626',
+      sub: stats.health_avg >= 75 ? 'Portefeuille sain' : stats.health_avg >= 50 ? 'Vigilance requise' : 'En alerte critique',
       icon: (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-          <polyline points="9 22 9 12 15 12 15 22"/>
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+        </svg>
+      ),
+    },
+    {
+      label: 'États chantiers',
+      value: '',
+      valueNode: (
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center', fontSize: 14, lineHeight: 1 }}>
+          <span>🟢 <strong style={{ fontSize: 16 }}>{stats.health_green}</strong></span>
+          <span>🟠 <strong style={{ fontSize: 16 }}>{stats.health_orange}</strong></span>
+          <span>🔴 <strong style={{ fontSize: 16 }}>{stats.health_red}</strong></span>
+        </div>
+      ),
+      sub: 'Sain · Attention · Critique',
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M21.21 15.89A10 10 0 1 1 8 2.83"/>
+          <path d="M22 12A10 10 0 0 0 12 2v10z"/>
         </svg>
       ),
     },
     {
       label: 'Budget engagé',
-      value: formatShort(stats.budget_active),
-      sub: `${stats.budget_total > 0 ? Math.round((stats.budget_active / stats.budget_total) * 100) : 0}% du portefeuille`,
-      trend: { label: '+8.1 %', positive: true },
+      value: fmtKpi(stats.budget_active),
+      sub: `sur ${fmtKpi(stats.budget_total)} FCFA prévu`,
       icon: (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/>
@@ -46,9 +74,32 @@ export default function KpiBar({ stats }: Props) {
       ),
     },
     {
-      label: 'Budget portefeuille',
-      value: formatShort(stats.budget_total),
-      sub: 'Année fiscale 2026',
+      label: "Taux d'engagement",
+      value: `${tauxEngagement}%`,
+      sub: engagementSub,
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <line x1="12" y1="20" x2="12" y2="10"/>
+          <line x1="18" y1="20" x2="18" y2="4"/>
+          <line x1="6" y1="20" x2="6" y2="16"/>
+        </svg>
+      ),
+    },
+    {
+      label: 'Chantiers actifs',
+      value: String(stats.active_count),
+      sub: `sur ${stats.active_count + stats.completed_count + stats.draft_count} au portefeuille`,
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+          <polyline points="9 22 9 12 15 12 15 22"/>
+        </svg>
+      ),
+    },
+    {
+      label: 'Budget prévisionnel',
+      value: fmtKpi(stats.budget_total),
+      sub: 'Enveloppe totale (FCFA HT)',
       icon: (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <rect x="2" y="7" width="20" height="14" rx="2"/>
@@ -56,46 +107,25 @@ export default function KpiBar({ stats }: Props) {
         </svg>
       ),
     },
-    {
-      label: 'Chantiers livrés',
-      value: String(stats.completed_count),
-      sub: 'Ce trimestre',
-      trend: { label: '+1', positive: true },
-      icon: (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-          <polyline points="22 4 12 14.01 9 11.01"/>
-        </svg>
-      ),
-    },
-    {
-      label: 'En retard',
-      value: String(stats.draft_count),
-      sub: 'Action requise',
-      trend: { label: '+2', positive: false },
-      icon: (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="12" cy="12" r="10"/>
-          <line x1="12" y1="8" x2="12" y2="12"/>
-          <line x1="12" y1="16" x2="12.01" y2="16"/>
-        </svg>
-      ),
-    },
   ];
+
+  const visible = items.filter(item => !KPI_HIDDEN_FOR[item.label]?.includes(roleGroup));
 
   return (
     <div className="kpi-bar">
-      {items.map((item) => (
+      {visible.map((item) => (
         <div key={item.label} className="kpi-bar__item">
           <div className="kpi-bar__top">
             <div className="kpi-bar__icon-sm">{item.icon}</div>
             {item.trend && (
               <span className={`kpi-trend ${item.trend.positive ? 'kpi-trend--up' : 'kpi-trend--down'}`}>
-                {item.trend.positive ? '↑' : '↑'} {item.trend.label}
+                {item.trend.positive ? '↑' : '↓'} {item.trend.label}
               </span>
             )}
           </div>
-          <div className="kpi-bar__value">{item.value}</div>
+          <div className="kpi-bar__value" style={item.valueColor ? { color: item.valueColor } : undefined}>
+            {item.valueNode ?? item.value}
+          </div>
           <div className="kpi-bar__label">{item.label}</div>
           <div className="kpi-bar__sub">{item.sub}</div>
         </div>

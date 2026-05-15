@@ -7,16 +7,25 @@ export type DashboardStats = {
   draft_count: number;
   budget_active: number;
   budget_total: number;
+  health_avg: number;
+  health_green: number;
+  health_orange: number;
+  health_red: number;
+  avg_progress: number;
 };
 
 export type ProjectHealth = {
   score: number;
   status: 'green' | 'orange' | 'red';
-  planning: number;
-  regularity: number;
-  budget: number;
-  safety: number;
-  progress: number;
+  label: string;
+  planning_score: number;
+  regularity_score: number;
+  budget_score: number;
+  safety_score: number;
+  latest_progress: number;
+  target_progress: number;
+  total_logs: number;
+  incident_count: number;
 };
 
 export type ActiveProject = Project & { health: ProjectHealth; doc_count: number };

@@ -1,13 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
+import { api } from '../../../lib/api';
+import { createTasks } from '../../tasks/api/tasks-api';
 import type { ProjectAlert } from '../api/get-dashboard';
-
-const STORAGE_KEY = 'chantier:dismissed-alerts';
-
-const SEVERITY_DOT: Record<ProjectAlert['severity'], string> = {
-  critical: '#dc2626',
-  warning:  '#ea580c',
-};
 
 const TYPE_ICON: Record<ProjectAlert['type'], string> = {
   overdue:        '⏰',
@@ -17,30 +13,67 @@ const TYPE_ICON: Record<ProjectAlert['type'], string> = {
   health_critical:'🔴',
 };
 
-function loadDismissed(): Set<string> {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? new Set(JSON.parse(raw) as string[]) : new Set();
-  } catch {
-    return new Set();
-  }
-}
+const ACTION_LABEL: Record<ProjectAlert['type'], string> = {
+  overdue:        'Planifier une réunion de rattrapage',
+  no_journal:     'Reprendre la saisie journal',
+  planning_lag:   'Réévaluer le planning',
+  open_incident:  'Vérifier la clôture incident',
+  health_critical:'Définir un plan correctif',
+};
 
-function saveDismissed(set: Set<string>): void {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify([...set]));
-}
+const ROLE_TARGET: Record<ProjectAlert['type'], string> = {
+  overdue:        'conducteur-travaux',
+  no_journal:     'chef-chantier',
+  planning_lag:   'conducteur-travaux',
+  open_incident:  'chef-chantier',
+  health_critical:'direction',
+};
+
+const VISIBLE_LIMIT = 6;
 
 type Props = { alerts: ProjectAlert[] };
 
 export default function AlertsPanel({ alerts }: Props) {
-  const [dismissed, setDismissed] = useState<Set<string>>(loadDismissed);
+  const queryClient                     = useQueryClient();
+  const [optimisticDismissed, setOpt]   = useState<Set<string>>(new Set());
+  const [taken, setTaken]               = useState<Set<string>>(new Set());
+  const [expanded, setExpanded]         = useState(false);
 
-  useEffect(() => { saveDismissed(dismissed); }, [dismissed]);
+  const dismiss = useCallback(async (id: string) => {
+    setOpt(prev => new Set([...prev, id]));
+    try {
+      await api.post('/dashboard/alerts/dismiss', { alert_key: id });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+    } catch {
+      // Optimistic dismiss stands for session; backend re-shows after 24h anyway
+    }
+  }, [queryClient]);
 
-  const visible = alerts.filter(a => !dismissed.has(a.id));
+  const takeCharge = useCallback((alert: ProjectAlert) => {
+    setTaken(prev => new Set([...prev, alert.id]));
+    // Create a real task in the platform, then dismiss after 1.5s
+    createTasks([{
+      title: `${ACTION_LABEL[alert.type]} — ${alert.project_code}`,
+      detail: alert.message,
+      priority: alert.severity === 'critical' ? 'urgent' : 'high',
+      role_target: ROLE_TARGET[alert.type],
+      project_code: alert.project_code,
+      source: 'ai',
+    }]).then(() => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    }).catch(() => { /* task creation failure is non-blocking */ });
+    setTimeout(() => dismiss(alert.id), 1500);
+  }, [dismiss, queryClient]);
+
+  const visible   = alerts.filter(a => !optimisticDismissed.has(a.id));
+  const displayed = expanded ? visible : visible.slice(0, VISIBLE_LIMIT);
+  const extra     = visible.length - VISIBLE_LIMIT;
 
   const total    = visible.length;
   const critical = visible.filter(a => a.severity === 'critical').length;
+
+  // All critical alerts get decision treatment (not just top 3)
+  const criticalIds = new Set(visible.filter(a => a.severity === 'critical').map(a => a.id));
 
   return (
     <div className="alerts-panel card">
@@ -58,22 +91,41 @@ export default function AlertsPanel({ alerts }: Props) {
         <p className="alerts-panel__empty">Aucune alerte active</p>
       ) : (
         <ul className="alerts-panel__list">
-          {visible.map(alert => (
-            <li key={alert.id} className={`ap-item ap-item--${alert.severity}`}>
-              <span className="ap-item__type-icon">{TYPE_ICON[alert.type] ?? '•'}</span>
-              <div className="ap-item__body">
-                <span className="ap-item__code">{alert.project_code}</span>
-                <span className="ap-item__msg">{alert.message}</span>
-              </div>
-              <Link to={alert.action_url} className="ap-item__link">→</Link>
-              <button
-                type="button"
-                className="ap-item__close"
-                onClick={() => setDismissed(prev => new Set([...prev, alert.id]))}
-                aria-label="Masquer"
-              >×</button>
-            </li>
-          ))}
+          {displayed.map(alert => {
+            const isDecision  = criticalIds.has(alert.id);
+            const isTaken     = taken.has(alert.id);
+            return (
+              <li key={alert.id} className={`ap-item ap-item--${alert.severity}${isDecision ? ' ap-item--decision' : ''}`}>
+                <div className="ap-item__main">
+                  <span className="ap-item__type-icon">{TYPE_ICON[alert.type] ?? '•'}</span>
+                  <div className="ap-item__body">
+                    <span className="ap-item__code">{alert.project_code}</span>
+                    <span className="ap-item__msg">{alert.message}</span>
+                  </div>
+                  <Link to={alert.action_url} className="ap-item__link">→</Link>
+                  <button
+                    type="button"
+                    className="ap-item__close"
+                    onClick={() => dismiss(alert.id)}
+                    aria-label="Masquer"
+                  >×</button>
+                </div>
+                {isDecision && (
+                  <div className="ap-item__action-row">
+                    <span className="ap-item__action-label">→ {ACTION_LABEL[alert.type]}</span>
+                    <button
+                      type="button"
+                      className={`ap-item__take-charge${isTaken ? ' ap-item__take-charge--done' : ''}`}
+                      onClick={() => takeCharge(alert)}
+                      disabled={isTaken}
+                    >
+                      {isTaken ? '✓ Pris en charge' : 'Prendre en charge'}
+                    </button>
+                  </div>
+                )}
+              </li>
+            );
+          })}
         </ul>
       )}
 
@@ -81,9 +133,9 @@ export default function AlertsPanel({ alerts }: Props) {
         <button
           type="button"
           className="alerts-panel__clear"
-          onClick={() => setDismissed(new Set(alerts.map(a => a.id)))}
+          onClick={() => extra > 0 && !expanded ? setExpanded(true) : setExpanded(false)}
         >
-          Tout masquer
+          {extra > 0 && !expanded ? `${extra} de plus ↓` : expanded ? 'Réduire ↑' : null}
         </button>
       )}
     </div>

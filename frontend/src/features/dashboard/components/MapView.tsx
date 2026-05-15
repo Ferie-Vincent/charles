@@ -1,6 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, forwardRef, useImperativeHandle } from 'react';
 import L from 'leaflet';
 import type { ActiveProject, ProjectHealth } from '../api/get-dashboard';
+
+export type MapViewHandle = { invalidateSize: () => void };
 
 const CI_CENTER: [number, number] = [7.54, -5.55];
 const CI_ZOOM = 7;
@@ -79,10 +81,14 @@ function makeMarker(project: ActiveProject): L.Marker {
 
 type Props = { projects: ActiveProject[] };
 
-export default function MapView({ projects }: Props) {
+const MapView = forwardRef<MapViewHandle, Props>(function MapView({ projects }, ref) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef       = useRef<L.Map | null>(null);
   const [filter, setFilter] = useState<FilterStatus>('all');
+
+  useImperativeHandle(ref, () => ({
+    invalidateSize: () => { mapRef.current?.invalidateSize(); },
+  }));
 
   const mappable = projects.filter(p => p.latitude != null && p.longitude != null);
   const visible  = filter === 'all' ? mappable : mappable.filter(p => p.health.status === filter);
@@ -141,4 +147,6 @@ export default function MapView({ projects }: Props) {
       </div>
     </div>
   );
-}
+});
+
+export default MapView;

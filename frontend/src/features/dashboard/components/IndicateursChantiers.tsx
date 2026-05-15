@@ -10,9 +10,9 @@ type Indicateur = {
   color?: string;
 };
 
-type Props = { projects: ActiveProject[] };
+type Props = { projects: ActiveProject[]; className?: string };
 
-export default function IndicateursChantiers({ projects }: Props) {
+export default function IndicateursChantiers({ projects, className }: Props) {
   if (!projects.length) return null;
 
   const green  = projects.filter(p => p.health.status === 'green').length;
@@ -40,20 +40,10 @@ export default function IndicateursChantiers({ projects }: Props) {
       value: `${avgScore} pts`,
       color: avgScore >= 75 ? '#059669' : avgScore >= 50 ? '#ea580c' : '#dc2626',
     },
-    {
-      icon: (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="14" height="14">
-          <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-        </svg>
-      ),
-      label: 'Chantiers suivis',
-      value: projects.length,
-      color: '#3b7ddd',
-    },
   ];
 
   return (
-    <div className="indicateurs-card card">
+    <div className={`indicateurs-card card ${className ?? ''}`}>
       <div className="synthese-card__head">
         <div className="card-icon card-icon--green">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16">
