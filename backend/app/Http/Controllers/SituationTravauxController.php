@@ -34,10 +34,10 @@ class SituationTravauxController extends Controller
             return response()->json(['error' => 'Aucune clé IA configurée (GROQ_API_KEY ou ANTHROPIC_API_KEY).'], 503);
         }
 
-        // Load DQE version — prefer the one requested, else latest validated
+        // Load DQE version — prefer the one requested, else highest version_number validated
         $dqeVersion = ($data['dqe_version_id'] ?? null)
             ? DqeVersion::with('lines')->find($data['dqe_version_id'])
-            : $project->dqeVersions()->with('lines')->where('status', 'validated')->latest()->first();
+            : $project->dqeVersions()->with('lines')->where('status', 'validated')->orderByDesc('version_number')->first();
 
         if (! $dqeVersion) {
             return response()->json(['error' => 'Aucun DQE validé trouvé pour ce chantier.'], 422);
@@ -52,15 +52,20 @@ class SituationTravauxController extends Controller
         );
 
         // Gather project context
-        $avancement      = $data['avancement'] ?? $project->progress_percent ?? 0;
-        $budgetTotal     = $project->budgetEntries()->sum('amount');
+        $avancement = (float) ($data['avancement']
+            ?? $project->dailyLogs()->latest('log_date')->value('progress_percent')
+            ?? 0);
+
+        // Engage = BDC entries + validée invoices (canonical, not sum of all budget_entry types)
+        $budgetEngage = (float) $project->budgetEntries()->where('type', 'engagement')->sum('amount')
+            + (float) $project->invoices()->where('status', 'validee')->sum('amount_ht');
         $incidentCount   = $project->incidents()->where('status', 'ouvert')->count();
         $totalLogs       = $project->dailyLogs()->count();
         $workersAvg      = round($project->dailyLogs()->avg('workers_count') ?? 0);
         $lastLog         = $project->dailyLogs()->latest('log_date')->first();
         $lastLogDate     = $lastLog ? $lastLog->log_date : 'N/A';
 
-        $prompt = $this->buildPrompt($project, $dqeVersion, $avancement, $budgetTotal, $incidentCount, $totalLogs, $workersAvg, $lastLogDate, $data['periode']);
+        $prompt = $this->buildPrompt($project, $dqeVersion, $avancement, $budgetEngage, $incidentCount, $totalLogs, $workersAvg, $lastLogDate, $data['periode']);
 
         $content = $groqKey
             ? $this->callGroq($groqKey, $prompt)

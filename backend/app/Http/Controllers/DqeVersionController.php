@@ -232,6 +232,7 @@ class DqeVersionController extends Controller
         if ($current === 'draft' && $to === 'soumise') {
             abort_unless(in_array($role, $submitRoles), 403, 'Soumission DQE réservée au DT, conducteur ou métreur.');
         } elseif ($current === 'draft' && $to === 'validated') {
+            // Validation directe sans soumission — réservée direction (cas exceptionnel : urgence contractuelle).
             abort_unless(in_array($role, $dgRoles), 403, 'Validation directe réservée à la direction.');
         } elseif ($current === 'soumise' && $to === 'validated') {
             abort_unless(in_array($role, $dgRoles), 403, 'Validation DQE réservée à la direction.');

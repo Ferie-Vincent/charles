@@ -41,18 +41,21 @@ class InvoiceController extends Controller
         }
 
         $data = $request->validate([
-            'reference'          => 'required|string|max:100',
-            'category'           => 'required|string|max:100',
-            'amount_ht'          => 'required|numeric|min:0',
-            'vat_rate'           => 'nullable|integer|min:0|max:100',
-            'amount_ttc'         => 'nullable|numeric|min:0',
-            'status'             => 'required|in:brouillon,soumise',
-            'invoice_date'       => 'required|date',
-            'due_date'           => 'nullable|date',
-            'supplier_id'        => ['nullable', Rule::exists('suppliers', 'id')->where('company_id', $request->user()->company_id)],
-            'purchase_order_id'  => ['nullable', Rule::exists('purchase_orders', 'id')->where('project_id', $project->id)],
-            'note'               => 'nullable|string|max:1000',
-            'attachment'         => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
+            'reference'             => 'required|string|max:100',
+            'category'              => 'required|string|max:100',
+            'type_facturation'      => 'nullable|in:facture,situation_travaux,acompte,decompte_final',
+            'amount_ht'             => 'required|numeric|min:0',
+            'vat_rate'              => 'nullable|integer|min:0|max:100',
+            'amount_ttc'            => 'nullable|numeric|min:0',
+            'retenue_garantie_pct'  => 'nullable|numeric|min:0|max:100',
+            'ras_pct'               => 'nullable|numeric|min:0|max:100',
+            'status'                => 'required|in:brouillon,soumise',
+            'invoice_date'          => 'required|date',
+            'due_date'              => 'nullable|date',
+            'supplier_id'           => ['nullable', Rule::exists('suppliers', 'id')->where('company_id', $request->user()->company_id)],
+            'purchase_order_id'     => ['nullable', Rule::exists('purchase_orders', 'id')->where('project_id', $project->id)],
+            'note'                  => 'nullable|string|max:1000',
+            'attachment'            => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
         ]);
 
         if (! empty($data['purchase_order_id'])) {
@@ -70,16 +73,29 @@ class InvoiceController extends Controller
         }
 
         $vatRate   = $data['vat_rate'] ?? 18;
-        $vatAmount = round($data['amount_ht'] * $vatRate / 100, 2);
+        $amountHt  = $data['amount_ht'];
+        $vatAmount = round($amountHt * $vatRate / 100, 2);
+        $amountTtc = $data['amount_ttc'] ?? round($amountHt + $vatAmount, 2);
+        $rdgPct    = $data['retenue_garantie_pct'] ?? 0;
+        $rdgAmount = round($amountTtc * $rdgPct / 100, 2);
+        $rasPct    = $data['ras_pct'] ?? 0;
+        $rasAmount = round($amountTtc * $rasPct / 100, 2);
+        $netAPayer = round($amountTtc - $rdgAmount - $rasAmount, 2);
 
-        $invoice = DB::transaction(function () use ($request, $project, $data, $vatRate, $vatAmount) {
+        $invoice = DB::transaction(function () use ($request, $project, $data, $vatRate, $vatAmount, $amountTtc, $rdgPct, $rdgAmount, $rasPct, $rasAmount, $netAPayer) {
             $inv = $project->invoices()->create([
                 ...collect($data)->except('attachment')->all(),
-                'vat_rate'   => $vatRate,
-                'vat_amount' => $vatAmount,
-                'amount_ttc' => $data['amount_ttc'] ?? round($data['amount_ht'] + $vatAmount, 2),
-                'currency'   => 'XOF',
-                'created_by' => $request->user()->id,
+                'type_facturation'       => $data['type_facturation'] ?? 'facture',
+                'vat_rate'               => $vatRate,
+                'vat_amount'             => $vatAmount,
+                'amount_ttc'             => $amountTtc,
+                'retenue_garantie_pct'   => $rdgPct,
+                'retenue_garantie_amount'=> $rdgAmount,
+                'ras_pct'                => $rasPct,
+                'ras_amount'             => $rasAmount,
+                'net_a_payer'            => $netAPayer,
+                'currency'               => 'XOF',
+                'created_by'             => $request->user()->id,
             ]);
 
             if ($request->hasFile('attachment')) {
@@ -103,18 +119,21 @@ class InvoiceController extends Controller
         abort_if($invoice->status === 'disputee', 422, 'Une facture en litige ne peut pas être modifiée directement. Utilisez la transition.');
 
         $data = $request->validate([
-            'reference'         => 'sometimes|required|string|max:100',
-            'category'          => 'sometimes|required|string|max:100',
-            'amount_ht'         => 'sometimes|required|numeric|min:0',
-            'vat_rate'          => 'nullable|integer|min:0|max:100',
-            'amount_ttc'        => 'nullable|numeric|min:0',
-            'status'            => 'sometimes|required|in:brouillon,soumise',
-            'invoice_date'      => 'sometimes|required|date',
-            'due_date'          => 'nullable|date',
-            'supplier_id'       => ['nullable', Rule::exists('suppliers', 'id')->where('company_id', $request->user()->company_id)],
-            'purchase_order_id' => ['nullable', Rule::exists('purchase_orders', 'id')->where('project_id', $project->id)],
-            'note'              => 'nullable|string|max:1000',
-            'attachment'        => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
+            'reference'             => 'sometimes|required|string|max:100',
+            'category'              => 'sometimes|required|string|max:100',
+            'type_facturation'      => 'nullable|in:facture,situation_travaux,acompte,decompte_final',
+            'amount_ht'             => 'sometimes|required|numeric|min:0',
+            'vat_rate'              => 'nullable|integer|min:0|max:100',
+            'amount_ttc'            => 'nullable|numeric|min:0',
+            'retenue_garantie_pct'  => 'nullable|numeric|min:0|max:100',
+            'ras_pct'               => 'nullable|numeric|min:0|max:100',
+            'status'                => 'sometimes|required|in:brouillon,soumise',
+            'invoice_date'          => 'sometimes|required|date',
+            'due_date'              => 'nullable|date',
+            'supplier_id'           => ['nullable', Rule::exists('suppliers', 'id')->where('company_id', $request->user()->company_id)],
+            'purchase_order_id'     => ['nullable', Rule::exists('purchase_orders', 'id')->where('project_id', $project->id)],
+            'note'                  => 'nullable|string|max:1000',
+            'attachment'            => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
         ]);
 
         if (isset($data['amount_ht']) || isset($data['purchase_order_id'])) {
@@ -136,16 +155,23 @@ class InvoiceController extends Controller
             }
         }
 
-        // Recalculate TVA if amount_ht or vat_rate changed
-        if (isset($data['amount_ht']) || isset($data['vat_rate'])) {
+        // Recalculate TVA + BTP retenues if amounts changed
+        if (isset($data['amount_ht']) || isset($data['vat_rate']) || isset($data['retenue_garantie_pct']) || isset($data['ras_pct'])) {
             $amountHt  = $data['amount_ht'] ?? $invoice->amount_ht;
             $vatRate   = $data['vat_rate'] ?? $invoice->vat_rate ?? 18;
             $vatAmount = round($amountHt * $vatRate / 100, 2);
-            $data['vat_rate']   = $vatRate;
-            $data['vat_amount'] = $vatAmount;
-            if (! isset($data['amount_ttc'])) {
-                $data['amount_ttc'] = round($amountHt + $vatAmount, 2);
-            }
+            $amountTtc = $data['amount_ttc'] ?? round($amountHt + $vatAmount, 2);
+            $rdgPct    = $data['retenue_garantie_pct'] ?? $invoice->retenue_garantie_pct ?? 0;
+            $rasPct    = $data['ras_pct'] ?? $invoice->ras_pct ?? 0;
+
+            $data['vat_rate']                = $vatRate;
+            $data['vat_amount']              = $vatAmount;
+            $data['amount_ttc']              = $amountTtc;
+            $data['retenue_garantie_pct']    = $rdgPct;
+            $data['retenue_garantie_amount'] = round($amountTtc * $rdgPct / 100, 2);
+            $data['ras_pct']                 = $rasPct;
+            $data['ras_amount']              = round($amountTtc * $rasPct / 100, 2);
+            $data['net_a_payer']             = round($amountTtc - $data['retenue_garantie_amount'] - $data['ras_amount'], 2);
         }
 
         $invoice->update(collect($data)->except('attachment')->all());

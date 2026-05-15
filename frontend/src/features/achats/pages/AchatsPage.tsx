@@ -11,12 +11,7 @@ import {
 import { getSuppliers } from '../../suppliers/api/suppliers';
 import { useAuth } from '../../auth/stores/auth-store';
 import PageHeader from '../../../components/ui/PageHeader';
-
-const fmt = (n: number) =>
-  n >= 1_000_000 ? `${(n / 1_000_000).toFixed(1)} M FCFA` :
-  n >= 1_000     ? `${(n / 1_000).toFixed(0)} k FCFA` : `${n.toFixed(0)} FCFA`;
-
-const fmtDate = (d: string) => new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
+import { fmtFCFA as fmt, fmtDate } from '../../../lib/formatters';
 
 const EMPTY_ITEM: OrderItem = { description: '', quantity: 1, unit: 'unité', unit_price: 0, total: 0 };
 

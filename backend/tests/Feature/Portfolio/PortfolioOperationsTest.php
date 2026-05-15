@@ -36,7 +36,7 @@ it('returns correct response shape', function () {
 
 it('only counts active projects in health summary', function () {
     Project::factory()->create(['company_id' => $this->company->id, 'status' => 'active']);
-    Project::factory()->create(['company_id' => $this->company->id, 'status' => 'draft']);
+    Project::factory()->create(['company_id' => $this->company->id, 'status' => 'en_preparation']);
     Project::factory()->create(['company_id' => $this->company->id, 'status' => 'completed']);
 
     $response = $this->actingAs($this->user)

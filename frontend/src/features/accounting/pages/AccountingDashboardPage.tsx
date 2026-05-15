@@ -10,46 +10,36 @@ import {
   approveExpense,
   rejectExpense,
   type GeneralExpense,
-  type ActivityItem,
 } from '../api/portfolio-accounting';
 import { useAuth } from '../../auth/stores/auth-store';
 import PageHeader from '../../../components/ui/PageHeader';
 import ActivityDetailModal from '../components/ActivityDetailModal';
-
-const fmt = (n: number) =>
-  n >= 1_000_000
-    ? `${(n / 1_000_000).toFixed(1)} M FCFA`
-    : n >= 1_000
-    ? `${(n / 1_000).toFixed(0)} k FCFA`
-    : `${n.toFixed(0)} FCFA`;
-
-const fmtDate = (d: string) =>
-  new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
-
-const STATUS_LABEL: Record<string, string> = {
-  brouillon: 'Brouillon', soumise: 'Soumise', validee: 'Validée', payee: 'Payée', disputee: 'Disputée',
-  paiement: 'Besoin comptabilisé',
-};
-const STATUS_COLOR: Record<string, string> = {
-  brouillon: '#94a3b8', soumise: '#f59e0b', validee: '#3b7ddd', payee: '#10b981', disputee: '#ef4444',
-  paiement: '#8b5cf6',
-};
-const PROJECT_STATUS_COLOR: Record<string, string> = {
-  en_cours: '#10b981', planifie: '#3b7ddd', termine: '#94a3b8', suspendu: '#f59e0b',
-};
-const PROJECT_STATUS_LABEL: Record<string, string> = {
-  en_cours: 'En cours', planifie: 'Planifié', termine: 'Terminé', suspendu: 'Suspendu',
-};
+import { fmtFCFA as fmt, fmtDate } from '../../../lib/formatters';
+import {
+  INVOICE_STATUS_LABEL as STATUS_LABEL,
+  INVOICE_STATUS_COLOR as STATUS_COLOR,
+  PROJECT_STATUS_LABEL,
+  PROJECT_STATUS_COLOR,
+  EXPENSE_STATUS_LABEL,
+  EXPENSE_STATUS_COLOR,
+} from '../../../lib/constants';
+// Frais généraux d'entreprise (siège) — distincts des charges de chantier
 const EXPENSE_CATEGORIES: Record<string, string> = {
-  transport: 'Transport', hebergement: 'Hébergement', restauration: 'Restauration',
-  fournitures: 'Fournitures', communication: 'Communication', salaires: 'Salaires',
-  charges: 'Charges', autre: 'Autre',
-};
-const EXPENSE_STATUS_LABEL: Record<string, string> = {
-  en_attente: 'En attente', approuvee: 'Approuvée', rejetee: 'Rejetée',
-};
-const EXPENSE_STATUS_COLOR: Record<string, string> = {
-  en_attente: '#f59e0b', approuvee: '#10b981', rejetee: '#ef4444',
+  transport:          'Transport & déplacement',
+  hebergement:        'Hébergement',
+  restauration:       'Restauration',
+  fournitures:        'Fournitures bureau',
+  communication:      'Communication & internet',
+  salaires:           'Salaires & charges',
+  cnps:               'CNPS & cotisations',
+  impots:             'Impôts & patente (DGI)',
+  loyer:              'Loyer & charges bureau',
+  assurances:         'Assurances entreprise',
+  materiel:           'Matériel & équipements',
+  sous_traitance:     'Sous-traitance générale',
+  honoraires:         'Honoraires & conseils',
+  charges:            'Charges diverses',
+  autre:              'Autre',
 };
 
 const EMPTY_EXPENSE = {

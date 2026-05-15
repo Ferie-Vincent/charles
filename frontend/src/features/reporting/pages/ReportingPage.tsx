@@ -6,15 +6,9 @@ import {
 } from '../api/get-portfolio-reports';
 import { downloadReport } from '../../../lib/download-report';
 import PageHeader from '../../../components/ui/PageHeader';
+import { fmtBytes as formatBytes } from '../../../lib/formatters';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
-
-function formatBytes(bytes: number): string {
-  if (bytes >= 1_000_000) {
-    return `${(bytes / 1_000_000).toFixed(1).replace('.', ',')} Mo`;
-  }
-  return `${Math.round(bytes / 1_000)} Ko`;
-}
 
 function formatWeekOf(dateStr: string): string {
   const [year, month, day] = dateStr.split('-');

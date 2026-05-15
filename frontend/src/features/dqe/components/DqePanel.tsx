@@ -1,12 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getDqeVersions, createDqeVersion, deleteDqeVersion, duplicateDqeVersion, updateDqeVersion } from '../api/dqe-api';
+import { getDqeVersions, createDqeVersion, deleteDqeVersion, duplicateDqeVersion } from '../api/dqe-api';
 import { STATUS_LABELS, type DqeVersion } from '../types';
-
-function fmtHT(n: number) {
-  return n.toLocaleString('fr-FR', { maximumFractionDigits: 0 }) + ' FCFA';
-}
+const fmtHT = (n: number) => n.toLocaleString('fr-FR', { maximumFractionDigits: 0 }) + ' FCFA';
 
 type Props = { projectId: number };
 

@@ -7,10 +7,7 @@ import {
 } from '../api/suppliers';
 import PageHeader from '../../../components/ui/PageHeader';
 
-const fmt = (n: number) =>
-  n >= 1_000_000 ? `${(n / 1_000_000).toFixed(1)} M` :
-  n >= 1_000     ? `${(n / 1_000).toFixed(0)} k` :
-  `${n.toFixed(0)}`;
+import { fmtCompact as fmt } from '../../../lib/formatters';
 
 const EMPTY: Partial<GlobalSupplier> = {
   name: '', category: 'fournitures', contact_name: '', phone: '', email: '',
@@ -25,13 +22,6 @@ const CAT_COLOR: Record<string, string> = {
   location:         '#f97316',
 };
 
-const CAT_BADGE: Record<string, string> = {
-  travaux:          'badge',
-  fournitures:      'badge badge-draft',
-  services:         'badge',
-  'sous-traitance': 'badge badge-active',
-  location:         'badge',
-};
 
 export default function SuppliersPage() {
   const queryClient = useQueryClient();

@@ -17,11 +17,14 @@ export default function MeetingReportModal({ projectId, onClose }: Props) {
   const [error, setError]         = useState<string | null>(null);
   const [copied, setCopied]       = useState(false);
 
-  const addRow    = <T,>(setter: React.Dispatch<React.SetStateAction<T[]>>, blank: T) => setter(a => [...a, blank]);
-  const removeRow = <T,>(setter: React.Dispatch<React.SetStateAction<T[]>>, i: number) =>
-    setter(a => a.filter((_, idx) => idx !== i));
-  const updateRow = <T,>(setter: React.Dispatch<React.SetStateAction<T[]>>, i: number, val: T) =>
-    setter(a => a.map((v, idx) => idx === i ? val : v));
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const addRow    = (setter: React.Dispatch<React.SetStateAction<any[]>>, blank: unknown) => setter((a: unknown[]) => [...a, blank]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const removeRow = (setter: React.Dispatch<React.SetStateAction<any[]>>, i: number) =>
+    setter((a: unknown[]) => a.filter((_, idx) => idx !== i));
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const updateRow = (setter: React.Dispatch<React.SetStateAction<any[]>>, i: number, val: unknown) =>
+    setter((a: unknown[]) => a.map((v, idx) => idx === i ? val : v));
 
   async function handleGenerate() {
     setError(null);

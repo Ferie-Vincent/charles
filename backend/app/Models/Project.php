@@ -24,18 +24,33 @@ class Project extends Model
         'current_progress',
         'start_date',
         'end_date',
+        // BTP contract fields
+        'type_marche',
+        'maitre_ouvrage',
+        'maitre_oeuvre',
+        'bureau_controle',
+        'montant_marche',
+        'avance_demarrage_pct',
+        'delai_execution_jours',
+        'date_reception_provisoire',
+        'date_reception_definitive',
     ];
 
     protected function casts(): array
     {
         return [
-            'budget_amount'    => 'decimal:2',
-            'target_progress'  => 'integer',
-            'current_progress' => 'integer',
-            'start_date'       => 'date',
-            'end_date'         => 'date',
-            'latitude'         => 'float',
-            'longitude'        => 'float',
+            'budget_amount'              => 'decimal:2',
+            'montant_marche'             => 'decimal:2',
+            'target_progress'            => 'integer',
+            'current_progress'           => 'integer',
+            'avance_demarrage_pct'       => 'integer',
+            'delai_execution_jours'      => 'integer',
+            'start_date'                 => 'date',
+            'end_date'                   => 'date',
+            'date_reception_provisoire'  => 'date',
+            'date_reception_definitive'  => 'date',
+            'latitude'                   => 'float',
+            'longitude'                  => 'float',
         ];
     }
 

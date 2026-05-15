@@ -27,7 +27,7 @@ class PortfolioAnalysisController extends Controller
 
         $projects = Project::with(['incidents', 'dailyLogs', 'budgetEntries', 'dqeVersions'])
             ->where('company_id', $user->company_id)
-            ->whereIn('status', ['active', 'draft'])
+            ->whereIn('status', ['active', 'en_preparation'])
             ->get();
 
         if ($projects->isEmpty()) {

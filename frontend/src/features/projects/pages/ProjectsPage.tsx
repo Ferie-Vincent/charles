@@ -13,7 +13,7 @@ import { getRoleGroup } from '../../../lib/roles';
 const STATUSES = [
   { key: '',          label: 'Tous' },
   { key: 'active',    label: 'Actifs' },
-  { key: 'draft',     label: 'Brouillon' },
+  { key: 'en_preparation', label: 'En préparation' },
   { key: 'completed', label: 'Terminés' },
   { key: 'archived',  label: 'Archivés' },
 ];

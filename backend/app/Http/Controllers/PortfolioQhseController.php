@@ -20,9 +20,16 @@ class PortfolioQhseController extends Controller
 
         $companyId = $request->user()->company_id;
 
-        // Fetch all incidents scoped to company, with project and reporter
+        $companyScope = fn ($q) => $q->where('company_id', $companyId);
+
+        // KPIs on full dataset — never limit before aggregating
+        $totalIncidents = Incident::whereHas('project', $companyScope)->count();
+        $openIncidents  = Incident::whereHas('project', $companyScope)->whereIn('status', ['ouvert', 'en_cours'])->count();
+        $critiqueCount  = Incident::whereHas('project', $companyScope)->where('severity', 'critique')->count();
+
+        // List: most recent 50 only (display)
         $incidents = Incident::query()
-            ->whereHas('project', fn ($q) => $q->where('company_id', $companyId))
+            ->whereHas('project', $companyScope)
             ->with([
                 'project:id,name,code',
                 'reporter:id,name',
@@ -30,11 +37,6 @@ class PortfolioQhseController extends Controller
             ->orderByDesc('occurred_at')
             ->limit(50)
             ->get();
-
-        // Stats
-        $totalIncidents = $incidents->count();
-        $openIncidents  = $incidents->whereIn('status', ['ouvert', 'en_cours'])->count();
-        $critiqueCount  = $incidents->where('severity', 'critique')->count();
 
         // Safety by project — compute monthly safety score for each active project
         $now       = Carbon::now();

@@ -161,7 +161,7 @@ TDD discipline:
 
 ## Feature Roadmap
 
-### V1 — Complété ✅ (61 tests passing)
+### V1 — Complété ✅
 
 | # | Feature | Notes |
 |---|---------|-------|
@@ -201,35 +201,8 @@ TDD discipline:
 | —  | GED Documents | Upload, téléchargement, filtres, Storage::disk('public') |
 | —  | Portfolio pages | Costs, evaluation, QSE, reporting, DQE portfolio |
 | —  | Comptabilité projet | Fournisseurs, factures, budget engagé/réalisé/RAC/écart |
-
-### Prochaine feature — Dashboard Opérationnel DT/DG 🔜
-
-Vue centralisée de pilotage pour Directeur Technique / Directeur Général.
-
-**Bloc 1 — KPIs sommaires**
-- Score santé portefeuille agrégé (moyenne pondérée health scores actifs)
-- Budget total engagé vs prévisionnel (tous chantiers)
-- Nb BDC en attente d'approbation
-- Nb stocks en alerte (qty < min_quantity)
-
-**Bloc 2 — Listes actionnables**
-- BDC en attente + compteur âge (jours depuis soumission) → bouton Approuver inline
-- Chantiers health score < 50 + fil d'actu 7 derniers événements
-- Stocks en alerte + suggestion BDC pré-rempli
-
-**Bloc 3 — Alertes intelligentes**
-- Deadline approbation 48h avec badge rouge
-- Snooze alertes non critiques (X jours)
-- Top 3 actions du jour (algo priorité)
-
-**Bloc 4 — V2**
-- Score fournisseur (délais + qualité + prix)
-- Trésorerie consolidée multi-chantiers 30/60/90j
-- Carte thermique budget (projets × catégories)
-- Mode réunion plein écran
-
-**Endpoint backend à créer :** `GET /api/portfolio/operations`
-Retourne : health_scores[], bdc_pending[], stock_alerts[], budget_summary{}
+| —  | Dashboard Opérationnel DT | `OperationsDashboardPage` at `/` for `dt` role via `RootPage` switcher; `GET /api/portfolio/operations`; BDC/DQE/factures inline approval; Top 3 actions algo; auto-refresh 60s |
+| —  | Dashboard refactor | Extracted `ActivityFeed`, `ProjectList`, `QuickActions`, `PortfolioPanel`; forwardRef MapView + requestAnimationFrame invalidateSize; `ACTIVITY_FEED_FILTER` + `KPI_HIDDEN_FOR` in `roles.ts`; Sally 4-zone direction layout |
 
 ### V2 (deferred)
 

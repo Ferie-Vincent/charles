@@ -7,8 +7,28 @@ import {
   type BudgetData, type BudgetEntryInput, type BudgetEntryType,
 } from '../api/get-budget';
 
+// Catégories budget BTP — alignées SYSCOHADA-CI (plan comptable OHADA classe 6)
 const CATEGORIES = [
-  'Matériaux', "Main d'œuvre", 'Transport', 'Équipements', 'Sous-traitance', 'Installation', 'Autre',
+  'Installation de chantier',
+  'Terrassement & fondations',
+  'Gros œuvre',
+  'Charpente & toiture',
+  'Menuiseries',
+  'Plomberie & sanitaire',
+  'Électricité & CVC',
+  'Revêtements & finitions',
+  'VRD & espaces extérieurs',
+  "Main d'œuvre directe",
+  'Sous-traitance',
+  'Matériaux',
+  'Matériel et outillage',
+  'Transport et déplacement',
+  'Études et honoraires',
+  'Sécurité et EPI',
+  'Assurances chantier',
+  'Impôts et taxes',
+  'Frais généraux chantier',
+  'Autre',
 ];
 
 const TYPE_LABELS: Record<BudgetEntryType, string> = {
@@ -138,7 +158,7 @@ export default function BudgetPanel({ projectId }: Props) {
                 width={60}
               />
               <Tooltip
-                formatter={(v: number, name: string) => [fmtFCFAFull(v), name]}
+                formatter={((v: number, name: string) => [fmtFCFAFull(v), name]) as any}
                 contentStyle={{ fontSize: 11, borderRadius: 6, border: '1px solid var(--border)' }}
               />
               <Legend wrapperStyle={{ fontSize: 11 }} />

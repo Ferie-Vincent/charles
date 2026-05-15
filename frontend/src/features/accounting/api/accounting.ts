@@ -13,12 +13,22 @@ export interface Supplier {
   notes?: string;
 }
 
+export type TypeFacturation = 'facture' | 'situation_travaux' | 'acompte' | 'decompte_final';
+
 export interface Invoice {
   id: number;
   reference: string;
   category: string;
+  type_facturation: TypeFacturation;
   amount_ht: number;
   amount_ttc?: number;
+  vat_rate?: number;
+  vat_amount?: number;
+  retenue_garantie_pct?: number;
+  retenue_garantie_amount?: number;
+  ras_pct?: number;
+  ras_amount?: number;
+  net_a_payer?: number;
   status: 'brouillon' | 'soumise' | 'validee' | 'payee' | 'disputee';
   invoice_date: string;
   due_date?: string;
@@ -29,7 +39,6 @@ export interface Invoice {
   purchase_order_id?: number | null;
   attachment_path?: string;
   attachment_name?: string;
-  purchase_order_id?: number | null;
   // workflow
   validated_by?: number;
   validated_at?: string;

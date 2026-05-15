@@ -18,6 +18,8 @@ export type ProjectMember = {
   };
 };
 
+export type TypeMarche = 'forfait' | 'bordereau_prix' | 'depenses_controlees' | 'cle_en_main';
+
 export type Project = {
   id: number;
   code: string;
@@ -30,6 +32,16 @@ export type Project = {
   start_date: string | null;
   end_date: string | null;
   target_progress: number | null;
+  // BTP contract fields
+  type_marche: TypeMarche | null;
+  maitre_ouvrage: string | null;
+  maitre_oeuvre: string | null;
+  bureau_controle: string | null;
+  montant_marche: number | null;
+  avance_demarrage_pct: number | null;
+  delai_execution_jours: number | null;
+  date_reception_provisoire: string | null;
+  date_reception_definitive: string | null;
   members?: ProjectMember[];
   activities?: ProjectActivity[];
 };
@@ -42,4 +54,14 @@ export type CreateProjectPayload = {
   budget_amount?: number;
   start_date?: string;
   end_date?: string;
+  // BTP contract fields
+  type_marche?: TypeMarche;
+  maitre_ouvrage?: string;
+  maitre_oeuvre?: string;
+  bureau_controle?: string;
+  montant_marche?: number;
+  avance_demarrage_pct?: number;
+  delai_execution_jours?: number;
+  date_reception_provisoire?: string;
+  date_reception_definitive?: string;
 };

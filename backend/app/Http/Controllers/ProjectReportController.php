@@ -36,6 +36,7 @@ class ProjectReportController extends Controller
     public function download(Request $request, Project $project, ProjectReport $report): Response
     {
         $this->authorize('view', $project);
+        abort_if($report->project_id !== $project->id, 404);
 
         abort_unless(Storage::disk('local')->exists($report->path), 404);
 

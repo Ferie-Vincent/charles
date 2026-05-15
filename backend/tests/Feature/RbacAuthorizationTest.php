@@ -32,7 +32,7 @@ describe('Project create', function () {
         $user = rbacUser($role, $this->company);
         $this->actingAs($user)
             ->postJson('/api/projects', [
-                'code' => 'CH-TEST', 'name' => 'Test', 'status' => 'draft',
+                'code' => 'CH-TEST', 'name' => 'Test', 'status' => 'en_preparation',
                 'location' => 'Abidjan', 'budget_amount' => 5000,
                 'start_date' => '2026-01-01', 'end_date' => '2026-12-31',
             ])
@@ -43,7 +43,7 @@ describe('Project create', function () {
         $user = rbacUser($role, $this->company);
         $this->actingAs($user)
             ->postJson('/api/projects', [
-                'code' => 'CH-TEST', 'name' => 'Test', 'status' => 'draft',
+                'code' => 'CH-TEST', 'name' => 'Test', 'status' => 'en_preparation',
                 'location' => 'Abidjan', 'budget_amount' => 5000,
             ])
             ->assertForbidden();
@@ -164,6 +164,7 @@ describe('Portfolio operations endpoint', function () {
 describe('Purchase order RBAC', function () {
     beforeEach(function () {
         $this->company = Company::factory()->create();
+        seedPermissions();
         $this->project = rbacProject($this->company, ['status' => 'active']);
     });
 
@@ -213,6 +214,7 @@ describe('Purchase order RBAC', function () {
 describe('Stock adjustments audit endpoint', function () {
     beforeEach(function () {
         $this->company = Company::factory()->create();
+        seedPermissions();
     });
 
     it('allows management and logistics to view adjustment audit', function (string $role) {
@@ -235,6 +237,7 @@ describe('Stock adjustments audit endpoint', function () {
 describe('Demande besoin RBAC', function () {
     beforeEach(function () {
         $this->company = Company::factory()->create();
+        seedPermissions();
         $this->project = rbacProject($this->company, ['status' => 'active']);
     });
 

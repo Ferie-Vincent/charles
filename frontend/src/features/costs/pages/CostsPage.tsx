@@ -12,20 +12,7 @@ import {
 } from 'recharts';
 import { getPortfolioCosts, type ProjectCost } from '../api/get-portfolio-costs';
 import PageHeader from '../../../components/ui/PageHeader';
-
-function fmtFCFA(n: number): string {
-  if (n >= 1_000_000_000) {
-    return (n / 1_000_000_000).toLocaleString('fr-FR', { maximumFractionDigits: 2 }) + ' Mds FCFA';
-  }
-  if (n >= 1_000_000) {
-    return (n / 1_000_000).toLocaleString('fr-FR', { maximumFractionDigits: 0 }) + ' M FCFA';
-  }
-  return n.toLocaleString('fr-FR') + ' FCFA';
-}
-
-function fmtFCFAFull(n: number): string {
-  return Number(n).toLocaleString('fr-FR') + ' FCFA';
-}
+import { fmtFCFA, fmtFCFAFull } from '../../../lib/formatters';
 
 const BAR_COLORS = {
   previsionnel: '#6366f1',
@@ -161,7 +148,8 @@ export default function CostsPage() {
                   <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#64748b' }} />
                   <YAxis tickFormatter={(v: number) => fmtFCFA(v)} tick={{ fontSize: 10, fill: '#64748b' }} width={90} />
                   <Tooltip
-                    formatter={(value: number, name: string) => [fmtFCFAFull(value), name.charAt(0).toUpperCase() + name.slice(1)]}
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    formatter={((value: number, name: string) => [fmtFCFAFull(value), name.charAt(0).toUpperCase() + name.slice(1)]) as any}
                     contentStyle={{ fontSize: 12, borderRadius: 6, border: '1px solid #e2e8f0' }}
                   />
                   <Legend

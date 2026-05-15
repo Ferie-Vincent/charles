@@ -119,6 +119,7 @@ it('comptable can record payment with proof on a validee invoice', function () {
     Storage::fake('public');
 
     $company      = Company::factory()->create();
+    seedPermissions();
     $comptable    = makeUser($company, 'comptable');
     $project      = makeProject($company);
     $purchaseOrder = makePurchaseOrder($company, $comptable);
@@ -145,6 +146,7 @@ it('comptable can record payment with proof on a validee invoice', function () {
 
 it('payment requires a proof file', function () {
     $company   = Company::factory()->create();
+    seedPermissions();
     $comptable = makeUser($company, 'comptable');
     $project   = makeProject($company);
     $invoice   = makeInvoice($project, $comptable, 'validee');
@@ -183,6 +185,7 @@ it('cannot pay an invoice that is not yet validated', function () {
     Storage::fake('public');
 
     $company   = Company::factory()->create();
+    seedPermissions();
     $comptable = makeUser($company, 'comptable');
     $project   = makeProject($company);
     $invoice   = makeInvoice($project, $comptable, 'soumise');

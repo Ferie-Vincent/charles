@@ -26,11 +26,11 @@ import CollapsibleSection from '../../../components/ui/CollapsibleSection';
 import TerrainFAB from '../../../components/ui/TerrainFAB';
 
 const STATUS_LABELS: Record<string, string> = {
-  draft: 'Brouillon', active: 'Actif', completed: 'Terminé', archived: 'Archivé',
+  en_preparation: 'En préparation', active: 'Actif', completed: 'Terminé', archived: 'Archivé',
 };
 
 const STATUS_COLOR: Record<string, string> = {
-  draft: '#8391a2', active: '#10b981', completed: '#3b7ddd', archived: '#94a3b8',
+  en_preparation: '#8391a2', active: '#10b981', completed: '#3b7ddd', archived: '#94a3b8',
 };
 
 const ROLE_LABELS: Record<string, string> = {

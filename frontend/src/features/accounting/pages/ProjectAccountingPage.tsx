@@ -7,30 +7,42 @@ import {
   createInvoice, updateInvoice, deleteInvoice,
   validateInvoice, payInvoice,
   invoiceAttachmentUrl, invoicePaymentProofUrl,
-  type Supplier, type Invoice,
+  type Supplier, type Invoice, type TypeFacturation,
 } from '../api/accounting';
 import PageHeader from '../../../components/ui/PageHeader';
 import SkeletonPage from '../../../components/ui/SkeletonPage';
 import ActivityDetailModal from '../components/ActivityDetailModal';
+import { fmtFCFA, fmtFCFAFull as fmtFull } from '../../../lib/formatters';
+import { INVOICE_STATUS } from '../../../lib/constants';
 
-const fmtFCFA = (n: number) => {
-  if (n >= 1_000_000_000) return (n / 1_000_000_000).toFixed(2) + ' Mds';
-  if (n >= 1_000_000) return (n / 1_000_000).toFixed(0) + ' M';
-  return n.toLocaleString('fr-FR');
+const SUPPLIER_CATEGORIES = ['travaux', 'fournitures', 'services', 'sous-traitance', 'location', 'études', 'assurances'];
+
+// Catégories BTP SYSCOHADA-CI (plan comptable OHADA classe 6)
+const INVOICE_CATEGORIES = [
+  'Gros œuvre',
+  'Second œuvre',
+  'VRD',
+  'Électricité / Plomberie / CVC',
+  'Main d\'œuvre',
+  'Sous-traitance',
+  'Matériaux',
+  'Matériel et outillage',
+  'Transport et déplacement',
+  'Installation de chantier',
+  'Études et honoraires',
+  'Sécurité et EPI',
+  'Assurances chantier',
+  'Impôts et taxes',
+  'Frais généraux',
+  'Autre',
+];
+
+const TYPE_FACTURATION_LABEL: Record<string, string> = {
+  facture:          'Facture ordinaire',
+  situation_travaux:'Situation de travaux',
+  acompte:          'Acompte / Avance',
+  decompte_final:   'Décompte final',
 };
-
-const fmtFull = (n: number) => Number(n).toLocaleString('fr-FR') + ' FCFA';
-
-const INVOICE_STATUS: Record<string, { label: string; color: string; bg: string }> = {
-  brouillon: { label: 'Brouillon',  color: '#64748b', bg: '#f1f5f9' },
-  soumise:   { label: 'Soumise',    color: '#f59e0b', bg: '#fffbeb' },
-  validee:   { label: 'Validée',    color: '#3b82f6', bg: '#eff6ff' },
-  payee:     { label: 'Payée',      color: '#10b981', bg: '#f0fdf4' },
-  disputee:  { label: 'Disputée',   color: '#ef4444', bg: '#fef2f2' },
-};
-
-const SUPPLIER_CATEGORIES = ['travaux', 'fournitures', 'services', 'sous-traitance', 'location'];
-const INVOICE_CATEGORIES = ['Matériaux', 'Main d\'œuvre', 'Sous-traitance', 'Transport', 'Équipements', 'Frais généraux', 'Autre'];
 
 type Tab = 'synthese' | 'factures' | 'fournisseurs';
 
@@ -253,8 +265,9 @@ export default function ProjectAccountingPage() {
                 <tr>
                   <th>Référence</th>
                   <th>Fournisseur</th>
-                  <th>Catégorie</th>
+                  <th>Type / Catégorie</th>
                   <th style={{ textAlign: 'right' }}>Montant HT</th>
+                  <th style={{ textAlign: 'right' }}>Net à payer</th>
                   <th>Date</th>
                   <th>Statut</th>
                   <th>PJ</th>
@@ -273,8 +286,19 @@ export default function ProjectAccountingPage() {
                     >
                       <td style={{ fontWeight: 600, fontSize: 13 }}>{inv.reference}</td>
                       <td style={{ color: 'var(--text-muted)', fontSize: 13 }}>{inv.supplier?.name ?? '—'}</td>
-                      <td>{inv.category}</td>
+                      <td>
+                        <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 2 }}>
+                          {TYPE_FACTURATION_LABEL[inv.type_facturation] ?? 'Facture ordinaire'}
+                        </div>
+                        {inv.category}
+                      </td>
                       <td style={{ textAlign: 'right', fontWeight: 600 }}>{fmtFull(inv.amount_ht)}</td>
+                      <td style={{ textAlign: 'right', fontSize: 13 }}>
+                        {inv.net_a_payer != null && inv.net_a_payer !== inv.amount_ttc
+                          ? <span style={{ color: '#f59e0b' }}>{fmtFull(inv.net_a_payer)}</span>
+                          : <span style={{ color: 'var(--text-muted)' }}>—</span>
+                        }
+                      </td>
                       <td style={{ fontSize: 13 }}>{new Date(inv.invoice_date).toLocaleDateString('fr-FR')}</td>
                       <td>
                         <span
@@ -696,15 +720,25 @@ function InvoiceModal({ invoice, suppliers, projectId, onSave, onClose }: {
   onClose: () => void;
 }) {
   const [form, setForm] = useState({
-    reference:    invoice?.reference ?? '',
-    category:     invoice?.category ?? 'Matériaux',
-    amount_ht:    invoice?.amount_ht ?? 0,
-    amount_ttc:   invoice?.amount_ttc ?? 0,
-    invoice_date: invoice?.invoice_date?.substring(0, 10) ?? new Date().toISOString().substring(0, 10),
-    due_date:     invoice?.due_date?.substring(0, 10) ?? '',
-    supplier_id:  invoice?.supplier_id ?? '',
-    note:         invoice?.note ?? '',
+    reference:            invoice?.reference ?? '',
+    category:             invoice?.category ?? 'Gros œuvre',
+    type_facturation:     (invoice?.type_facturation ?? 'facture') as TypeFacturation,
+    amount_ht:            invoice?.amount_ht ?? 0,
+    vat_rate:             invoice?.vat_rate ?? 18,
+    retenue_garantie_pct: invoice?.retenue_garantie_pct ?? 0,
+    ras_pct:              invoice?.ras_pct ?? 0,
+    invoice_date:         invoice?.invoice_date?.substring(0, 10) ?? new Date().toISOString().substring(0, 10),
+    due_date:             invoice?.due_date?.substring(0, 10) ?? '',
+    supplier_id:          invoice?.supplier_id ?? '',
+    note:                 invoice?.note ?? '',
   });
+
+  // Derived BTP amounts (computed on render)
+  const vatAmount  = Math.round(form.amount_ht * form.vat_rate / 100 * 100) / 100;
+  const amountTtc  = Math.round((form.amount_ht + vatAmount) * 100) / 100;
+  const rdgAmount  = Math.round(amountTtc * form.retenue_garantie_pct / 100 * 100) / 100;
+  const rasAmount  = Math.round(amountTtc * form.ras_pct / 100 * 100) / 100;
+  const netAPayer  = Math.round((amountTtc - rdgAmount - rasAmount) * 100) / 100;
   const [attachment, setAttachment] = useState<File | null>(null);
   const [dragOver, setDragOver]     = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -721,12 +755,16 @@ function InvoiceModal({ invoice, suppliers, projectId, onSave, onClose }: {
     setSaving(true);
     const payload = {
       ...form,
-      supplier_id: form.supplier_id || null,
-      due_date:    form.due_date || null,
-      amount_ttc:  form.amount_ttc || null,
-      attachment:  attachment,
+      supplier_id:          form.supplier_id || null,
+      due_date:             form.due_date || null,
+      amount_ttc:           amountTtc,
+      vat_amount:           vatAmount,
+      retenue_garantie_amount: rdgAmount,
+      ras_amount:           rasAmount,
+      net_a_payer:          netAPayer,
+      attachment:           attachment,
     };
-    try { await onSave(payload); } finally { setSaving(false); }
+    try { await onSave(payload as Partial<Invoice> & { attachment?: File | null }); } finally { setSaving(false); }
   }
 
   return (
@@ -745,29 +783,74 @@ function InvoiceModal({ invoice, suppliers, projectId, onSave, onClose }: {
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
             <div className="form-field">
-              <label className="form-label">Catégorie</label>
+              <label className="form-label">Type de facturation</label>
+              <select className="form-select" value={form.type_facturation} onChange={e => setForm(f => ({ ...f, type_facturation: e.target.value as TypeFacturation }))}>
+                {Object.entries(TYPE_FACTURATION_LABEL).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+              </select>
+            </div>
+            <div className="form-field">
+              <label className="form-label">Catégorie BTP</label>
               <select className="form-select" value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))}>
                 {INVOICE_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
-            <div className="form-field">
-              <label className="form-label">Fournisseur</label>
-              <select className="form-select" value={form.supplier_id} onChange={e => setForm(f => ({ ...f, supplier_id: e.target.value }))}>
-                <option value="">— Sans fournisseur —</option>
-                {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-              </select>
-            </div>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+          <div className="form-field">
+            <label className="form-label">Fournisseur</label>
+            <select className="form-select" value={form.supplier_id} onChange={e => setForm(f => ({ ...f, supplier_id: e.target.value }))}>
+              <option value="">— Sans fournisseur —</option>
+              {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+            </select>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.75rem' }}>
             <div className="form-field">
               <label className="form-label">Montant HT (FCFA)</label>
               <input className="form-input" type="number" min="0" value={form.amount_ht} onChange={e => setForm(f => ({ ...f, amount_ht: Number(e.target.value) }))} required />
             </div>
             <div className="form-field">
-              <label className="form-label">Montant TTC (FCFA)</label>
-              <input className="form-input" type="number" min="0" value={form.amount_ttc} onChange={e => setForm(f => ({ ...f, amount_ttc: Number(e.target.value) }))} />
+              <label className="form-label">TVA (%)</label>
+              <input className="form-input" type="number" min="0" max="100" value={form.vat_rate} onChange={e => setForm(f => ({ ...f, vat_rate: Number(e.target.value) }))} />
+            </div>
+            <div className="form-field">
+              <label className="form-label">TTC auto-calculé</label>
+              <input className="form-input" type="text" readOnly value={amountTtc.toLocaleString('fr-FR') + ' FCFA'} style={{ background: 'var(--bg-subtle, #f8fafc)', color: 'var(--text-muted)' }} />
             </div>
           </div>
+          {/* BTP CI: Retenues réglementaires */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+            <div className="form-field">
+              <label className="form-label">Retenue de garantie (%)</label>
+              <input className="form-input" type="number" min="0" max="100" step="0.5" value={form.retenue_garantie_pct} onChange={e => setForm(f => ({ ...f, retenue_garantie_pct: Number(e.target.value) }))} placeholder="5" />
+            </div>
+            <div className="form-field">
+              <label className="form-label">Retenue à la source DGI (%)</label>
+              <input className="form-input" type="number" min="0" max="100" step="0.5" value={form.ras_pct} onChange={e => setForm(f => ({ ...f, ras_pct: Number(e.target.value) }))} placeholder="0" />
+            </div>
+          </div>
+          {(form.retenue_garantie_pct > 0 || form.ras_pct > 0) && (
+            <div style={{ background: 'var(--bg-subtle, #f8fafc)', border: '1px solid var(--border)', borderRadius: 6, padding: '0.625rem 0.875rem', fontSize: 12, display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: 'var(--text-muted)' }}>Montant TTC</span>
+                <span>{amountTtc.toLocaleString('fr-FR')} FCFA</span>
+              </div>
+              {form.retenue_garantie_pct > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: '#f59e0b' }}>
+                  <span>− Retenue garantie ({form.retenue_garantie_pct}%)</span>
+                  <span>−{rdgAmount.toLocaleString('fr-FR')} FCFA</span>
+                </div>
+              )}
+              {form.ras_pct > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: '#f59e0b' }}>
+                  <span>− RAS DGI ({form.ras_pct}%)</span>
+                  <span>−{rasAmount.toLocaleString('fr-FR')} FCFA</span>
+                </div>
+              )}
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600, borderTop: '1px solid var(--border)', paddingTop: 4, marginTop: 2 }}>
+                <span>Net à payer</span>
+                <span style={{ color: 'var(--color-primary, #2F60B0)' }}>{netAPayer.toLocaleString('fr-FR')} FCFA</span>
+              </div>
+            </div>
+          )}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
             <div className="form-field">
               <label className="form-label">Date facture</label>

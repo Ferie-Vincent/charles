@@ -27,6 +27,7 @@ function dqeVersion(Project $project, User $user, string $status = 'draft'): Dqe
 
 beforeEach(function () {
     $this->company = Company::factory()->create();
+    seedPermissions();
     $this->project = Project::factory()->create(['company_id' => $this->company->id]);
     $this->dg      = dqeUser($this->company, 'direction');
     $this->dt      = dqeUser($this->company, 'directeur-technique');
