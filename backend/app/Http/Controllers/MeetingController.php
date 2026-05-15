@@ -226,16 +226,13 @@ class MeetingController extends Controller
 
     private function buildChecklist(?string $alertType): ?string
     {
-        return match ($alertType) {
-            'overdue', 'planning_lag' =>
-                "- [ ] Réévaluer les jalons avec le conducteur\n- [ ] Mettre à jour le planning\n- [ ] Définir plan de rattrapage\n- [ ] Rédiger compte-rendu réunion",
-            'open_incident' =>
-                "- [ ] Vérifier PV de clôture incident\n- [ ] Action corrective signée\n- [ ] Mise à jour registre QSE",
-            'no_journal' =>
-                "- [ ] Reprendre la saisie des journaux de chantier\n- [ ] Rappeler chef chantier\n- [ ] Vérifier conformité reporting",
-            'health_critical' =>
-                "- [ ] Analyser les 4 composantes du score santé\n- [ ] Plan correctif prioritaire\n- [ ] Point direction sous 48h",
-            default => null,
-        };
+        if (! $alertType) {
+            return null;
+        }
+
+        // Generic 3-item checklist — simplify before measuring usage then refine
+        return "- [ ] Définir les actions correctives avec les responsables\n"
+             . "- [ ] Assigner les tâches et fixer les délais\n"
+             . "- [ ] Planifier un point de vérification dans 48h";
     }
 }

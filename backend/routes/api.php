@@ -245,6 +245,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/meetings', [\App\Http\Controllers\MeetingController::class, 'store']);
     Route::patch('/meeting-invitations/{meetingId}/respond', [\App\Http\Controllers\MeetingController::class, 'respond']);
     Route::get('/meetings/{meetingId}/rsvp-status', [\App\Http\Controllers\MeetingController::class, 'rsvpStatus']);
+    Route::get('/meetings/metrics', [\App\Http\Controllers\MeetingMetricsController::class, 'index']);
 
     // ── Notifications utilisateur ──────────────────────────────────────────────
     Route::get('/notifications', [\App\Http\Controllers\MeetingController::class, 'userNotifications']);
