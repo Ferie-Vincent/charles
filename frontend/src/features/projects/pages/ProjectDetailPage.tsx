@@ -45,10 +45,14 @@ function TodayJournalCard({ logs, projectId }: { logs: DailyLog[]; projectId: nu
         </div>
         <div className="journal-status-card__body">
           <span className="journal-status-card__title">Journal du {label} — Saisi</span>
+          {/* Présences ouvriers = priorité chef de chantier */}
+          <div className="journal-status-card__presence">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="14" height="14"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <strong>{todayLog.workers_count}</strong> personne{todayLog.workers_count > 1 ? 's' : ''} présente{todayLog.workers_count > 1 ? 's' : ''}
+          </div>
           <div className="journal-status-card__chips">
             <span>{WEATHER_EMOJI[todayLog.weather] ?? '🌡'} {todayLog.weather}</span>
-            <span>👷 {todayLog.workers_count} ouvriers</span>
-            <span>📈 {todayLog.progress_percent} %</span>
+            <span>📈 Avancement {todayLog.progress_percent} %</span>
             {todayLog.has_incident && <span className="journal-status-card__chip--alert">⚠️ Incident signalé</span>}
           </div>
         </div>
@@ -62,12 +66,12 @@ function TodayJournalCard({ logs, projectId }: { logs: DailyLog[]; projectId: nu
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="20" height="20"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
       </div>
       <div className="journal-status-card__body">
-        <span className="journal-status-card__title">Journal non saisi — {label}</span>
-        <span className="journal-status-card__hint">Pensez à saisir votre rapport journalier avant la fin de journée.</span>
+        <span className="journal-status-card__title">Présences non saisies — {label}</span>
+        <span className="journal-status-card__hint">Pointez les ouvriers présents et enregistrez l'avancement du jour.</span>
       </div>
       <Link to={`/projects/${projectId}/journal`} className="journal-status-card__cta">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="14" height="14"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        Saisir le journal
+        Pointer & saisir
       </Link>
     </div>
   );
@@ -576,12 +580,14 @@ export default function ProjectDetailPage() {
             title="Rapports hebdomadaires"
             subtitle="Archives générées automatiquement — téléchargeables"
             icon={icons.report}
-            extra={<WhatsAppTestButton projectId={project.id} />}
           >
             <PanelErrorBoundary title="Rapports">
               <ReportsWidget projectId={project.id} />
             </PanelErrorBoundary>
           </CollapsibleSection>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: -8, marginBottom: 8 }}>
+            <WhatsAppTestButton projectId={project.id} />
+          </div>
 
           {/* 7. Équipe + Historique */}
           <div className="detail-grid">
@@ -598,24 +604,28 @@ export default function ProjectDetailPage() {
            VUE TERRAIN / AUTRES — ordre opérationnel quotidien
         ════════════════════════════════════════════════════════ */
         <>
-          {/* Statut journal du jour — Sally: CTA unique + journal statut card */}
+          {/* Statut pointage + présences du jour */}
           <TodayJournalCard logs={logs} projectId={project.id} />
 
+          {/* ── 1. Photos chantier — priorité N°1 chef de chantier ─────────────
+              Preuve contractuelle pour situations mensuelles + traçabilité QHSE.
+          ─────────────────────────────────────────────────────────────────── */}
           <CollapsibleSection
-            title="Documents du chantier"
-            subtitle="Appel d'offres, ordre de service, marché, contrats et plans"
+            title="Photos du chantier"
+            subtitle="Prenez des photos pour documenter l'avancement — preuve contractuelle et QHSE"
             defaultOpen
-            icon={icons.docs}
+            icon={icons.photo}
           >
-            <PanelErrorBoundary title="Documents">
-              <ProjectDocumentsPanel projectId={project.id} />
+            <PanelErrorBoundary title="Photos">
+              <PhotoGallery projectId={project.id} />
             </PanelErrorBoundary>
           </CollapsibleSection>
 
+          {/* ── 2. Pointage & journaux — présences ouvriers ────────────────── */}
           <CollapsibleSection
             id="journal-section"
-            title="Rapports journaliers"
-            subtitle="Calendrier mensuel — cliquer un jour pour voir le détail"
+            title="Pointage & rapports journaliers"
+            subtitle="Présences, avancement, matériaux — calendrier mensuel"
             defaultOpen
             icon={icons.calendar}
           >
@@ -624,6 +634,7 @@ export default function ProjectDetailPage() {
             </PanelErrorBoundary>
           </CollapsibleSection>
 
+          {/* ── 3. Incidents & Sécurité ─────────────────────────────────────── */}
           <CollapsibleSection title="Incidents chantier" subtitle="Incidents déclarés — classés par gravité" icon={icons.incident}>
             <PanelErrorBoundary title="Incidents">
               <IncidentPanel projectId={project.id} />
@@ -636,6 +647,25 @@ export default function ProjectDetailPage() {
             </PanelErrorBoundary>
           </CollapsibleSection>
 
+          {/* ── 4. Matériaux reçus ──────────────────────────────────────────── */}
+          <CollapsibleSection title="Réceptions matériaux" subtitle="Totaux et historique des livraisons" icon={icons.mat}>
+            <PanelErrorBoundary title="Matériaux">
+              <MaterialReceiptsPanel projectId={project.id} />
+            </PanelErrorBoundary>
+          </CollapsibleSection>
+
+          {/* ── 5. Documents (consultation ponctuelle) ──────────────────────── */}
+          <CollapsibleSection
+            title="Documents du chantier"
+            subtitle="Appel d'offres, ordre de service, marché, contrats et plans"
+            icon={icons.docs}
+          >
+            <PanelErrorBoundary title="Documents">
+              <ProjectDocumentsPanel projectId={project.id} />
+            </PanelErrorBoundary>
+          </CollapsibleSection>
+
+          {/* ── 6. Références (pilotage secondaire pour terrain) ────────────── */}
           {project.start_date && project.end_date && (
             <CollapsibleSection title="Courbe S — Avancement réel vs théorique" subtitle="Progression cumulée depuis le début du chantier" icon={icons.courbeS}>
               <PanelErrorBoundary title="Courbe S">
@@ -643,6 +673,12 @@ export default function ProjectDetailPage() {
               </PanelErrorBoundary>
             </CollapsibleSection>
           )}
+
+          <CollapsibleSection title="Planning phases BTP" subtitle="Distribution estimée selon la répartition standard BTP" icon={icons.gantt}>
+            <PanelErrorBoundary title="Planning">
+              <PhaseGanttWidget project={project} progressPercent={avancement} />
+            </PanelErrorBoundary>
+          </CollapsibleSection>
 
           {isManagement && (
             <CollapsibleSection title="Trésorerie prévisionnelle — 90 jours" subtitle="Budget prévisionnel, engagements et décaissements" icon={icons.budget}>
@@ -652,40 +688,29 @@ export default function ProjectDetailPage() {
             </CollapsibleSection>
           )}
 
-          <CollapsibleSection title="Décompte Quantitatif Estimatif (DQE)" subtitle="Versions, lignes, lots — base contractuelle" icon={icons.dqe}>
-            <PanelErrorBoundary title="DQE">
-              <DqePanel projectId={project.id} />
-            </PanelErrorBoundary>
-          </CollapsibleSection>
+          {/* DQE — visible si conducteur-travaux ou metreur (permission DB) */}
+          {(group === 'dt' || group === 'metreur' || isDGDT) && (
+            <CollapsibleSection title="Décompte Quantitatif Estimatif (DQE)" subtitle="Versions, lignes, lots — base contractuelle" icon={icons.dqe}>
+              <PanelErrorBoundary title="DQE">
+                <DqePanel projectId={project.id} />
+              </PanelErrorBoundary>
+            </CollapsibleSection>
+          )}
 
-          <CollapsibleSection title="Planning phases BTP" subtitle="Distribution estimée selon la répartition standard BTP" icon={icons.gantt}>
-            <PanelErrorBoundary title="Planning">
-              <PhaseGanttWidget project={project} progressPercent={avancement} />
-            </PanelErrorBoundary>
-          </CollapsibleSection>
-
-          <CollapsibleSection title="Réceptions matériaux" subtitle="Totaux et historique des livraisons" icon={icons.mat}>
-            <PanelErrorBoundary title="Matériaux">
-              <MaterialReceiptsPanel projectId={project.id} />
-            </PanelErrorBoundary>
-          </CollapsibleSection>
-
-          <CollapsibleSection title="Galerie photos terrain" subtitle="Photos taguées par phase — glisser-déposer pour ajouter" icon={icons.photo}>
-            <PanelErrorBoundary title="Photos">
-              <PhotoGallery projectId={project.id} />
-            </PanelErrorBoundary>
-          </CollapsibleSection>
-
+          {/* fix: WhatsAppTestButton est un <button> — ne pas passer en extra
+              (qui se retrouve dans un <button> header = HTML invalide) */}
           <CollapsibleSection
             title="Rapports hebdomadaires"
             subtitle="Archives générées automatiquement"
             icon={icons.report}
-            extra={<WhatsAppTestButton projectId={project.id} />}
           >
             <PanelErrorBoundary title="Rapports">
               <ReportsWidget projectId={project.id} />
             </PanelErrorBoundary>
           </CollapsibleSection>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: -8, marginBottom: 8 }}>
+            <WhatsAppTestButton projectId={project.id} />
+          </div>
 
           <div className="detail-grid">
             <CollapsibleSection className="col-half" title="Équipe du chantier" icon={icons.team}>
