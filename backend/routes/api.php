@@ -35,6 +35,7 @@ use App\Http\Controllers\GedController;
 use App\Http\Controllers\DemandeBesoinController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\PortfolioOperationsController;
+use App\Http\Controllers\ProjectWorkerController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/health', function () {
@@ -214,6 +215,13 @@ Route::middleware('auth')->group(function () {
     Route::get('/projects/{project}/report/pdf', [ProjectReportController::class, 'pdf']);
     Route::get('/projects/{project}/reports', [ProjectReportController::class, 'index']);
     Route::get('/projects/{project}/reports/{report}/download', [ProjectReportController::class, 'download']);
+
+    // ── Personnel chantier ───────────────────────────────────────────────────
+    Route::get('/projects/{project}/workers', [ProjectWorkerController::class, 'index']);
+    Route::post('/projects/{project}/workers', [ProjectWorkerController::class, 'store']);
+    Route::patch('/projects/{project}/workers/{worker}', [ProjectWorkerController::class, 'update']);
+    Route::delete('/projects/{project}/workers/{worker}', [ProjectWorkerController::class, 'destroy']);
+    Route::post('/projects/{project}/workers/attendance', [ProjectWorkerController::class, 'attendance']);
 
     // ── DQE ──────────────────────────────────────────────────────────────────
     Route::middleware('permission:dqe')->group(function () {

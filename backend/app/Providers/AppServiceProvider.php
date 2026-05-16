@@ -4,11 +4,13 @@ namespace App\Providers;
 
 use App\Models\DailyLog;
 use App\Models\Project;
+use App\Models\ProjectWorker;
 use App\Models\Task;
 use App\Models\User;
 use App\Observers\TaskObserver;
 use App\Policies\DailyLogPolicy;
 use App\Policies\ProjectPolicy;
+use App\Policies\ProjectWorkerPolicy;
 use App\Policies\UserPolicy;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Support\Facades\Gate;
@@ -24,6 +26,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Project::class, ProjectPolicy::class);
         Gate::policy(DailyLog::class, DailyLogPolicy::class);
         Gate::policy(User::class, UserPolicy::class);
+        Gate::policy(ProjectWorker::class, ProjectWorkerPolicy::class);
 
         Task::observe(TaskObserver::class);
 
