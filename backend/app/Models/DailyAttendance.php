@@ -16,11 +16,16 @@ class DailyAttendance extends Model
         'log_date',
         'present',
         'task_assigned',
+        'statut',
+        'heures_normales',
+        'heures_sup',
     ];
 
     protected $casts = [
         'present'  => 'boolean',
         'log_date' => 'date:Y-m-d',
+        'heures_normales' => 'float',
+        'heures_sup' => 'float',
     ];
 
     public function worker(): BelongsTo
@@ -31,5 +36,10 @@ class DailyAttendance extends Model
     public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class);
+    }
+
+    public function getIsPresentAttribute(): bool
+    {
+        return in_array($this->statut, ['present', 'demi_journee']);
     }
 }
