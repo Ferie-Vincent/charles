@@ -16,9 +16,9 @@ class TaskController extends Controller
                 'assignee:id,name',
                 'creator:id,name',
                 'meeting' => fn($q) => $q->select('id', 'task_id')->withCount([
-                    'invitees as rsvp_accepted' => fn($q) => $q->wherePivot('status', 'accepted'),
-                    'invitees as rsvp_declined' => fn($q) => $q->wherePivot('status', 'declined'),
-                    'invitees as rsvp_invited'  => fn($q) => $q->wherePivot('status', 'invited'),
+                    'invitees as rsvp_accepted' => fn($q) => $q->where('meeting_invitation_users.status', 'accepted'),
+                    'invitees as rsvp_declined' => fn($q) => $q->where('meeting_invitation_users.status', 'declined'),
+                    'invitees as rsvp_invited'  => fn($q) => $q->where('meeting_invitation_users.status', 'invited'),
                 ]),
             ])
             ->orderByRaw("FIELD(priority,'urgent','high','normal')")
