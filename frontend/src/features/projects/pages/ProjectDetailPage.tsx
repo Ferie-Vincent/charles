@@ -26,6 +26,52 @@ import CollapsibleSection from '../../../components/ui/CollapsibleSection';
 import TerrainFAB from '../../../components/ui/TerrainFAB';
 import { formatBudget, getDaysRemaining, splitHeroName } from '../utils/formatters';
 import PanelErrorBoundary from '../../../components/ui/PanelErrorBoundary';
+import type { DailyLog } from '../../daily-logs/types';
+
+const WEATHER_EMOJI: Record<string, string> = {
+  Soleil: '☀️', Nuageux: '🌤', Pluie: '🌧', Orage: '⛈', 'Vent fort': '💨', Autre: '🌡',
+};
+
+function TodayJournalCard({ logs, projectId }: { logs: DailyLog[]; projectId: number }) {
+  const today = new Date().toISOString().slice(0, 10);
+  const todayLog = logs.find(l => l.log_date === today);
+  const label = new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+
+  if (todayLog) {
+    return (
+      <div className="journal-status-card journal-status-card--ok">
+        <div className="journal-status-card__icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="20" height="20"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        </div>
+        <div className="journal-status-card__body">
+          <span className="journal-status-card__title">Journal du {label} — Saisi</span>
+          <div className="journal-status-card__chips">
+            <span>{WEATHER_EMOJI[todayLog.weather] ?? '🌡'} {todayLog.weather}</span>
+            <span>👷 {todayLog.workers_count} ouvriers</span>
+            <span>📈 {todayLog.progress_percent} %</span>
+            {todayLog.has_incident && <span className="journal-status-card__chip--alert">⚠️ Incident signalé</span>}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="journal-status-card journal-status-card--missing">
+      <div className="journal-status-card__icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="20" height="20"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      </div>
+      <div className="journal-status-card__body">
+        <span className="journal-status-card__title">Journal non saisi — {label}</span>
+        <span className="journal-status-card__hint">Pensez à saisir votre rapport journalier avant la fin de journée.</span>
+      </div>
+      <Link to={`/projects/${projectId}/journal`} className="journal-status-card__cta">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="14" height="14"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Saisir le journal
+      </Link>
+    </div>
+  );
+}
 
 const STATUS_LABELS: Record<string, string> = {
   en_preparation: 'En préparation', active: 'Actif', completed: 'Terminé', archived: 'Archivé',
@@ -367,8 +413,22 @@ export default function ProjectDetailPage() {
           <div className="proj-kpi">
             <div className="proj-kpi__icon proj-kpi__icon--teal"><IcoDoc /></div>
             <div className="proj-kpi__body">
-              <span className="proj-kpi__value" style={{ color: '#1abc9c' }}>{jourssuivis}</span>
-              <span className="proj-kpi__label">Journaux saisis</span>
+              {/* Terrain: afficher statut du jour plutôt que compteur brut */}
+              {(() => {
+                const today = new Date().toISOString().slice(0, 10);
+                const loggedToday = logs.some(l => l.log_date === today);
+                return loggedToday ? (
+                  <>
+                    <span className="proj-kpi__value" style={{ color: '#10b981' }}>✓ Saisi</span>
+                    <span className="proj-kpi__label">Journal aujourd'hui</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="proj-kpi__value" style={{ color: '#f59e0b' }}>À saisir</span>
+                    <span className="proj-kpi__label">Journal aujourd'hui</span>
+                  </>
+                );
+              })()}
             </div>
           </div>
         )}
@@ -538,6 +598,9 @@ export default function ProjectDetailPage() {
            VUE TERRAIN / AUTRES — ordre opérationnel quotidien
         ════════════════════════════════════════════════════════ */
         <>
+          {/* Statut journal du jour — Sally: CTA unique + journal statut card */}
+          <TodayJournalCard logs={logs} projectId={project.id} />
+
           <CollapsibleSection
             title="Documents du chantier"
             subtitle="Appel d'offres, ordre de service, marché, contrats et plans"
@@ -556,43 +619,61 @@ export default function ProjectDetailPage() {
             defaultOpen
             icon={icons.calendar}
           >
-            <LogCalendar logs={logs} meta={logMeta} projectId={project.id} />
+            <PanelErrorBoundary title="Journaux">
+              <LogCalendar logs={logs} meta={logMeta} projectId={project.id} />
+            </PanelErrorBoundary>
           </CollapsibleSection>
 
           <CollapsibleSection title="Incidents chantier" subtitle="Incidents déclarés — classés par gravité" icon={icons.incident}>
-            <IncidentPanel projectId={project.id} />
+            <PanelErrorBoundary title="Incidents">
+              <IncidentPanel projectId={project.id} />
+            </PanelErrorBoundary>
           </CollapsibleSection>
 
           <CollapsibleSection title="Score Sécurité Mensuel" subtitle="Basé sur les incidents déclarés ce mois" icon={icons.safety}>
-            <SafetyScoreWidget projectId={project.id} />
+            <PanelErrorBoundary title="Score Sécurité">
+              <SafetyScoreWidget projectId={project.id} />
+            </PanelErrorBoundary>
           </CollapsibleSection>
 
           {project.start_date && project.end_date && (
             <CollapsibleSection title="Courbe S — Avancement réel vs théorique" subtitle="Progression cumulée depuis le début du chantier" icon={icons.courbeS}>
-              <SCurveChart logs={logs} startDate={project.start_date} endDate={project.end_date} targetProgress={project.target_progress ?? 100} />
+              <PanelErrorBoundary title="Courbe S">
+                <SCurveChart logs={logs} startDate={project.start_date} endDate={project.end_date} targetProgress={project.target_progress ?? 100} />
+              </PanelErrorBoundary>
             </CollapsibleSection>
           )}
 
           {isManagement && (
             <CollapsibleSection title="Trésorerie prévisionnelle — 90 jours" subtitle="Budget prévisionnel, engagements et décaissements" icon={icons.budget}>
-              <BudgetPanel projectId={project.id} />
+              <PanelErrorBoundary title="Trésorerie">
+                <BudgetPanel projectId={project.id} />
+              </PanelErrorBoundary>
             </CollapsibleSection>
           )}
 
           <CollapsibleSection title="Décompte Quantitatif Estimatif (DQE)" subtitle="Versions, lignes, lots — base contractuelle" icon={icons.dqe}>
-            <DqePanel projectId={project.id} />
+            <PanelErrorBoundary title="DQE">
+              <DqePanel projectId={project.id} />
+            </PanelErrorBoundary>
           </CollapsibleSection>
 
           <CollapsibleSection title="Planning phases BTP" subtitle="Distribution estimée selon la répartition standard BTP" icon={icons.gantt}>
-            <PhaseGanttWidget project={project} progressPercent={avancement} />
+            <PanelErrorBoundary title="Planning">
+              <PhaseGanttWidget project={project} progressPercent={avancement} />
+            </PanelErrorBoundary>
           </CollapsibleSection>
 
           <CollapsibleSection title="Réceptions matériaux" subtitle="Totaux et historique des livraisons" icon={icons.mat}>
-            <MaterialReceiptsPanel projectId={project.id} />
+            <PanelErrorBoundary title="Matériaux">
+              <MaterialReceiptsPanel projectId={project.id} />
+            </PanelErrorBoundary>
           </CollapsibleSection>
 
           <CollapsibleSection title="Galerie photos terrain" subtitle="Photos taguées par phase — glisser-déposer pour ajouter" icon={icons.photo}>
-            <PhotoGallery projectId={project.id} />
+            <PanelErrorBoundary title="Photos">
+              <PhotoGallery projectId={project.id} />
+            </PanelErrorBoundary>
           </CollapsibleSection>
 
           <CollapsibleSection
