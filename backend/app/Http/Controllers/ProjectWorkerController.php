@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\DailyAttendance;
 use App\Models\Project;
 use App\Models\ProjectWorker;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ProjectWorkerController extends Controller
 {
@@ -20,7 +22,7 @@ class ProjectWorkerController extends Controller
         $workers = ProjectWorker::where('project_id', $project->id)
             ->where('company_id', $request->user()->company_id)
             ->orderBy('name')
-            ->get();
+            ->get(); // Retourne tous (actifs + inactifs) — frontend filtre par is_active
 
         $attendances = DailyAttendance::where('project_id', $project->id)
             ->where('log_date', $date)
@@ -105,15 +107,28 @@ class ProjectWorkerController extends Controller
             'task_assigned' => 'nullable|string|max:120',
         ]);
 
-        $att = DailyAttendance::updateOrCreate(
-            ['worker_id' => $data['worker_id'], 'log_date' => $data['log_date']],
-            [
-                'project_id'    => $project->id,
-                'company_id'    => $request->user()->company_id,
-                'present'       => $data['present'],
-                'task_assigned' => $data['task_assigned'] ?? null,
-            ]
-        );
+        try {
+            $att = DB::transaction(function () use ($data, $project, $request) {
+                return DailyAttendance::updateOrCreate(
+                    ['worker_id' => $data['worker_id'], 'log_date' => $data['log_date']],
+                    [
+                        'project_id'    => $project->id,
+                        'company_id'    => $request->user()->company_id,
+                        'present'       => $data['present'],
+                        'task_assigned' => $data['task_assigned'] ?? null,
+                    ]
+                );
+            });
+        } catch (QueryException $e) {
+            if ($e->getCode() === '23000') {
+                // Race condition : duplicate — re-fetch l'enregistrement existant
+                $att = DailyAttendance::where('worker_id', $data['worker_id'])
+                    ->where('log_date', $data['log_date'])
+                    ->firstOrFail();
+            } else {
+                throw $e;
+            }
+        }
 
         return response()->json(['attendance' => $att]);
     }

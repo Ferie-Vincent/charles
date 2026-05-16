@@ -10,11 +10,13 @@ export const TRADES = [
   'Carreleur',
   'Peintre',
   'Manœuvre',
-  'Conducteur d\'engin',
-  'Chef d\'équipe',
+  "Conducteur d'engin",
+  "Chef d'équipe",
   'Technicien',
   'Autre',
 ] as const;
+
+export type Trade = typeof TRADES[number];
 
 export interface WorkerAttendance {
   id: number;

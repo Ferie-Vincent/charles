@@ -25,6 +25,11 @@ const ROLE_HEADER: Record<RoleGroup, { breadcrumb: string; title: string; subtit
     title: 'Tableau de bord — DT',
     subtitle: 'Vue opérationnelle : DQE, achats, avancements et alertes chantier.',
   },
+  conducteur: {
+    breadcrumb: 'CONDUCTEUR DE TRAVAUX · 2026',
+    title: 'Mes chantiers',
+    subtitle: 'Supervision terrain : avancements, QHSE, plannings et alertes.',
+  },
   terrain: {
     breadcrumb: 'TERRAIN · 2026',
     title: 'Mes chantiers',
@@ -115,16 +120,34 @@ export default function DashboardPage() {
         </>
       )}
 
+      {roleGroup === 'conducteur' && (
+        <>
+          <div className="db-sidebar-grid">
+            <div className="db-sidebar-grid__main">
+              <CriticitéCard activeProjects={active_projects} />
+              <BudgetBarsCard activeProjects={active_projects} />
+            </div>
+            <div className="db-sidebar-grid__side">
+              <AlertsPanel alerts={alerts ?? []} />
+            </div>
+          </div>
+          <PortfolioPanel projects={active_projects} />
+          <ActivityFeed activities={recent_activities} filter={ACTIVITY_FEED_FILTER[roleGroup]} />
+        </>
+      )}
+
       {roleGroup === 'terrain' && (
         <>
-          <AlertsPanel alerts={alerts ?? []} />
-          <ProjectList
-            projects={active_projects}
-            subtitle={`Journal du jour — ${new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}`}
-            ctaLabel="Saisir journal"
-            ctaTo={id => `/projects/${id}/journal`}
-            showHealthScore
-          />
+          <div className="terrain-top-grid">
+            <AlertsPanel alerts={alerts ?? []} />
+            <ProjectList
+              projects={active_projects}
+              subtitle={`Journal du jour — ${new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}`}
+              ctaLabel="Saisir journal"
+              ctaTo={id => `/projects/${id}/journal`}
+              showHealthScore
+            />
+          </div>
           <PortfolioPanel projects={active_projects} showTimeline={false} />
         </>
       )}

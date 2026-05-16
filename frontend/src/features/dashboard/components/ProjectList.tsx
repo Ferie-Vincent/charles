@@ -55,7 +55,7 @@ export default function ProjectList({
           </svg>
         </div>
         <div>
-          <h3 className="card-title" style={{ margin: 0 }}>Chantiers actifs</h3>
+          <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: 'var(--text-main)', letterSpacing: '-0.1px' }}>Chantiers actifs</h3>
           <p className="card-subtitle" style={{ margin: 0 }}>{subtitle}</p>
         </div>
       </div>
