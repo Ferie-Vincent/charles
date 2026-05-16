@@ -40,7 +40,7 @@ export function PermissionsProvider({ children }: { children: ReactNode }) {
   async function load() {
     const [myRes, matrixRes] = await Promise.allSettled([
       api.get('/my-permissions'),
-      api.get('/permissions'),
+      api.get('/permissions', { _silentOn403: true }),  // direction-only — 403 expected for other roles
     ]);
 
     if (myRes.status === 'fulfilled') setMyFeatures(myRes.value.data.features ?? {});

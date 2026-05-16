@@ -2253,6 +2253,20 @@ code {
   color: var(--text-muted);
 }
 
+.journal-status-card__presence {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #10b981;
+  margin-bottom: 4px;
+}
+.journal-status-card__presence strong {
+  font-size: 20px;
+  line-height: 1;
+}
+
 .journal-status-card__chips {
   display: flex;
   flex-wrap: wrap;

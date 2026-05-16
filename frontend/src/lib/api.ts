@@ -1,5 +1,10 @@
 import axios from 'axios';
 
+// Attach _silentOn403: true on a request config to skip the global 403 toast.
+declare module 'axios' {
+  interface AxiosRequestConfig { _silentOn403?: boolean }
+}
+
 export const api = axios.create({
   baseURL: 'http://localhost:8000/api',
   withCredentials: true,
@@ -23,7 +28,7 @@ api.interceptors.response.use(
       window.dispatchEvent(new CustomEvent('api-error', {
         detail: 'Session expirée ou token CSRF invalide. Rechargez la page.',
       }));
-    } else if (status === 403) {
+    } else if (status === 403 && !err.config?._silentOn403) {
       window.dispatchEvent(new CustomEvent('api-error', {
         detail: data?.message ?? 'Accès refusé (403).',
       }));
