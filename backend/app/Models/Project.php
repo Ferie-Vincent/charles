@@ -16,10 +16,13 @@ class Project extends Model
         'code',
         'name',
         'status',
+        'lifecycle_status',
         'location',
         'latitude',
         'longitude',
         'budget_amount',
+        'caution_bonne_execution_pct',
+        'penalites_retard_par_jour',
         'target_progress',
         'current_progress',
         'start_date',
@@ -40,6 +43,8 @@ class Project extends Model
     {
         return [
             'budget_amount'              => 'decimal:2',
+            'caution_bonne_execution_pct' => 'decimal:2',
+            'penalites_retard_par_jour'  => 'decimal:2',
             'montant_marche'             => 'decimal:2',
             'target_progress'            => 'integer',
             'current_progress'           => 'integer',
