@@ -65,3 +65,16 @@ export async function upsertAttendance(projectId: number, data: {
   const res = await api.post(`/projects/${projectId}/workers/attendance`, data);
   return res.data.attendance;
 }
+
+export async function exportAttendancePdf(projectId: number, dateFrom: string, dateTo: string): Promise<void> {
+  const res = await api.get(`/projects/${projectId}/workers/export`, {
+    params: { date_from: dateFrom, date_to: dateTo },
+    responseType: 'blob',
+  });
+  const url = URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `pointage-${projectId}-${dateFrom}_${dateTo}.pdf`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
