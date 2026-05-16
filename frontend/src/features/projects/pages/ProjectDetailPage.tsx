@@ -24,6 +24,8 @@ import { useAuth } from '../../auth/stores/auth-store';
 import { getRoleGroup } from '../../../lib/roles';
 import CollapsibleSection from '../../../components/ui/CollapsibleSection';
 import TerrainFAB from '../../../components/ui/TerrainFAB';
+import { formatBudget, getDaysRemaining, splitHeroName } from '../utils/formatters';
+import PanelErrorBoundary from '../../../components/ui/PanelErrorBoundary';
 
 const STATUS_LABELS: Record<string, string> = {
   en_preparation: 'En préparation', active: 'Actif', completed: 'Terminé', archived: 'Archivé',
@@ -52,29 +54,6 @@ function formatDate(d: string | null) {
   return new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
-// P0 fix: guard null/NaN — never renders "NaN FCFA"
-function formatBudget(amount: string | number | null | undefined): string {
-  if (amount === null || amount === undefined || amount === '') return '—';
-  const n = typeof amount === 'string' ? Number(amount) : amount;
-  if (!isFinite(n) || isNaN(n)) return '—';
-  if (n >= 1_000_000_000) return (n / 1_000_000_000).toLocaleString('fr-FR', { maximumFractionDigits: 2 }) + ' Mds FCFA';
-  if (n >= 1_000_000) return (n / 1_000_000).toLocaleString('fr-FR', { maximumFractionDigits: 0 }) + ' M FCFA';
-  return n.toLocaleString('fr-FR') + ' FCFA';
-}
-
-// P1 fix: invalid date returns null, not NaN
-function getDaysRemaining(endDate: string | null): number | null {
-  if (!endDate) return null;
-  const ms = new Date(endDate).getTime() - Date.now();
-  return isNaN(ms) ? null : Math.ceil(ms / 86_400_000);
-}
-
-// splitHeroName already handles missing separator — returns { title: name, sub: '' }
-function splitHeroName(name: string): { title: string; sub: string } {
-  const idx = name.indexOf(' – ');
-  if (idx > -1) return { title: name.slice(0, idx), sub: name.slice(idx + 3) };
-  return { title: name, sub: '' };
-}
 
 // ── Icon helpers (avoid JSX repetition) ────────────────────────────────────
 const IcoChart   = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>;
@@ -424,7 +403,9 @@ export default function ProjectDetailPage() {
               defaultOpen
               icon={icons.courbeS}
             >
-              <SCurveChart logs={logs} startDate={project.start_date} endDate={project.end_date} targetProgress={project.target_progress ?? 100} />
+              <PanelErrorBoundary title="Courbe S">
+                <SCurveChart logs={logs} startDate={project.start_date} endDate={project.end_date} targetProgress={project.target_progress ?? 100} />
+              </PanelErrorBoundary>
             </CollapsibleSection>
           )}
 
@@ -435,7 +416,9 @@ export default function ProjectDetailPage() {
             defaultOpen
             icon={icons.budget}
           >
-            <BudgetPanel projectId={project.id} />
+            <PanelErrorBoundary title="Trésorerie">
+              <BudgetPanel projectId={project.id} />
+            </PanelErrorBoundary>
           </CollapsibleSection>
 
           {/* 2. DQE */}
@@ -445,7 +428,9 @@ export default function ProjectDetailPage() {
             defaultOpen
             icon={icons.dqe}
           >
-            <DqePanel projectId={project.id} />
+            <PanelErrorBoundary title="DQE">
+              <DqePanel projectId={project.id} />
+            </PanelErrorBoundary>
           </CollapsibleSection>
 
           {/* 3. Incidents + Score Sécurité côte à côte */}
@@ -457,7 +442,9 @@ export default function ProjectDetailPage() {
               defaultOpen
               icon={icons.incident}
             >
-              <IncidentPanel projectId={project.id} />
+              <PanelErrorBoundary title="Incidents">
+                <IncidentPanel projectId={project.id} />
+              </PanelErrorBoundary>
             </CollapsibleSection>
             <CollapsibleSection
               className="col-half"
@@ -466,7 +453,9 @@ export default function ProjectDetailPage() {
               defaultOpen
               icon={icons.safety}
             >
-              <SafetyScoreWidget projectId={project.id} />
+              <PanelErrorBoundary title="Score Sécurité">
+                <SafetyScoreWidget projectId={project.id} />
+              </PanelErrorBoundary>
             </CollapsibleSection>
           </div>
 
@@ -495,7 +484,9 @@ export default function ProjectDetailPage() {
             subtitle="Totaux et historique des livraisons"
             icon={icons.mat}
           >
-            <MaterialReceiptsPanel projectId={project.id} />
+            <PanelErrorBoundary title="Réceptions matériaux">
+              <MaterialReceiptsPanel projectId={project.id} />
+            </PanelErrorBoundary>
           </CollapsibleSection>
 
           {/* 6b. Galerie photos */}
@@ -504,7 +495,9 @@ export default function ProjectDetailPage() {
             subtitle="Photos taguées par phase"
             icon={icons.photo}
           >
-            <PhotoGallery projectId={project.id} />
+            <PanelErrorBoundary title="Galerie photos">
+              <PhotoGallery projectId={project.id} />
+            </PanelErrorBoundary>
           </CollapsibleSection>
 
           {/* 6c. Documents contractuels (consultation ponctuelle → en bas) */}
@@ -513,7 +506,9 @@ export default function ProjectDetailPage() {
             subtitle="Appel d'offres, ordre de service, marché, contrats et plans"
             icon={icons.docs}
           >
-            <ProjectDocumentsPanel projectId={project.id} />
+            <PanelErrorBoundary title="Documents">
+              <ProjectDocumentsPanel projectId={project.id} />
+            </PanelErrorBoundary>
           </CollapsibleSection>
 
           {/* 6d. Rapports hebdomadaires */}
@@ -523,7 +518,9 @@ export default function ProjectDetailPage() {
             icon={icons.report}
             extra={<WhatsAppTestButton projectId={project.id} />}
           >
-            <ReportsWidget projectId={project.id} />
+            <PanelErrorBoundary title="Rapports">
+              <ReportsWidget projectId={project.id} />
+            </PanelErrorBoundary>
           </CollapsibleSection>
 
           {/* 7. Équipe + Historique */}
@@ -547,7 +544,9 @@ export default function ProjectDetailPage() {
             defaultOpen
             icon={icons.docs}
           >
-            <ProjectDocumentsPanel projectId={project.id} />
+            <PanelErrorBoundary title="Documents">
+              <ProjectDocumentsPanel projectId={project.id} />
+            </PanelErrorBoundary>
           </CollapsibleSection>
 
           <CollapsibleSection
@@ -602,7 +601,9 @@ export default function ProjectDetailPage() {
             icon={icons.report}
             extra={<WhatsAppTestButton projectId={project.id} />}
           >
-            <ReportsWidget projectId={project.id} />
+            <PanelErrorBoundary title="Rapports">
+              <ReportsWidget projectId={project.id} />
+            </PanelErrorBoundary>
           </CollapsibleSection>
 
           <div className="detail-grid">

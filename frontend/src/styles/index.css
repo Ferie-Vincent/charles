@@ -2190,6 +2190,20 @@ code {
   transition: width 0.5s ease;
 }
 
+/* ─── Panel error boundary fallback ─── */
+
+.panel-error-boundary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 1rem 1.25rem;
+  color: #f87171;
+  font-size: 13px;
+  background: rgba(248,113,113,0.06);
+  border-radius: var(--radius);
+  border: 1px solid rgba(248,113,113,0.2);
+}
+
 /* ─── Project action bar ─── */
 
 .proj-action-bar {
