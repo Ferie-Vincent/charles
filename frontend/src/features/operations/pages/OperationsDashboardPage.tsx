@@ -12,17 +12,9 @@ import {
 import { approvePurchaseOrder } from '../../achats/api/purchase-orders';
 import { transitionDqeVersion } from '../../dqe/api/dqe-api';
 import { api } from '../../../lib/api';
+import { fmtFCFA as fmtAmount } from '../../../lib/formatters';
 import SkeletonPage from '../../../components/ui/SkeletonPage';
 import PageHeader from '../../../components/ui/PageHeader';
-
-/* ─── helpers ───────────────────────────────────────────────────── */
-function fmtAmount(n: number) {
-  return new Intl.NumberFormat('fr-FR', {
-    style: 'currency',
-    currency: 'XOF',
-    maximumFractionDigits: 0,
-  }).format(n);
-}
 
 function HealthBadge({ score }: { score: number }) {
   const cls =

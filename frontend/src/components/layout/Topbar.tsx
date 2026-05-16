@@ -5,6 +5,8 @@ import { logout } from '../../features/auth/api/login';
 import { useAuth } from '../../features/auth/stores/auth-store';
 import { getRoleGroup } from '../../lib/roles';
 import { api } from '../../lib/api';
+import { getUserNotifications, markNotificationRead, markAllNotificationsRead, respondToMeeting } from '../../features/meetings/api/meetings-api';
+import type { UserNotification } from '../../features/meetings/api/meetings-api';
 
 const DISMISSED_KEY = 'topbar_dismissed_notifs';
 
@@ -39,6 +41,8 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [validatingId, setValidatingId] = useState<number | null>(null);
   const [dismissed, setDismissed] = useState<Set<string>>(() => loadDismissed());
+  const [rsvpToast, setRsvpToast] = useState<{ notifId: string; meetingId: number; status: 'accepted' | 'declined' } | null>(null);
+  const rsvpTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const dismiss = useCallback((key: string) => {
     setDismissed(prev => {
@@ -62,6 +66,17 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
     staleTime: 60_000,
     enabled: canSeeOps,
   });
+
+  const { data: userNotifs } = useQuery({
+    queryKey: ['user-notifications'],
+    queryFn: getUserNotifications,
+    staleTime: 30_000,
+    refetchInterval: 60_000,
+  });
+
+  const meetingNotifs: UserNotification[] = (userNotifs?.notifications ?? []).filter(
+    (n: UserNotification) => n.type === 'meeting_invitation' && !n.read
+  );
 
   const isManagement = roleGroup === 'direction' || roleGroup === 'dt';
 
@@ -100,7 +115,7 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
   const criticalProj    = (ops?.critical_projects ?? []).filter((p: any) => !dismissed.has(`proj-${p.id}`));
   const invoicesPending = isManagement ? (ops?.invoices_pending ?? []).filter((i: any) => !dismissed.has(`inv-${i.id}`)) : [];
   const dqePending      = isManagement ? (ops?.dqe_pending      ?? []).filter((d: any) => !dismissed.has(`dqe-${d.id}`)) : [];
-  const notifCount      = bdcPending.length + stockAlerts.length + criticalProj.length + invoicesPending.length + dqePending.length;
+  const notifCount      = bdcPending.length + stockAlerts.length + criticalProj.length + invoicesPending.length + dqePending.length + meetingNotifs.length;
 
   useEffect(() => {
     function handleOutside(e: MouseEvent) {
@@ -109,6 +124,22 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
     }
     document.addEventListener('mousedown', handleOutside);
     return () => document.removeEventListener('mousedown', handleOutside);
+  }, []);
+
+  const handleRsvp = useCallback((notifId: string, meetingId: number, status: 'accepted' | 'declined') => {
+    if (rsvpTimerRef.current) clearTimeout(rsvpTimerRef.current);
+    setRsvpToast({ notifId, meetingId, status });
+    rsvpTimerRef.current = setTimeout(async () => {
+      await respondToMeeting(meetingId, status);
+      await markNotificationRead(notifId);
+      queryClient.invalidateQueries({ queryKey: ['user-notifications'] });
+      setRsvpToast(null);
+    }, 5000);
+  }, [queryClient]);
+
+  const cancelRsvp = useCallback(() => {
+    if (rsvpTimerRef.current) clearTimeout(rsvpTimerRef.current);
+    setRsvpToast(null);
   }, []);
 
   async function handleLogout() {
@@ -221,6 +252,46 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
                   </div>
                 ) : (
                   <div className="topbar-notif-list">
+                    {meetingNotifs.map((notif: UserNotification) => {
+                      const d = notif.data as any;
+                      const when = d.scheduled_at
+                        ? new Date(d.scheduled_at).toLocaleString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+                        : '';
+                      const contextLine = d.alert_message
+                        ? d.alert_message
+                        : d.project_name;
+                      return (
+                        <div
+                          key={notif.id}
+                          className="topbar-notif-item topbar-notif-item--meeting"
+                        >
+                          <span className="topbar-notif-item__dot topbar-notif-item__dot--meeting" />
+                          <div className="topbar-notif-item__body">
+                            <div className="topbar-notif-item__title">📅 {d.title}</div>
+                            <div className="topbar-notif-item__sub">
+                              {contextLine} · {when}
+                              {d.organizer_name ? ` · ${d.organizer_name}` : ''}
+                            </div>
+                            {/* RSVP inline avec undo 5s */}
+                            {d.meeting_id && (
+                              <div className="topbar-rsvp">
+                                <button
+                                  type="button"
+                                  className="topbar-rsvp__btn topbar-rsvp__btn--accept"
+                                  onClick={() => handleRsvp(notif.id, d.meeting_id, 'accepted')}
+                                >✓ Confirmer</button>
+                                <button
+                                  type="button"
+                                  className="topbar-rsvp__btn topbar-rsvp__btn--decline"
+                                  onClick={() => handleRsvp(notif.id, d.meeting_id, 'declined')}
+                                >✗ Décliner</button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+
                     {bdcPending.map((bdc: any) => (
                       <button
                         key={`bdc-${bdc.id}`}
@@ -408,6 +479,18 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
           </Link>
         )}
       </div>
+
+      {/* Toast undo RSVP */}
+      {rsvpToast && (
+        <div className="rsvp-toast" role="status" aria-live="polite">
+          <span>
+            {rsvpToast.status === 'accepted' ? '✓ Présence confirmée' : '✗ Absence notifiée'} — envoi dans 5s
+          </span>
+          <button type="button" className="rsvp-toast__undo" onClick={cancelRsvp}>
+            Annuler
+          </button>
+        </div>
+      )}
     </header>
   );
 }

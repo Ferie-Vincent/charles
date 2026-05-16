@@ -4,7 +4,9 @@ namespace App\Providers;
 
 use App\Models\DailyLog;
 use App\Models\Project;
+use App\Models\Task;
 use App\Models\User;
+use App\Observers\TaskObserver;
 use App\Policies\DailyLogPolicy;
 use App\Policies\ProjectPolicy;
 use App\Policies\UserPolicy;
@@ -22,6 +24,8 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Project::class, ProjectPolicy::class);
         Gate::policy(DailyLog::class, DailyLogPolicy::class);
         Gate::policy(User::class, UserPolicy::class);
+
+        Task::observe(TaskObserver::class);
 
         RateLimiter::for('login', function ($request) {
             return Limit::perMinute(5)->by($request->ip());

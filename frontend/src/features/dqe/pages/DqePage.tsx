@@ -5,14 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { getPortfolioDqe, type PortfolioDqeItem } from '../api/dqe-api';
 import { STATUS_LABELS, type DqeStatus } from '../types';
 import PageHeader from '../../../components/ui/PageHeader';
-
-function fmtHT(n: number) {
-  return n.toLocaleString('fr-FR', { maximumFractionDigits: 0 });
-}
-
-function fmtDate(s: string) {
-  return new Date(s).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
-}
+import { fmtHT, fmtDate } from '../../../lib/formatters';
 
 const FILTER_LABELS: Record<string, string> = {
   all:       'Tous',
@@ -23,6 +16,7 @@ const FILTER_LABELS: Record<string, string> = {
 
 const STATUS_BADGE: Record<DqeStatus, string> = {
   draft:     'badge badge-draft',
+  soumise:   'badge badge-urgent',
   validated: 'badge badge-active',
   archived:  'badge badge-archived',
 };

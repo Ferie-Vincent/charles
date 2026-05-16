@@ -33,6 +33,7 @@ export const ROLE_ACCESS: Record<string, RoleGroup[]> = {
   '/besoins':    ['direction', 'dt', 'terrain', 'metreur', 'logistique'],
   '/users':      ['direction'],
   '/operations': ['direction', 'dt'],
+  '/tasks':      ['direction', 'dt', 'terrain', 'metreur', 'comptable', 'logistique'],
 };
 
 export function canAccess(path: string, group: RoleGroup): boolean {
@@ -40,3 +41,15 @@ export function canAccess(path: string, group: RoleGroup): boolean {
   if (!allowed) return group === 'direction';
   return allowed.includes(group);
 }
+
+/** Activity types surfaced in the dashboard feed per role. Undefined = show all. */
+export const ACTIVITY_FEED_FILTER: Partial<Record<RoleGroup, string[]>> = {
+  logistique: ['document', 'site_visit', 'note', 'status_change'],
+};
+
+/** KPI items hidden per role group. */
+export const KPI_HIDDEN_FOR: Partial<Record<string, RoleGroup[]>> = {
+  'Budget engagé':        ['terrain', 'logistique'],
+  "Taux d'engagement":    ['terrain', 'logistique'],
+  'Budget prévisionnel':  ['terrain', 'logistique'],
+};

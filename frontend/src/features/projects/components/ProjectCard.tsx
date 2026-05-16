@@ -1,20 +1,10 @@
 import { Link } from 'react-router-dom';
 import type { Project } from '../types';
-
-const STATUS_LABELS: Record<string, string> = {
-  draft:     'Brouillon',
-  active:    'Actif',
-  completed: 'Terminé',
-  archived:  'Archivé',
-};
-
-function fmt(date: string | null) {
-  if (!date) return null;
-  return new Date(date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
-}
+import { fmtDate as fmt, fmtNum } from '../../../lib/formatters';
+import { PROJECT_STATUS_LABEL as STATUS_LABELS } from '../../../lib/constants';
 
 function fmtBudget(amount: string) {
-  return Number(amount).toLocaleString('fr-FR');
+  return fmtNum(Number(amount));
 }
 
 export default function ProjectCard({ p }: { p: Project }) {

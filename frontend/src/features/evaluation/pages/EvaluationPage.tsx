@@ -1,4 +1,3 @@
-import SkeletonPage from '../../../components/ui/SkeletonPage';
 import { useQuery } from '@tanstack/react-query';
 import { getEvaluation, type ProjectEvaluation } from '../api/get-evaluation';
 import PageHeader from '../../../components/ui/PageHeader';
@@ -18,7 +17,7 @@ const HEALTH_BG: Record<string, string> = {
 const STATUS_LABEL: Record<string, string> = {
   active:    'Actif',
   completed: 'Terminé',
-  draft:     'Brouillon',
+  en_preparation: 'En préparation',
   on_hold:   'En pause',
 };
 

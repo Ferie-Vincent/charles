@@ -2,6 +2,8 @@ import { createBrowserRouter, Navigate } from 'react-router-dom';
 import type { ReactNode } from 'react';
 import AppShell from './components/layout/AppShell';
 import RoleGuard from './components/guards/RoleGuard';
+import { useAuth } from './features/auth/stores/auth-store';
+import { getRoleGroup } from './lib/roles';
 import LoginPage from './features/auth/pages/LoginPage';
 import DashboardPage from './features/dashboard/pages/DashboardPage';
 import OperationsDashboardPage from './features/operations/pages/OperationsDashboardPage';
@@ -28,9 +30,16 @@ import GedPage from './features/ged/pages/GedPage';
 import BesoinsPage from './features/besoins/pages/BesoinsPage';
 import ProfilePage from './features/profile/pages/ProfilePage';
 import SettingsPage from './features/settings/pages/SettingsPage';
+import TasksPage from './features/tasks/pages/TasksPage';
 
 function Shell({ children }: { children: ReactNode }) {
   return <AppShell>{children}</AppShell>;
+}
+
+function RootPage() {
+  const { user } = useAuth();
+  if (getRoleGroup(user?.role?.name ?? '') === 'dt') return <OperationsDashboardPage />;
+  return <DashboardPage />;
 }
 
 function Guarded({ path, children }: { path: string; children: ReactNode }) {
@@ -43,7 +52,7 @@ function Guarded({ path, children }: { path: string; children: ReactNode }) {
 
 export const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
-  { path: '/',                         element: <Shell><DashboardPage /></Shell> },
+  { path: '/',                         element: <Shell><RootPage /></Shell> },
   { path: '/operations',               element: <Guarded path="/operations"><OperationsDashboardPage /></Guarded> },
   { path: '/projects',                 element: <Shell><ProjectsPage /></Shell> },
   { path: '/projects/new',             element: <Shell><NewProjectPage /></Shell> },
@@ -66,6 +75,7 @@ export const router = createBrowserRouter([
   { path: '/reporting',                element: <Guarded path="/reporting"><ReportingPage /></Guarded> },
   { path: '/users',                    element: <Guarded path="/users"><UsersPage /></Guarded> },
   { path: '/permissions',              element: <Guarded path="/users"><PermissionsPage /></Guarded> },
+  { path: '/tasks',                     element: <Shell><TasksPage /></Shell> },
   { path: '/profile',                  element: <Shell><ProfilePage /></Shell> },
   { path: '/settings',                 element: <Shell><SettingsPage /></Shell> },
   { path: '*',                         element: <Navigate to="/" replace /> },

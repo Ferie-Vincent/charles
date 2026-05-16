@@ -198,7 +198,7 @@ class ProjectSeeder extends Seeder
             [
                 'code'          => 'CH-ABJ-2025-011',
                 'name'          => 'Réfection voirie interne lotissement – Bingerville',
-                'status'        => 'draft',
+                'status'        => 'en_preparation',
                 'location'      => 'Bingerville',
                 'latitude'      => 5.3580,
                 'longitude'     => -3.8870,
@@ -209,7 +209,7 @@ class ProjectSeeder extends Seeder
             [
                 'code'          => 'CH-ABJ-2026-001',
                 'name'          => 'Tour bureaux R+8 – Zone 4 Marcory',
-                'status'        => 'draft',
+                'status'        => 'en_preparation',
                 'location'      => 'Abidjan, Zone 4',
                 'latitude'      => 5.2950,
                 'longitude'     => -3.9700,
@@ -220,7 +220,7 @@ class ProjectSeeder extends Seeder
             [
                 'code'          => 'CH-ABJ-2026-002',
                 'name'          => 'Complexe sportif municipal – Treichville',
-                'status'        => 'draft',
+                'status'        => 'en_preparation',
                 'location'      => 'Abidjan, Treichville',
                 'latitude'      => 5.3013,
                 'longitude'     => -3.9942,
@@ -231,7 +231,7 @@ class ProjectSeeder extends Seeder
             [
                 'code'          => 'CH-GGN-2026-001',
                 'name'          => 'Pont routier sur fleuve Bandama – Gagnoa',
-                'status'        => 'draft',
+                'status'        => 'en_preparation',
                 'location'      => 'Gagnoa, Route Nationale 1',
                 'latitude'      => 5.9392,
                 'longitude'     => -5.9492,

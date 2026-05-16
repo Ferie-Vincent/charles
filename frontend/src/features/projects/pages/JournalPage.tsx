@@ -1,4 +1,3 @@
-import SkeletonPage from '../../../components/ui/SkeletonPage';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { getProject } from '../api/get-project';

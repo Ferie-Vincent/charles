@@ -5,12 +5,12 @@ namespace App\Http\Controllers;
 use App\Models\DailyLog;
 use App\Models\Project;
 use App\Models\ProjectActivity;
-use App\Services\HealthScoreService;
 use App\Services\ProjectMetricsService;
 use App\Support\Roles;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
@@ -33,7 +33,7 @@ class DashboardController extends Controller
         $stats = [
             'active_count'    => $byStatus->get('active', collect())->count(),
             'completed_count' => $byStatus->get('completed', collect())->count(),
-            'draft_count'     => $byStatus->get('draft', collect())->count(),
+            'draft_count'     => $byStatus->get('en_preparation', collect())->count(),
             'budget_active'   => $byStatus->get('active', collect())->sum('budget_amount'),
             'budget_total'    => $projects->sum('budget_amount'),
         ];
@@ -64,8 +64,31 @@ class DashboardController extends Controller
             )
         )->values();
 
+        $healthMap = $activeProjectsWithHealth->keyBy('id')->map(fn ($p) => $p['health']);
+        $stats['health_avg']    = $activeProjectsWithHealth->isNotEmpty()
+            ? (int) round($activeProjectsWithHealth->avg(fn ($p) => $p['health']['score']))
+            : 0;
+        $stats['health_green']  = $activeProjectsWithHealth->filter(fn ($p) => $p['health']['status'] === 'green')->count();
+        $stats['health_orange'] = $activeProjectsWithHealth->filter(fn ($p) => $p['health']['status'] === 'orange')->count();
+        $stats['health_red']    = $activeProjectsWithHealth->filter(fn ($p) => $p['health']['status'] === 'red')->count();
+        // Weighted avg_progress: weight by budget to avoid micro-projects skewing the mean
+        if ($activeProjectsWithHealth->isNotEmpty()) {
+            $totalWeight  = $activeProjectsWithHealth->sum(fn ($p) => max(1, (float) ($p['budget_amount'] ?? 0)));
+            $weightedSum  = $activeProjectsWithHealth->sum(
+                fn ($p) => $p['health']['latest_progress'] * max(1, (float) ($p['budget_amount'] ?? 0))
+            );
+            $stats['avg_progress'] = (int) round($weightedSum / $totalWeight);
+        } else {
+            $stats['avg_progress'] = 0;
+        }
+
+        $dismissedKeys = $this->loadDismissedKeys($user->id);
+
         $leaderboard = $this->buildLeaderboard($activeProjects, $logStats, $latestLog);
-        $alerts      = $this->buildAlerts($activeProjects, $logStats, $latestLog);
+        $alerts      = array_values(array_filter(
+            $this->buildAlerts($activeProjects, $logStats, $latestLog, $healthMap, $user->role->name),
+            fn ($a) => ! in_array($a['id'], $dismissedKeys, true)
+        ));
 
         return response()->json([
             'stats'             => $stats,
@@ -101,9 +124,10 @@ class DashboardController extends Controller
         return [$logStats, $latestLog];
     }
 
-    private function buildAlerts(Collection $activeProjects, Collection $logStats, Collection $latestLog): array
+    private function buildAlerts(Collection $activeProjects, Collection $logStats, Collection $latestLog, Collection $healthMap, string $userRole = ''): array
     {
-        $healthService = new HealthScoreService();
+        $isTerrainRole = in_array($userRole, Roles::TERRAIN);
+
         $alerts = [];
 
         foreach ($activeProjects as $project) {
@@ -157,9 +181,9 @@ class DashboardController extends Controller
                     "{$incidentCount} incident" . ($incidentCount > 1 ? 's' : '') . " signalé" . ($incidentCount > 1 ? 's' : ''));
             }
 
-            // Health score critical
-            $health = $healthService->compute($project);
-            if ($health['label'] === 'critical') {
+            // Health score critical — strategic alert, not shown to terrain
+            $health = $healthMap->get($project->id);
+            if (!$isTerrainRole && $health && $health['label'] === 'critical') {
                 $alerts[] = $this->alert("health-{$project->id}", 'health_critical', 'critical', $project,
                     "Score de santé critique : {$health['score']}/100");
             }
@@ -182,6 +206,42 @@ class DashboardController extends Controller
             'message'      => $message,
             'action_url'   => "/projects/{$project->id}",
         ];
+    }
+
+    public function dismissAlert(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'alert_key'      => 'required|string|max:100',
+            // 0 = permanent, 24/72/168 = hours; default 24
+            'duration_hours' => 'nullable|integer|in:0,24,72,168',
+        ]);
+
+        $alertKey      = $data['alert_key'];
+        $durationHours = $data['duration_hours'] ?? 24;
+        // reappears_at = NULL means permanent suppression
+        $reappearsAt   = $durationHours === 0 ? null : now()->addHours($durationHours);
+
+        DB::table('dismissed_alerts')->upsert(
+            [
+                'user_id'      => $request->user()->id,
+                'alert_key'    => $alertKey,
+                'dismissed_at' => now(),
+                'reappears_at' => $reappearsAt,
+            ],
+            ['user_id', 'alert_key'],
+            ['dismissed_at', 'reappears_at']
+        );
+
+        return response()->json(['dismissed' => $alertKey, 'duration_hours' => $durationHours]);
+    }
+
+    private function loadDismissedKeys(int $userId): array
+    {
+        return DB::table('dismissed_alerts')
+            ->where('user_id', $userId)
+            ->where(fn($q) => $q->whereNull('reappears_at')->orWhere('reappears_at', '>', now()))
+            ->pluck('alert_key')
+            ->all();
     }
 
     private function buildLeaderboard(Collection $activeProjects, Collection $logStats, Collection $latestLog): array

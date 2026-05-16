@@ -43,6 +43,10 @@ return [
         'key' => env('GROQ_API_KEY'),
     ],
 
+    'mistral' => [
+        'key' => env('MISTRAL_API_KEY'),
+    ],
+
     'twilio' => [
         'sid'   => env('TWILIO_ACCOUNT_SID'),
         'token' => env('TWILIO_AUTH_TOKEN'),

@@ -1,7 +1,9 @@
 import { NavLink } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../../features/auth/stores/auth-store';
 import { getRoleGroup, canAccess as staticCanAccess } from '../../lib/roles';
 import { usePermissions } from '../../lib/permissions-context';
+import { getTasks } from '../../features/tasks/api/tasks-api';
 
 const navItems = [
   {
@@ -70,6 +72,11 @@ const navItems = [
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>,
   },
   {
+    to: '/tasks',
+    label: 'Tâches',
+    icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><path d="M9 3v6"/></svg>,
+  },
+  {
     to: '/ged',
     label: 'Documents',
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>,
@@ -90,6 +97,13 @@ export default function Sidebar({ open, onClose }: { open?: boolean; onClose?: (
   const { user } = useAuth();
   const { canAccess } = usePermissions();
   const group = getRoleGroup(user?.role?.name ?? '');
+
+  const { data: tasks = [] } = useQuery({
+    queryKey: ['tasks'],
+    queryFn: getTasks,
+    staleTime: 60_000,
+  });
+  const openTaskCount = tasks.filter(t => t.status !== 'done').length;
 
   const visibleItems = navItems.filter(item => {
     // Static ROLE_ACCESS is the hard gate — if role not in allowed list, hide
@@ -131,6 +145,9 @@ export default function Sidebar({ open, onClose }: { open?: boolean; onClose?: (
               <NavLink to={item.to} end={item.to === '/'}>
                 {item.icon}
                 {item.label}
+                {item.to === '/tasks' && openTaskCount > 0 && (
+                  <span className="sidebar-badge">{openTaskCount}</span>
+                )}
               </NavLink>
             </li>
           ))}

@@ -1,12 +1,6 @@
 import { Link } from 'react-router-dom';
 import type { Project } from '../types';
-
-const STATUS_LABELS: Record<string, string> = {
-  draft: 'Brouillon',
-  active: 'Actif',
-  completed: 'Terminé',
-  archived: 'Archivé',
-};
+import { PROJECT_STATUS_LABEL as STATUS_LABELS } from '../../../lib/constants';
 
 type ProjectTableProps = {
   projects: Project[];

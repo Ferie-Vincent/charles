@@ -1,4 +1,3 @@
-import SkeletonPage from '../../../components/ui/SkeletonPage';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import PageHeader from '../../../components/ui/PageHeader';

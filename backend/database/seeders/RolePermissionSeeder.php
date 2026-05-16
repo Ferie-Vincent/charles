@@ -15,13 +15,13 @@ class RolePermissionSeeder extends Seeder
             'projects'   => true,
             'map'        => true,
             'timeline'   => true,
-            'dqe'        => false,
-            'execution'  => false,
+            'dqe'        => true,   // conducteur-travaux est DQE_SUBMITTER (peut soumettre)
+            'execution'  => true,
             'costs'      => false,
             'accounting' => false,
             'qse'        => true,
             'reporting'  => false,
-            'achats'     => false,
+            'achats'     => true,   // conducteur-travaux est BDC_CREATOR (peut créer BDC)
             'stocks'     => false,
             'suppliers'  => false,
             'besoins'    => true,

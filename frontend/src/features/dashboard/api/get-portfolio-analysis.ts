@@ -24,14 +24,20 @@ export async function generateSolutions(analysis: string): Promise<AiAction[]> {
   return res.data.actions;
 }
 
-export async function assignTasks(tasks: Array<{
-  title: string;
-  detail?: string;
-  priority: string;
-  role_target?: string;
-  project_code?: string;
-  assigned_to?: number | null;
-  source: 'ai';
-}>): Promise<void> {
-  await api.post('/tasks', { tasks });
+export async function assignTasks(
+  tasks: Array<{
+    title: string;
+    detail?: string;
+    priority: string;
+    role_target?: string;
+    project_code?: string;
+    assigned_to?: number | null;
+    source: 'ai';
+  }>,
+  idempotencyKey?: string,
+): Promise<void> {
+  await api.post('/tasks', {
+    tasks,
+    ...(idempotencyKey && { idempotency_key: idempotencyKey }),
+  });
 }

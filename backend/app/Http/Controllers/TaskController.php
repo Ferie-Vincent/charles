@@ -12,10 +12,26 @@ class TaskController extends Controller
     public function index(Request $request): JsonResponse
     {
         $tasks = Task::where('company_id', $request->user()->company_id)
-            ->with('assignee:id,name', 'creator:id,name')
+            ->with([
+                'assignee:id,name',
+                'creator:id,name',
+                'meeting' => fn($q) => $q->select('id', 'task_id')->withCount([
+                    'invitees as rsvp_accepted' => fn($q) => $q->wherePivot('status', 'accepted'),
+                    'invitees as rsvp_declined' => fn($q) => $q->wherePivot('status', 'declined'),
+                    'invitees as rsvp_invited'  => fn($q) => $q->wherePivot('status', 'invited'),
+                ]),
+            ])
             ->orderByRaw("FIELD(priority,'urgent','high','normal')")
             ->orderByDesc('created_at')
-            ->get();
+            ->get()
+            ->map(fn($t) => array_merge($t->toArray(), [
+                'meeting_id'   => $t->meeting?->id,
+                'rsvp_summary' => $t->meeting ? [
+                    'accepted' => $t->meeting->rsvp_accepted,
+                    'declined' => $t->meeting->rsvp_declined,
+                    'invited'  => $t->meeting->rsvp_invited,
+                ] : null,
+            ]));
 
         return response()->json($tasks);
     }
@@ -50,7 +66,7 @@ class TaskController extends Controller
         abort_if($task->company_id !== $request->user()->company_id, 403);
 
         $data = $request->validate([
-            'status'      => 'sometimes|in:todo,in_progress,done',
+            'status'      => 'sometimes|in:todo,in_progress,blocked,done,cancelled',
             'assigned_to' => 'sometimes|nullable|exists:users,id',
             'due_date'    => 'sometimes|nullable|date',
         ]);

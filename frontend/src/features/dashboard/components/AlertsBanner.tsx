@@ -3,10 +3,11 @@ import { Link } from 'react-router-dom';
 import type { ProjectAlert } from '../api/get-dashboard';
 
 const TYPE_ICON: Record<ProjectAlert['type'], string> = {
-  overdue:       '🔴',
-  no_journal:    '📋',
-  planning_lag:  '⏳',
-  open_incident: '⚠️',
+  overdue:        '🔴',
+  no_journal:     '📋',
+  planning_lag:   '⏳',
+  open_incident:  '⚠️',
+  health_critical: '🩺',
 };
 
 type Props = { alerts: ProjectAlert[] };

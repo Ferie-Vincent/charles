@@ -26,7 +26,7 @@ class PortfolioAccountingController extends Controller
 
         $projects = Project::query()
             ->where('company_id', $companyId)
-            ->whereIn('status', ['active', 'draft'])
+            ->whereIn('status', ['active', 'en_preparation'])
             ->with(['budgetEntries', 'invoices.supplier', 'dqeVersions'])
             ->get();
 

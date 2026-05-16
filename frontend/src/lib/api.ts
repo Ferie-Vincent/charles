@@ -12,3 +12,30 @@ api.interceptors.request.use(config => {
   }
   return config;
 });
+
+api.interceptors.response.use(
+  res => res,
+  err => {
+    const status = err.response?.status;
+    const data = err.response?.data;
+
+    if (status === 419) {
+      window.dispatchEvent(new CustomEvent('api-error', {
+        detail: 'Session expirée ou token CSRF invalide. Rechargez la page.',
+      }));
+    } else if (status === 403) {
+      window.dispatchEvent(new CustomEvent('api-error', {
+        detail: data?.message ?? 'Accès refusé (403).',
+      }));
+    } else if (status === 401) {
+      window.dispatchEvent(new CustomEvent('api-error', {
+        detail: 'Non authentifié. Reconnectez-vous.',
+      }));
+    } else if (status >= 500) {
+      window.dispatchEvent(new CustomEvent('api-error', {
+        detail: data?.message ?? `Erreur serveur (${status}).`,
+      }));
+    }
+    return Promise.reject(err);
+  }
+);

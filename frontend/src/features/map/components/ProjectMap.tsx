@@ -12,7 +12,7 @@ const HEALTH_COLOR: Record<string, string> = {
 };
 
 const STATUS_LABELS: Record<string, string> = {
-  draft: 'Brouillon', active: 'Actif', completed: 'Terminé', archived: 'Archivé',
+  en_preparation: 'En préparation', active: 'Actif', completed: 'Terminé', archived: 'Archivé',
 };
 
 function makeIcon(color: string): L.DivIcon {

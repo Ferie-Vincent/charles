@@ -1,5 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { getActivityDetail, type ActivityDetail } from '../api/portfolio-accounting';
+import { fmtFCFAFull as fmtAmount2, fmtDateLong, fmtDateFull as fmtDateShort } from '../../../lib/formatters';
+import { INVOICE_STATUS as STATUS_INVOICE, EXPENSE_STATUS_LABEL, EXPENSE_STATUS_COLOR } from '../../../lib/constants';
 
 interface Props {
   type: string;
@@ -8,35 +10,19 @@ interface Props {
 }
 
 const fmtAmount = (n?: number) =>
-  n !== undefined && n !== null
-    ? new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XOF', maximumFractionDigits: 0 }).format(n)
-    : '—';
+  n !== undefined && n !== null ? fmtAmount2(n) : '—';
 
-const fmtDateLong = (d?: string | null) =>
-  d ? new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : null;
-
-const fmtDateShort = (d?: string | null) =>
-  d ? new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' }) : null;
+const EXPENSE_STATUS: Record<string, { label: string; color: string; bg: string }> = {
+  en_attente: { label: EXPENSE_STATUS_LABEL.en_attente, color: EXPENSE_STATUS_COLOR.en_attente, bg: '#fffbeb' },
+  approuvee:  { label: EXPENSE_STATUS_LABEL.approuvee,  color: '#16a34a', bg: '#f0fdf4' },
+  rejetee:    { label: EXPENSE_STATUS_LABEL.rejetee,    color: EXPENSE_STATUS_COLOR.rejetee,    bg: '#fef2f2' },
+};
 
 const URGENCY: Record<string, { label: string; color: string; bg: string }> = {
   faible:   { label: 'Faible',    color: '#64748b', bg: '#f1f5f9' },
   normale:  { label: 'Normale',   color: '#3b82f6', bg: '#eff6ff' },
   haute:    { label: 'Haute',     color: '#f59e0b', bg: '#fffbeb' },
   critique: { label: 'Critique',  color: '#ef4444', bg: '#fef2f2' },
-};
-
-const STATUS_INVOICE: Record<string, { label: string; color: string; bg: string }> = {
-  brouillon: { label: 'Brouillon', color: '#64748b', bg: '#f1f5f9' },
-  soumise:   { label: 'Soumise',   color: '#f59e0b', bg: '#fffbeb' },
-  validee:   { label: 'Validée',   color: '#3b82f6', bg: '#eff6ff' },
-  payee:     { label: 'Payée',     color: '#16a34a', bg: '#f0fdf4' },
-  disputee:  { label: 'Disputée',  color: '#ef4444', bg: '#fef2f2' },
-};
-
-const EXPENSE_STATUS: Record<string, { label: string; color: string; bg: string }> = {
-  en_attente: { label: 'En attente', color: '#f59e0b', bg: '#fffbeb' },
-  approuvee:  { label: 'Approuvée',  color: '#16a34a', bg: '#f0fdf4' },
-  rejetee:    { label: 'Rejetée',    color: '#ef4444', bg: '#fef2f2' },
 };
 
 const TYPE_META: Record<string, { title: string; badge: string; dotColor: string }> = {

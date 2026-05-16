@@ -15,10 +15,7 @@ import { UNITES_BTP, STATUS_LABELS, type DqeLine, type DqeLineInput } from '../t
 import PageHeader from '../../../components/ui/PageHeader';
 import { useAuth } from '../../../features/auth/stores/auth-store';
 import { getRoleGroup } from '../../../lib/roles';
-
-function fmtHT(n: number) {
-  return n.toLocaleString('fr-FR', { maximumFractionDigits: 0 });
-}
+import { fmtHT } from '../../../lib/formatters';
 
 const STATUS_BADGE: Record<string, string> = {
   draft:     'badge badge-draft',
@@ -27,7 +24,6 @@ const STATUS_BADGE: Record<string, string> = {
   archived:  'badge badge-archived',
 };
 
-type LineFormState = DqeLineInput & { _editing?: boolean };
 
 const EMPTY_LINE: DqeLineInput = {
   lot: '', ouvrage: '', unite: 'm²', quantite: 0, prix_unitaire: 0,

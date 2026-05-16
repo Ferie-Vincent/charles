@@ -1,19 +1,15 @@
+import { Link } from 'react-router-dom';
 import {
-  PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
-  BarChart, Bar, XAxis, YAxis, CartesianGrid,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts';
-import type { DashboardStats } from '../api/get-dashboard';
-import type { Project } from '../../projects/types';
+import type { ActiveProject } from '../api/get-dashboard';
 
-const COLORS = {
-  active:    '#1abc9c',
-  completed: '#3b7ddd',
-  draft:     '#8391a2',
-};
+const HEALTH_COLOR = { green: '#059669', orange: '#ea580c', red: '#dc2626' };
+const HEALTH_LABEL = { green: 'Sain', orange: 'Attention', red: 'Critique' };
 
 function smartName(name: string): string {
   const base = name.includes(' – ') ? name.split(' – ')[0].trim() : name;
-  return base.length > 24 ? base.slice(0, 24) + '…' : base;
+  return base.length > 22 ? base.slice(0, 22) + '…' : base;
 }
 
 function formatM(value: number): string {
@@ -21,127 +17,132 @@ function formatM(value: number): string {
   return (value / 1_000_000).toFixed(0) + ' M';
 }
 
-type Props = {
-  stats: DashboardStats;
-  activeProjects: Project[];
-};
+type Props = { activeProjects: ActiveProject[]; className?: string };
 
-export default function DashboardCharts({ stats, activeProjects }: Props) {
-  const pieData = [
-    { name: 'Actifs',     value: stats.active_count,    color: COLORS.active    },
-    { name: 'Terminés',   value: stats.completed_count, color: COLORS.completed },
-    { name: 'Brouillons', value: stats.draft_count,     color: COLORS.draft     },
-  ].filter(d => d.value > 0);
-
-  const total = pieData.reduce((s, d) => s + d.value, 0);
-
+export function BudgetBarsCard({ activeProjects, className = '' }: Props) {
   const barData = [...activeProjects]
     .sort((a, b) => Number(b.budget_amount) - Number(a.budget_amount))
     .slice(0, 8)
-    .map(p => ({
-      name:   smartName(p.name),
-      budget: Number(p.budget_amount),
-    }));
+    .map(p => ({ name: smartName(p.name), budget: Number(p.budget_amount) }));
 
   return (
-    <div className="detail-grid" style={{ marginBottom: 16 }}>
-
-      {/* ── Donut répartition statuts ── */}
-      <div className="card card--half">
-        <div className="card-head">
-          <div className="card-icon card-icon--teal">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16">
-              <path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/>
-            </svg>
-          </div>
-          <div>
-            <h3 className="card-title" style={{ margin: 0 }}>Répartition par statut</h3>
-            <p className="card-subtitle" style={{ margin: 0 }}>{total} chantiers au portefeuille</p>
-          </div>
+    <div className={`card ${className}`}>
+      <div className="card-head">
+        <div className="card-icon card-icon--blue">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16">
+            <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/>
+            <line x1="6" y1="20" x2="6" y2="14"/>
+          </svg>
         </div>
+        <div>
+          <h3 className="card-title" style={{ margin: 0 }}>Top 8 budgets — chantiers actifs</h3>
+          <p className="card-subtitle" style={{ margin: 0 }}>Classés par budget engagé</p>
+        </div>
+      </div>
 
-        <ResponsiveContainer width="100%" height={195}>
-          <PieChart>
-            <Pie
-              data={pieData}
-              dataKey="value"
-              nameKey="name"
-              cx="50%"
-              cy="50%"
-              innerRadius={58}
-              outerRadius={88}
-              paddingAngle={3}
-              labelLine={false}
-            >
-              {pieData.map(entry => (
-                <Cell key={entry.name} fill={entry.color} />
-              ))}
-            </Pie>
-            <Tooltip
-              formatter={(value) => [`${value} chantier(s)`, '']}
-              contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e3eaef' }}
-            />
-          </PieChart>
-        </ResponsiveContainer>
+      <ResponsiveContainer width="100%" height={280}>
+        <BarChart data={barData} layout="vertical" margin={{ top: 4, right: 56, left: 0, bottom: 0 }}>
+          <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e3eaef" />
+          <XAxis
+            type="number" tickFormatter={formatM}
+            tick={{ fontSize: 11, fill: '#8391a2' }} axisLine={false} tickLine={false}
+          />
+          <YAxis
+            type="category" dataKey="name" width={200}
+            tick={{ fontSize: 12, fill: '#2f3944' }} axisLine={false} tickLine={false}
+          />
+          <Tooltip
+            formatter={(value) => [formatM(Number(value)) + ' FCFA', 'Budget']}
+            cursor={{ fill: 'rgba(59,125,221,0.06)' }}
+            contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e3eaef' }}
+          />
+          <Bar dataKey="budget" fill="#3b7ddd" radius={[0, 4, 4, 0]} barSize={18} />
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
 
-        <div className="chart-legend">
-          {pieData.map(d => (
-            <div key={d.name} className="chart-legend__item">
-              <span className="chart-legend__dot" style={{ background: d.color }} />
-              <span className="chart-legend__label">{d.name}</span>
-              <span className="chart-legend__count">{d.value}</span>
-            </div>
+export function CriticitéCard({ activeProjects, className = '' }: Props) {
+  const criticite = [...activeProjects]
+    .sort((a, b) => a.health.score - b.health.score)
+    .slice(0, 8);
+
+  return (
+    <div className={`card ${className}`}>
+      <div className="card-head">
+        <div className="card-icon card-icon--red">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+        </div>
+        <div>
+          <h3 className="card-title" style={{ margin: 0 }}>Chantiers par criticité</h3>
+          <p className="card-subtitle" style={{ margin: 0 }}>Du plus critique au plus sain</p>
+        </div>
+      </div>
+
+      <div style={{ maxHeight: 260, overflowY: 'auto' }}>
+      <table className="data-table">
+        <thead style={{ position: 'sticky', top: 0, background: 'var(--bg-card)', zIndex: 1 }}>
+          <tr>
+            <th>Chantier</th>
+            <th>Santé</th>
+            <th style={{ textAlign: 'right' }}>Budget</th>
+          </tr>
+        </thead>
+        <tbody>
+          {criticite.map(p => (
+            <tr key={p.id}>
+              <td>
+                <Link
+                  to={`/projects/${p.id}`}
+                  style={{ fontWeight: 700, color: 'var(--accent)', textDecoration: 'none', fontSize: '0.82rem' }}
+                >
+                  {p.code}
+                </Link>
+                <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: 1 }}>
+                  {smartName(p.name)}
+                </div>
+              </td>
+              <td>
+                <span style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 4,
+                  fontSize: '0.78rem', fontWeight: 600,
+                  color: HEALTH_COLOR[p.health.status],
+                }}>
+                  {p.health.score}/100
+                  <span style={{ fontWeight: 400, color: 'var(--text-muted)' }}>
+                    {HEALTH_LABEL[p.health.status]}
+                  </span>
+                </span>
+              </td>
+              <td style={{ textAlign: 'right', fontWeight: 600, fontSize: '0.82rem' }}>
+                {formatM(Number(p.budget_amount))} FCFA
+              </td>
+            </tr>
           ))}
-        </div>
+          {criticite.length === 0 && (
+            <tr>
+              <td colSpan={3} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '20px 0' }}>
+                Aucun chantier actif
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
       </div>
+    </div>
+  );
+}
 
-      {/* ── Bar top budgets actifs ── */}
-      <div className="card card--half">
-        <div className="card-head">
-          <div className="card-icon card-icon--blue">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16">
-              <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/>
-              <line x1="6" y1="20" x2="6" y2="14"/>
-            </svg>
-          </div>
-          <div>
-            <h3 className="card-title" style={{ margin: 0 }}>Top 8 budgets — chantiers actifs</h3>
-            <p className="card-subtitle" style={{ margin: 0 }}>Classés par budget engagé</p>
-          </div>
-        </div>
-
-        <ResponsiveContainer width="100%" height={260}>
-          <BarChart
-            data={barData}
-            layout="vertical"
-            margin={{ top: 4, right: 48, left: 0, bottom: 0 }}
-          >
-            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e3eaef" />
-            <XAxis
-              type="number"
-              tickFormatter={formatM}
-              tick={{ fontSize: 11, fill: '#8391a2' }}
-              axisLine={false}
-              tickLine={false}
-            />
-            <YAxis
-              type="category"
-              dataKey="name"
-              width={152}
-              tick={{ fontSize: 11, fill: '#2f3944' }}
-              axisLine={false}
-              tickLine={false}
-            />
-            <Tooltip
-              formatter={(value) => [formatM(Number(value)) + ' FCFA', 'Budget']}
-              cursor={{ fill: 'rgba(59,125,221,0.06)' }}
-              contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e3eaef' }}
-            />
-            <Bar dataKey="budget" fill="#3b7ddd" radius={[0, 4, 4, 0]} barSize={16} />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
-
+/** @deprecated Use BudgetBarsCard + CriticitéCard directly */
+export default function DashboardCharts({ activeProjects }: { activeProjects: ActiveProject[] }) {
+  return (
+    <div className="detail-grid" style={{ marginBottom: 16 }}>
+      <CriticitéCard activeProjects={activeProjects} className="card--half" />
+      <BudgetBarsCard activeProjects={activeProjects} className="card--half" />
     </div>
   );
 }

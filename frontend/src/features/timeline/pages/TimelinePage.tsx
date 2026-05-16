@@ -5,14 +5,9 @@ import PageHeader from '../../../components/ui/PageHeader';
 import SkeletonPage from '../../../components/ui/SkeletonPage';
 
 const HEALTH_COLOR = { green: '#10b981', orange: '#f59e0b', red: '#ef4444' };
-const HEALTH_LABEL = { green: 'Sain', orange: 'Attention', critical: 'Critique' };
 
 function parseDate(d: string | null | undefined): Date | null {
   return d ? new Date(d) : null;
-}
-
-function fmt(d: Date): string {
-  return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
 function fmtShort(d: Date): string {
@@ -125,7 +120,7 @@ export default function TimelinePage() {
               const totalMs   = end.getTime() - start.getTime();
               const elapsedMs = Math.min(today.getTime() - start.getTime(), totalMs);
               const expectedPct = totalMs > 0 ? Math.max(0, Math.min(100, elapsedMs / totalMs * 100)) : 0;
-              const actualPct   = project.health.progress ?? 0;
+              const actualPct   = project.health.latest_progress ?? 0;
 
               return (
                 <div key={project.id} className="tl-row">

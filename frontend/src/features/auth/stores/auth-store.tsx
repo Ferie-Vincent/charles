@@ -5,7 +5,7 @@ export type AuthUser = {
   name: string;
   email: string;
   role: { name: string; label: string };
-  company: { id: number; name: string };
+  company: { id: number; name: string; slug?: string };
 } | null;
 
 type AuthContextType = {
