@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { api } from '../../../lib/api';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useParams, Link } from 'react-router-dom';
 import { getProject } from '../api/get-project';
 import ActivityTimeline from '../components/ActivityTimeline';
@@ -26,6 +26,8 @@ import CollapsibleSection from '../../../components/ui/CollapsibleSection';
 import TerrainFAB from '../../../components/ui/TerrainFAB';
 import { formatBudget, getDaysRemaining, splitHeroName } from '../utils/formatters';
 import PanelErrorBoundary from '../../../components/ui/PanelErrorBoundary';
+import WorkersPanel from '../components/WorkersPanel';
+import { fetchWorkers } from '../api/workers';
 import type { DailyLog } from '../../daily-logs/types';
 
 const WEATHER_EMOJI: Record<string, string> = {
@@ -37,6 +39,16 @@ function TodayJournalCard({ logs, projectId }: { logs: DailyLog[]; projectId: nu
   const todayLog = logs.find(l => l.log_date === today);
   const label = new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
 
+  const { data: workers = [] } = useQuery({
+    queryKey: ['workers', projectId, today],
+    queryFn: () => fetchWorkers(projectId, today),
+    staleTime: 30_000,
+  });
+
+  const activeWorkers  = workers.filter(w => w.is_active);
+  const presentWorkers = activeWorkers.filter(w => w.attendance?.present);
+  const hasWorkers     = activeWorkers.length > 0;
+
   if (todayLog) {
     return (
       <div className="journal-status-card journal-status-card--ok">
@@ -45,10 +57,13 @@ function TodayJournalCard({ logs, projectId }: { logs: DailyLog[]; projectId: nu
         </div>
         <div className="journal-status-card__body">
           <span className="journal-status-card__title">Journal du {label} — Saisi</span>
-          {/* Présences ouvriers = priorité chef de chantier */}
           <div className="journal-status-card__presence">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="14" height="14"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-            <strong>{todayLog.workers_count}</strong> personne{todayLog.workers_count > 1 ? 's' : ''} présente{todayLog.workers_count > 1 ? 's' : ''}
+            {hasWorkers ? (
+              <><strong>{presentWorkers.length}</strong>/{activeWorkers.length} ouvrier{activeWorkers.length > 1 ? 's' : ''} présent{presentWorkers.length > 1 ? 's' : ''}</>
+            ) : (
+              <><strong>{todayLog.workers_count}</strong> personne{todayLog.workers_count > 1 ? 's' : ''} présente{todayLog.workers_count > 1 ? 's' : ''}</>
+            )}
           </div>
           <div className="journal-status-card__chips">
             <span>{WEATHER_EMOJI[todayLog.weather] ?? '🌡'} {todayLog.weather}</span>
@@ -67,7 +82,11 @@ function TodayJournalCard({ logs, projectId }: { logs: DailyLog[]; projectId: nu
       </div>
       <div className="journal-status-card__body">
         <span className="journal-status-card__title">Présences non saisies — {label}</span>
-        <span className="journal-status-card__hint">Pointez les ouvriers présents et enregistrez l'avancement du jour.</span>
+        <span className="journal-status-card__hint">
+          {hasWorkers
+            ? `${activeWorkers.length} ouvrier${activeWorkers.length > 1 ? 's' : ''} enregistré${activeWorkers.length > 1 ? 's' : ''} — pointez les présences ci-dessous.`
+            : 'Pointez les ouvriers présents et enregistrez l\'avancement du jour.'}
+        </span>
       </div>
       <Link to={`/projects/${projectId}/journal`} className="journal-status-card__cta">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="14" height="14"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -621,17 +640,26 @@ export default function ProjectDetailPage() {
             </PanelErrorBoundary>
           </CollapsibleSection>
 
-          {/* ── 2. Pointage & journaux — présences ouvriers ────────────────── */}
+          {/* ── 2. Pointage & Personnel — présences ouvriers ───────────────── */}
           <CollapsibleSection
             id="journal-section"
-            title="Pointage & rapports journaliers"
-            subtitle="Présences, avancement, matériaux — calendrier mensuel"
+            title="Pointage & Personnel"
+            subtitle="Présences journalières + affectation des tâches par ouvrier"
             defaultOpen
             icon={icons.calendar}
           >
-            <PanelErrorBoundary title="Journaux">
-              <LogCalendar logs={logs} meta={logMeta} projectId={project.id} />
+            <PanelErrorBoundary title="Personnel">
+              <WorkersPanel
+                projectId={project.id}
+                date={new Date().toISOString().slice(0, 10)}
+                readonly={group !== 'terrain'}
+              />
             </PanelErrorBoundary>
+            <div style={{ marginTop: 16 }}>
+              <PanelErrorBoundary title="Journaux">
+                <LogCalendar logs={logs} meta={logMeta} projectId={project.id} />
+              </PanelErrorBoundary>
+            </div>
           </CollapsibleSection>
 
           {/* ── 3. Incidents & Sécurité ─────────────────────────────────────── */}
