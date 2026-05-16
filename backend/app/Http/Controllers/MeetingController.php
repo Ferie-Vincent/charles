@@ -108,6 +108,16 @@ class MeetingController extends Controller
         ], 201);
     }
 
+    /**
+     * Public RSVP via tokenized email link — no auth required.
+     *
+     * Security model (V1): UUID v4 token (128-bit entropy, server-generated).
+     * Brute-force is computationally infeasible. Token expiry is implicit:
+     * the guard below returns 410 Gone once scheduled_at is past, so forwarding
+     * a link after the meeting is harmless. Link forwarding before the meeting
+     * is treated as deliberate delegation (accepted BTP context). Authenticated
+     * users can also update their RSVP via PATCH /api/meeting-invitations/{id}/respond.
+     */
     public function rsvpViaToken(string $token, string $status): Response
     {
         if (! in_array($status, ['accepted', 'declined'])) {

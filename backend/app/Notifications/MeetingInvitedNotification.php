@@ -27,9 +27,13 @@ class MeetingInvitedNotification extends Notification implements ShouldQueue
     public function via(object $notifiable): array
     {
         $channels = ['database', 'mail'];
-        // WhatsApp si l'utilisateur a un numéro de téléphone
         if (! empty($notifiable->phone)) {
             $channels[] = 'whatsapp_custom';
+        } else {
+            Log::info('MeetingInvitedNotification: WhatsApp skipped — no phone', [
+                'meeting_id' => $this->meeting->id,
+                'user_id'    => $notifiable->id,
+            ]);
         }
         return $channels;
     }

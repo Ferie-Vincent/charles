@@ -81,7 +81,7 @@ class MeetingMetricsController extends Controller
                 'total'           => $clTotal,
                 'done'            => $clDone,
                 'completion_rate_pct' => $checklistRate,
-                'below_threshold' => $checklistRate < 20,
+                'below_threshold' => $checklistRate < config('meetings.checklist_threshold_pct'),
             ],
         ]);
     }
