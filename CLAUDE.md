@@ -8,6 +8,21 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 The product spec lives at `docs/superpowers/specs/2026-04-28-chantier-dqe-webapp-design.md`.
 
+## Règle impérative — Logique Métier BTP
+
+**Tout agent (IA ou humain) qui conçoit, implémente ou modifie une fonctionnalité DOIT d'abord consulter `docs/logique-metier.md`.**
+
+Ce document est la source de vérité du domaine BTP adapté au contexte ivoirien. Il définit :
+- Les acteurs, rôles et hiérarchies terrain
+- Le cycle de vie complet d'un chantier (AO → DGD)
+- Les documents contractuels et leurs définitions précises (DQE, DPGF, BPU, Situation de travaux…)
+- La logique financière (FCFA/XOF, TVA 18% CI, retenue garantie 5%, seuils validation)
+- Les workflows irréversibles (situation → validée → payée, BDC → approuvé → reçu)
+- Les règles métier inviolables (1 journal/jour, montant DQE calculé jamais saisi, RBAC strict…)
+- Les alertes automatiques et leurs déclencheurs
+
+Toute décision technique (modèle DB, endpoint API, composant UI, règle de validation) doit être cohérente avec ce document. En cas de conflit entre une intuition de développement et `logique-metier.md`, le document fait foi.
+
 ## Repository Structure
 
 Monorepo — two separate apps in one repo:

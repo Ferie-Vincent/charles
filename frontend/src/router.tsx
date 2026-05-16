@@ -11,6 +11,7 @@ import ProjectsPage from './features/projects/pages/ProjectsPage';
 import NewProjectPage from './features/projects/pages/NewProjectPage';
 import ProjectDetailPage from './features/projects/pages/ProjectDetailPage';
 import JournalPage from './features/projects/pages/JournalPage';
+import PersonnelPage from './features/projects/pages/PersonnelPage';
 import MapPage from './features/map/pages/MapPage';
 import TimelinePage from './features/timeline/pages/TimelinePage';
 import EvaluationPage from './features/evaluation/pages/EvaluationPage';
@@ -58,6 +59,7 @@ export const router = createBrowserRouter([
   { path: '/projects/new',             element: <Shell><NewProjectPage /></Shell> },
   { path: '/projects/:id',             element: <Shell><ProjectDetailPage /></Shell> },
   { path: '/projects/:id/journal',     element: <Shell><JournalPage /></Shell> },
+  { path: '/projects/:id/personnel',   element: <Shell><PersonnelPage /></Shell> },
   { path: '/projects/:id/accounting',  element: <Guarded path="/costs"><ProjectAccountingPage /></Guarded> },
   { path: '/map',                      element: <Guarded path="/map"><MapPage /></Guarded> },
   { path: '/timeline',                 element: <Guarded path="/timeline"><TimelinePage /></Guarded> },
