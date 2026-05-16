@@ -36,6 +36,7 @@ use App\Http\Controllers\DemandeBesoinController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\PortfolioOperationsController;
 use App\Http\Controllers\ProjectWorkerController;
+use App\Http\Controllers\AvenantController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/health', function () {
@@ -222,6 +223,13 @@ Route::middleware('auth')->group(function () {
     Route::patch('/projects/{project}/workers/{worker}', [ProjectWorkerController::class, 'update']);
     Route::delete('/projects/{project}/workers/{worker}', [ProjectWorkerController::class, 'destroy']);
     Route::post('/projects/{project}/workers/attendance', [ProjectWorkerController::class, 'attendance']);
+    Route::get('/projects/{project}/workers/export', [ProjectWorkerController::class, 'export']);
+
+    // ── Avenants ─────────────────────────────────────────────────────────────
+    Route::get('/projects/{project}/avenants', [AvenantController::class, 'index']);
+    Route::post('/projects/{project}/avenants', [AvenantController::class, 'store']);
+    Route::put('/projects/{project}/avenants/{avenant}', [AvenantController::class, 'update']);
+    Route::delete('/projects/{project}/avenants/{avenant}', [AvenantController::class, 'destroy']);
 
     // ── DQE ──────────────────────────────────────────────────────────────────
     Route::middleware('permission:dqe')->group(function () {
