@@ -281,7 +281,13 @@ PROMPT;
         $avancementPct = (float) $request->query('avancement_pct', 0);
         $dqeVersionId  = $request->query('dqe_version_id');
 
-        ['base' => $base, 'avenants_sum' => $avenants] = $this->resolveBaseCalcul($project, $dqeVersionId);
+        if ($project->type_marche === 'forfait' && $project->montant_marche) {
+            $avenants = (float) Avenant::where('project_id', $project->id)
+                ->where('status', 'signe')->sum('montant_ht');
+            $base = (float) $project->montant_marche + $avenants;
+        } else {
+            ['base' => $base, 'avenants_sum' => $avenants] = $this->resolveBaseCalcul($project, $dqeVersionId);
+        }
 
         $montantBrut = round($base * ($avancementPct / 100), 2);
 
@@ -301,6 +307,7 @@ PROMPT;
             'avance_demarrage_pct'      => $project->avance_demarrage_pct,
             'progress_from_journal'     => $lastLog ? (float) $lastLog->progress_percent : null,
             'last_log_date'             => $lastLog?->log_date,
+            'type_marche'               => $project->type_marche,
         ]);
     }
 

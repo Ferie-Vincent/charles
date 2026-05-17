@@ -43,6 +43,8 @@ class Project extends Model
         'caution_liberee',
         'caution_liberee_at',
         'caution_liberee_par',
+        'is_arrete',
+        'arret_depuis',
     ];
 
     protected function casts(): array
@@ -65,6 +67,8 @@ class Project extends Model
             'date_reception_definitive'  => 'date',
             'caution_liberee'            => 'boolean',
             'caution_liberee_at'         => 'date',
+            'is_arrete'                  => 'boolean',
+            'arret_depuis'               => 'date',
             'latitude'                   => 'float',
             'longitude'                  => 'float',
         ];

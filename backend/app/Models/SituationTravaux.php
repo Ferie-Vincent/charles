@@ -50,11 +50,16 @@ class SituationTravaux extends Model
 
     public static function computeAvanceRemboursement(Project $project, float $montantBrut, ?int $excludeId = null): float
     {
-        if (!$project->montant_marche || !$project->avance_demarrage_pct) {
+        if (!$project->avance_demarrage_pct) {
             return 0;
         }
 
-        $totalAvance = round((float) $project->montant_marche * ($project->avance_demarrage_pct / 100), 2);
+        // avance_demarrage_montant accessor prefers frozen amount over live formula
+        $totalAvance = round($project->avance_demarrage_montant, 2);
+
+        if ($totalAvance <= 0) {
+            return 0;
+        }
 
         $alreadyReimbursed = (float) self::where('project_id', $project->id)
             ->whereNotIn('status', ['brouillon'])

@@ -10,6 +10,7 @@ use App\Support\Roles;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
 
 #[Signature('projects:check-budget-depasse {--dry-run : List without sending}')]
 #[Description('Alert CDT + direction when realised cost exceeds budget_ref by > 5%')]
@@ -22,7 +23,20 @@ class CheckBudgetDepasse extends Command
 
     public function handle(): int
     {
+        // Cooldown 7 days: skip projects already notified this week
+        $recentProjectIds = DB::table('notifications')
+            ->where('created_at', '>', now()->subDays(7))
+            ->get(['data'])
+            ->map(fn($n) => json_decode($n->data, true))
+            ->filter(fn($d) => ($d['type'] ?? '') === 'budget_depasse' && isset($d['project_id']))
+            ->pluck('project_id')
+            ->unique()
+            ->map(fn($id) => (int) $id)
+            ->values()
+            ->toArray();
+
         $projects = Project::where('status', 'active')
+            ->whereNotIn('id', $recentProjectIds)
             ->with(['budgetEntries', 'invoices', 'dqeVersions.lines'])
             ->get();
 
