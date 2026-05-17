@@ -45,6 +45,7 @@ use App\Http\Controllers\AiBriefingController;
 use App\Http\Controllers\AiFeedbackController;
 use App\Http\Controllers\AiRagController;
 use App\Http\Controllers\AiVisionController;
+use App\Http\Controllers\SetupController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/health', function () {
@@ -53,6 +54,12 @@ Route::get('/health', function () {
         'app' => config('app.name'),
         'timestamp' => now()->toIso8601String(),
     ]);
+});
+
+// Bootstrap super-admin — disponible une seule fois, avant tout utilisateur
+Route::prefix('setup')->group(function () {
+    Route::get('/',  [SetupController::class, 'status'])->middleware('throttle:20,1');
+    Route::post('/', [SetupController::class, 'create'])->middleware('throttle:3,1');
 });
 
 Route::prefix('auth')->group(function () {

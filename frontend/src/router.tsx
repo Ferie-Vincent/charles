@@ -5,6 +5,7 @@ import RoleGuard from './components/guards/RoleGuard';
 import { useAuth } from './features/auth/stores/auth-store';
 import { getRoleGroup } from './lib/roles';
 import LoginPage from './features/auth/pages/LoginPage';
+import SetupPage from './features/auth/pages/SetupPage';
 import SetPasswordPage from './features/auth/pages/SetPasswordPage';
 import ForgotPasswordPage from './features/auth/pages/ForgotPasswordPage';
 import ChangePasswordPage from './features/auth/pages/ChangePasswordPage';
@@ -60,6 +61,7 @@ function Guarded({ path, children }: { path: string; children: ReactNode }) {
 
 export const router = createBrowserRouter([
   { path: '/login',            element: <LoginPage /> },
+  { path: '/setup',            element: <SetupPage /> },
   { path: '/invitation/:token', element: <SetPasswordPage /> },
   { path: '/forgot-password',  element: <ForgotPasswordPage /> },
   { path: '/change-password',  element: <ChangePasswordPage /> },
