@@ -52,7 +52,7 @@ RUN apt-get update && apt-get install -y \
                                                                 EXPOSE 80
 
                                                                 # Create startup script: runs migrations+seed then starts Apache
-                                                                RUN printf '#!/bin/bash\nset -e\nphp artisan migrate --seed --force\napache2-foreground\n' > /start.sh \
+                                                                RUN printf '#!/bin/bash\nset -e\nphp artisan config:clear\nphp artisan migrate --seed --force\napache2-foreground\n' > /start.sh \
                                                                     && chmod +x /start.sh
 
                                                                     CMD ["/start.sh"]
