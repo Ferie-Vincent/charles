@@ -137,6 +137,9 @@ class DgdController extends Controller
     public function updateObservations(Request $request, Project $project): JsonResponse
     {
         $this->authorize('update', $project);
+        abort_unless(in_array($request->user()->role->name, Roles::MANAGEMENT), 403,
+            "DGD réservé à la direction et au directeur technique."
+        );
         $dgd = DecompteGeneralDefinitif::where('project_id', $project->id)->firstOrFail();
         abort_if($dgd->status === 'signe_moa', 422, 'DGD clôturé — observations non modifiables.');
         $data = $request->validate(['observations' => 'nullable|string|max:2000']);
