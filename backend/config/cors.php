@@ -19,7 +19,12 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['http://localhost:5173', 'http://localhost:5174'],
+        'allowed_origins' => array_filter([
+                                                  'http://localhost:5173',
+                                                  'http://localhost:5174',
+                                                  env('FRONTEND_URL'),
+                                                  'https://charles-frontend-app.onrender.com',
+                                              ]),
 
     'allowed_origins_patterns' => [],
 
