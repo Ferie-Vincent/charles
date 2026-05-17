@@ -907,6 +907,60 @@ button[type="submit"]:disabled {
   cursor: not-allowed;
 }
 
+@media (max-width: 640px) {
+  .login-page {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+    min-height: 100vh;
+  }
+
+  .login-panel {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+    min-height: auto;
+  }
+
+  .login-panel::before,
+  .login-panel::after {
+    display: none;
+  }
+
+  .login-panel__content,
+  .login-panel__stats {
+    display: none;
+  }
+
+  .login-panel__brand {
+    gap: 10px;
+  }
+
+  .login-panel__logo-img {
+    height: 36px;
+  }
+
+  /* Compact tagline next to logo on mobile */
+  .login-panel__mobile-tag {
+    font-size: 11px;
+    color: rgba(148, 163, 184, 0.75);
+    font-weight: 500;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+  }
+
+  .login-form-side {
+    padding: 40px 24px 56px;
+    background: var(--bg-app);
+    justify-content: flex-start;
+    padding-top: 48px;
+  }
+
+  .login-form-side h1 {
+    font-size: 22px;
+  }
+}
+
 /* ─── Misc ─── */
 
 .empty-state {
