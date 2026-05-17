@@ -1,13 +1,15 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import LoginForm from '../components/LoginForm';
 import { login, type LoginPayload } from '../api/login';
 import { useAuth } from '../stores/auth-store';
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const { setUser } = useAuth();
+  const { user, setUser } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+
+  if (user) return <Navigate to="/" replace />;
   const [error, setError] = useState<string>();
 
   async function handleSubmit(payload: LoginPayload) {
@@ -48,7 +50,7 @@ export default function LoginPage() {
             <div className="login-panel__stat-label">Données sécurisées</div>
           </div>
           <div>
-            <div className="login-panel__stat-value">7</div>
+            <div className="login-panel__stat-value">15+</div>
             <div className="login-panel__stat-label">Modules intégrés</div>
           </div>
           <div>

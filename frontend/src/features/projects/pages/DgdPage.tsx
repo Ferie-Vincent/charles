@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import type { Dgd } from '../api/get-dgd';
 import { fetchDgd, initializeDgd, signDgd, updateDgdObservations } from '../api/get-dgd';
 import PageHeader from '../../../components/ui/PageHeader';
 import { useAuth } from '../../auth/stores/auth-store';
@@ -28,20 +29,23 @@ export default function DgdPage() {
   const { user } = useAuth();
   const group = getRoleGroup(user?.role?.name ?? '');
   const canManage = group === 'direction' || group === 'dt';
-  // Gap #12: métreur + comptable peuvent consulter en lecture
-  const canView = canManage || group === 'metreur' || group === 'comptable';
+  // Gap #12: métreur + comptable peuvent consulter en lecture (route-level guard only)
+  void (group === 'metreur' || group === 'comptable');
   const qc = useQueryClient();
 
   const [signDate, setSignDate] = useState(today());
   const [observations, setObservations] = useState('');
   const [editingObs, setEditingObs] = useState(false);
 
-  const { data: dgd, isLoading } = useQuery({
+  const { data: dgd, isLoading } = useQuery<Dgd | null>({
     queryKey: ['dgd', projectId],
     queryFn: () => fetchDgd(projectId),
     staleTime: 30_000,
-    onSuccess: (d) => { if (d?.observations) setObservations(d.observations); },
   });
+
+  useEffect(() => {
+    if (dgd?.observations) setObservations(dgd.observations);
+  }, [dgd?.observations]);
 
   const invalidate = () => qc.invalidateQueries({ queryKey: ['dgd', projectId] });
 
