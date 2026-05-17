@@ -43,7 +43,7 @@ function initials(name: string): string {
   return name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
 }
 
-// ── RSVP mini-indicator (data comes from task payload — no extra HTTP call) ───
+// ── Indicateur RSVP (données issues du payload tâche — aucun appel HTTP supplémentaire) ───
 function RsvpBadge({ summary }: { summary: RsvpSummary }) {
   return (
     <div className="kb-rsvp" title={`${summary.accepted} confirmé(s) · ${summary.declined} décliné(s) · ${summary.invited} en attente`}>
