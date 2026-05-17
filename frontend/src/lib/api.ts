@@ -1,7 +1,20 @@
+/**
+ * Instance Axios partagée pour toute l'application.
+ *
+ * Auth : Laravel Sanctum en mode cookie (session), pas de Bearer token.
+ * - `withCredentials: true` est obligatoire — sans ça, le cookie de session
+ *   n'est pas envoyé et toutes les requêtes retournent 401.
+ * - Le token XSRF est lu depuis le cookie `XSRF-TOKEN` et injecté en header
+ *   sur chaque requête mutante (POST/PATCH/PUT/DELETE) pour la protection CSRF.
+ *
+ * Ne jamais importer `axios` directement dans les features — toujours importer `api` ici.
+ */
+
 import axios from 'axios';
 import { enqueueRequest, replayQueue } from './offline-queue';
 
-// Attach _silentOn403/_silentOn401: true on a request config to skip global error toasts.
+// Permet de passer _silentOn403/_silentOn401 dans la config d'une requête
+// pour désactiver les toasts d'erreur globaux sur certains appels silencieux.
 declare module 'axios' {
   interface AxiosRequestConfig {
     _silentOn403?: boolean;
@@ -11,9 +24,12 @@ declare module 'axios' {
 
 export const api = axios.create({
   baseURL: 'http://localhost:8000/api',
+  // Obligatoire pour Sanctum cookie-based auth
   withCredentials: true,
 });
 
+// Injecte le XSRF-TOKEN depuis le cookie dans chaque requête.
+// Laravel valide ce header pour prévenir les attaques CSRF.
 api.interceptors.request.use(config => {
   const match = document.cookie.match(/(?:^|;\s*)XSRF-TOKEN=([^;]+)/);
   if (match) {
@@ -22,7 +38,7 @@ api.interceptors.request.use(config => {
   return config;
 });
 
-// Replay queued mutations when connection is restored
+// Rejoue les mutations en attente quand la connexion est rétablie (PWA offline)
 window.addEventListener('online', async () => {
   const { replayed, failed, failedRequests } = await replayQueue(api);
   if (replayed > 0 || failed > 0) {
@@ -38,7 +54,7 @@ api.interceptors.response.use(
     const status = err.response?.status;
     const data = err.response?.data;
 
-    // Queue write mutations when offline for later replay
+    // Si hors-ligne : mettre en file les mutations pour replay ultérieur
     if (!navigator.onLine && !err.response && err.config) {
       const method = (err.config.method ?? '').toLowerCase();
       if (MUTATION_METHODS.has(method)) {
@@ -48,6 +64,7 @@ api.interceptors.response.use(
       }
     }
 
+    // 419 = token CSRF expiré (session expirée ou rechargement forcé)
     if (status === 419) {
       window.dispatchEvent(new CustomEvent('api-error', {
         detail: 'Session expirée ou token CSRF invalide. Rechargez la page.',
