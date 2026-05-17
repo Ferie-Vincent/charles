@@ -248,6 +248,7 @@ Route::middleware('auth')->group(function () {
 
     // ── Situation Travaux — DB workflow ───────────────────────────────────────
     Route::get('/projects/{project}/situations/last-status', [SituationTravauxController::class, 'lastStatus']);
+    Route::get('/projects/{project}/situations/preview-calcul', [SituationTravauxController::class, 'previewCalcul']);
     Route::get('/projects/{project}/situations', [SituationTravauxController::class, 'list']);
     Route::post('/projects/{project}/situations', [SituationTravauxController::class, 'storeSituation']);
     Route::patch('/projects/{project}/situations/{situation}/submit', [SituationTravauxController::class, 'submit']);

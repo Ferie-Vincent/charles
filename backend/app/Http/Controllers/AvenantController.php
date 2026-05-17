@@ -3,6 +3,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Avenant;
 use App\Models\Project;
+use App\Models\User;
+use App\Notifications\AvenantSigneNotification;
+use App\Support\Roles;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -46,6 +49,7 @@ class AvenantController extends Controller
     {
         $this->authorize('update', $project);
         abort_if($avenant->status === 'signe', 422, 'Un avenant signé ne peut pas être modifié.');
+        $wasSigne = $avenant->status === 'signe';
         $data = $request->validate([
             'objet'                      => 'sometimes|string|max:255',
             'type'                       => 'sometimes|in:montant,delai,montant_et_delai',
@@ -56,6 +60,19 @@ class AvenantController extends Controller
             'notes'                      => 'nullable|string',
         ]);
         $avenant->update($data);
+
+        // P2: notify metreurs when avenant transitions to signed
+        if (!$wasSigne && ($data['status'] ?? null) === 'signe') {
+            $avenant->load('project:id,name,code');
+            User::whereHas('role', fn($q) => $q->whereIn('name', [
+                Roles::METREUR_ECONOMISTE_SLUG,
+                Roles::CONDUCTEUR_TRAVAUX_SLUG,
+            ]))
+                ->where('company_id', $avenant->company_id)
+                ->get()
+                ->each(fn($u) => $u->notify(new AvenantSigneNotification($avenant)));
+        }
+
         return response()->json(['avenant' => $avenant]);
     }
 

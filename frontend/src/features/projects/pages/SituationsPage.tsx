@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   fetchSituations, createSituation, submitSituation,
-  validateSituation, paySituation,
+  validateSituation, paySituation, fetchPreviewCalcul,
   type Situation, type SituationStatut,
 } from '../api/get-situations';
 import PageHeader from '../../../components/ui/PageHeader';
@@ -48,11 +48,19 @@ export default function SituationsPage() {
   const payMut      = useMutation({ mutationFn: ({ sid, date }: { sid: number; date: string }) => paySituation(projectId, sid, date), onSuccess: invalidate });
 
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ periode: currentMonth(), avancement_pct: 0, montant_brut_ht: 0, notes: '' });
+  const [form, setForm] = useState({ periode: currentMonth(), avancement_pct: 0, notes: '' });
   const [payDate, setPayDate] = useState<Record<number, string>>({});
+
+  const { data: preview } = useQuery({
+    queryKey: ['situation-preview', projectId, form.avancement_pct],
+    queryFn: () => fetchPreviewCalcul(projectId, form.avancement_pct),
+    enabled: showForm && form.avancement_pct > 0,
+    staleTime: 10_000,
+  });
 
   function handleCreate(e: React.FormEvent) {
     e.preventDefault();
+    if (preview?.avancement_precedent_pct !== null && form.avancement_pct < (preview?.avancement_precedent_pct ?? 0)) return;
     createMut.mutate({ ...form }, { onSuccess: () => setShowForm(false) });
   }
 
@@ -83,25 +91,36 @@ export default function SituationsPage() {
               />
             </div>
             <div className="form-group">
-              <label className="form-label">Avancement global (%)</label>
+              <label className="form-label">Avancement cumulé (%)</label>
               <input
                 type="number"
                 className="form-control"
-                min={0} max={100} step={1}
+                min={preview?.avancement_precedent_pct ?? 0}
+                max={100} step={1}
                 value={form.avancement_pct}
                 onChange={e => setForm(f => ({ ...f, avancement_pct: parseFloat(e.target.value) || 0 }))}
               />
+              {preview?.avancement_precedent_pct != null && (
+                <span className="form-hint">
+                  Précédent certifié : {preview.avancement_precedent_pct}%
+                  {form.avancement_pct < preview.avancement_precedent_pct && (
+                    <span style={{ color: '#ef4444', marginLeft: 8 }}>⚠ Régression interdite</span>
+                  )}
+                </span>
+              )}
             </div>
-            <div className="form-group">
-              <label className="form-label">Montant brut HT (XOF) *</label>
-              <input
-                type="number"
-                className="form-control"
-                min={0} step={1}
-                value={form.montant_brut_ht}
-                onChange={e => setForm(f => ({ ...f, montant_brut_ht: parseFloat(e.target.value) || 0 }))}
-                required
-              />
+            <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+              <label className="form-label">Montant brut HT calculé</label>
+              <div className="form-control" style={{ background: 'var(--color-surface-2)', color: 'var(--color-text-muted)', cursor: 'default', fontWeight: 600 }}>
+                {preview ? fmt(preview.montant_brut_ht) : '—'}
+              </div>
+              {preview && (
+                <span className="form-hint">
+                  Base = {fmt(preview.base_calcul)}
+                  {preview.avenants_signes_sum > 0 && ` (dont ${fmt(preview.avenants_signes_sum)} avenants signés)`}
+                  {' × '}{form.avancement_pct}%
+                </span>
+              )}
             </div>
             <div className="form-group">
               <label className="form-label">Notes</label>
@@ -134,7 +153,9 @@ export default function SituationsPage() {
                 <th>N°</th>
                 <th>Période</th>
                 <th>Avancement</th>
+                <th>Δ période</th>
                 <th>Brut HT</th>
+                <th>Cumul précédent</th>
                 <th>Retenue</th>
                 <th>Net à payer</th>
                 <th>Statut</th>
@@ -146,8 +167,19 @@ export default function SituationsPage() {
                 <tr key={s.id}>
                   <td><strong>{s.numero}</strong></td>
                   <td>{s.periode}</td>
-                  <td>{s.avancement_pct}%</td>
+                  <td>
+                    {s.avancement_pct}%
+                    {s.avancement_precedent_pct != null && (
+                      <span style={{ color: 'var(--color-text-muted)', fontSize: '11px', marginLeft: 4 }}>
+                        (/{s.avancement_precedent_pct}%)
+                      </span>
+                    )}
+                  </td>
+                  <td style={{ color: s.delta_pct > 0 ? '#22c55e' : '#ef4444' }}>
+                    {s.delta_pct > 0 ? '+' : ''}{s.delta_pct}%
+                  </td>
                   <td>{fmt(s.montant_brut_ht)}</td>
+                  <td style={{ color: 'var(--color-text-muted)' }}>{fmt(s.cumul_precedent_ht)}</td>
                   <td>{fmt(s.retenue_garantie_amount)}</td>
                   <td><strong>{fmt(s.net_a_payer)}</strong></td>
                   <td>

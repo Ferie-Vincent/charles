@@ -7,6 +7,8 @@ export interface Situation {
   numero: string;
   periode: string;
   avancement_pct: number;
+  avancement_precedent_pct: number | null;
+  delta_pct: number;
   montant_brut_ht: number;
   cumul_precedent_ht: number;
   retenue_garantie_pct: number;
@@ -31,10 +33,21 @@ export async function fetchSituations(projectId: number): Promise<Situation[]> {
   return res.data.situations;
 }
 
+export async function fetchPreviewCalcul(projectId: number, avancementPct: number, dqeVersionId?: number | null): Promise<{
+  base_calcul: number;
+  avenants_signes_sum: number;
+  avancement_precedent_pct: number | null;
+  montant_brut_ht: number;
+}> {
+  const params = new URLSearchParams({ avancement_pct: String(avancementPct) });
+  if (dqeVersionId) params.append('dqe_version_id', String(dqeVersionId));
+  const res = await api.get(`/projects/${projectId}/situations/preview-calcul?${params}`);
+  return res.data;
+}
+
 export async function createSituation(projectId: number, data: {
   periode: string;
   avancement_pct: number;
-  montant_brut_ht: number;
   dqe_version_id?: number | null;
   notes?: string;
 }): Promise<Situation> {

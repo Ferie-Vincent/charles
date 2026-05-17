@@ -7,6 +7,8 @@ use App\Models\DqeVersion;
 use App\Models\GedDocument;
 use App\Models\Project;
 use App\Models\SituationTravaux;
+use App\Models\User;
+use App\Notifications\SituationValidatedNotification;
 use App\Support\Roles;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -246,7 +248,7 @@ Style : formel, chiffré, professionnel. Utilise des tableaux Markdown. Ne pas i
 PROMPT;
     }
 
-    // Terrain-accessible: returns last situation status only (no financial data)
+    // ── Terrain-accessible: status badge only (no financial data) ────────────
     public function lastStatus(Project $project): JsonResponse
     {
         $this->authorize('view', $project);
@@ -259,16 +261,58 @@ PROMPT;
         return response()->json(['last_situation' => $last]);
     }
 
+    // ── Preview calcul avant création (no DB write) ───────────────────────────
+    public function previewCalcul(Request $request, Project $project): JsonResponse
+    {
+        $this->authorize('update', $project);
+
+        $avancementPct = (float) $request->query('avancement_pct', 0);
+        $dqeVersionId  = $request->query('dqe_version_id');
+
+        ['base' => $base, 'avenants_sum' => $avenants] = $this->resolveBaseCalcul($project, $dqeVersionId);
+
+        $montantBrut = round($base * ($avancementPct / 100), 2);
+
+        $prevAvancement = SituationTravaux::where('project_id', $project->id)
+            ->whereNotIn('status', ['brouillon'])
+            ->orderByDesc('created_at')
+            ->value('avancement_pct');
+
+        return response()->json([
+            'base_calcul'              => $base,
+            'avenants_signes_sum'      => $avenants,
+            'avancement_precedent_pct' => $prevAvancement,
+            'montant_brut_ht'          => $montantBrut,
+        ]);
+    }
+
     // ── DB-backed workflow methods ────────────────────────────────────────────
 
     public function list(Project $project): JsonResponse
     {
         $this->authorize('view', $project);
+
         $situations = SituationTravaux::where('project_id', $project->id)
             ->with('creator:id,name', 'dqeVersion:id,name,version_number')
-            ->orderByDesc('created_at')
+            ->orderBy('created_at')
             ->get();
-        return response()->json(['situations' => $situations]);
+
+        // Enrich with sequential avancement context
+        $prevAvancement = null;
+        $enriched = $situations->map(function ($s) use (&$prevAvancement) {
+            $arr = $s->toArray();
+            $arr['avancement_precedent_pct'] = $prevAvancement;
+            $arr['delta_pct'] = $prevAvancement !== null
+                ? round($s->avancement_pct - $prevAvancement, 2)
+                : $s->avancement_pct;
+
+            if ($s->status !== 'brouillon') {
+                $prevAvancement = $s->avancement_pct;
+            }
+            return $arr;
+        })->sortByDesc('created_at')->values();
+
+        return response()->json(['situations' => $enriched]);
     }
 
     public function storeSituation(Request $request, Project $project): JsonResponse
@@ -276,32 +320,38 @@ PROMPT;
         $this->authorize('update', $project);
 
         $data = $request->validate([
-            'periode'         => ['required', 'string', 'regex:/^\d{4}-\d{2}$/'],
-            'dqe_version_id'  => ['nullable', 'integer', Rule::exists('dqe_versions', 'id')->where('project_id', $project->id)],
-            'avancement_pct'  => 'required|numeric|min:0|max:100',
-            'montant_brut_ht' => 'required|numeric|min:0',
-            'detail_lots'     => 'nullable|array',
-            'notes'           => 'nullable|string',
+            'periode'        => ['required', 'string', 'regex:/^\d{4}-\d{2}$/'],
+            'dqe_version_id' => ['nullable', 'integer', Rule::exists('dqe_versions', 'id')->where('project_id', $project->id)],
+            'avancement_pct' => 'required|numeric|min:0|max:100',
+            'detail_lots'    => 'nullable|array',
+            'notes'          => 'nullable|string',
         ]);
 
-        $montantMax = (float)($project->montant_marche ?? 0)
-            + Avenant::where('project_id', $project->id)->where('status', 'signe')->sum('montant_ht');
+        // P0: block avancement regression vs any non-brouillon situation
+        $prevAvancement = SituationTravaux::where('project_id', $project->id)
+            ->whereNotIn('status', ['brouillon'])
+            ->orderByDesc('created_at')
+            ->value('avancement_pct');
 
-        if ($montantMax > 0 && $data['montant_brut_ht'] > $montantMax) {
+        if ($prevAvancement !== null && $data['avancement_pct'] < $prevAvancement) {
             return response()->json([
-                'message'     => 'Le montant brut HT dépasse le montant du marché (incluant avenants signés).',
-                'montant_max' => $montantMax,
+                'message'                  => "Avancement {$data['avancement_pct']}% inférieur au précédent certifié ({$prevAvancement}%). Régression interdite.",
+                'avancement_precedent_pct' => $prevAvancement,
             ], 422);
         }
+
+        // P0: compute montant_brut_ht server-side — saisie libre interdite
+        ['base' => $base] = $this->resolveBaseCalcul($project, $data['dqe_version_id'] ?? null);
+        $montantBrutHT = round($base * ($data['avancement_pct'] / 100), 2);
 
         $cumulPrecedent = SituationTravaux::where('project_id', $project->id)
             ->whereIn('status', ['validee_moe', 'payee'])
             ->sum('montant_brut_ht');
 
-        $retenueAmount  = round($data['montant_brut_ht'] * (config('btp.retenue_garantie_pct') / 100), 2);
-        $avanceRembours = SituationTravaux::computeAvanceRemboursement($project, $data['montant_brut_ht']);
+        $retenueAmount  = round($montantBrutHT * (config('btp.retenue_garantie_pct') / 100), 2);
+        $avanceRembours = SituationTravaux::computeAvanceRemboursement($project, $montantBrutHT);
         $vatRate        = config('btp.tva_taux_standard');
-        $baseHT         = $data['montant_brut_ht'] - $retenueAmount - $avanceRembours;
+        $baseHT         = $montantBrutHT - $retenueAmount - $avanceRembours;
         $vatAmount      = round($baseHT * ($vatRate / 100), 2);
         $netAPayer      = round($baseHT + $vatAmount, 2);
 
@@ -316,7 +366,7 @@ PROMPT;
             'numero'                  => $numero,
             'periode'                 => $data['periode'],
             'avancement_pct'          => $data['avancement_pct'],
-            'montant_brut_ht'         => $data['montant_brut_ht'],
+            'montant_brut_ht'         => $montantBrutHT,
             'cumul_precedent_ht'      => $cumulPrecedent,
             'retenue_garantie_pct'    => config('btp.retenue_garantie_pct'),
             'retenue_garantie_amount' => $retenueAmount,
@@ -329,7 +379,11 @@ PROMPT;
             'status'                  => 'brouillon',
         ]);
 
-        return response()->json(['situation' => $situation->load('creator:id,name')], 201);
+        return response()->json([
+            'situation'                => $situation->load('creator:id,name'),
+            'base_calcul'              => $base,
+            'avancement_precedent_pct' => $prevAvancement,
+        ], 201);
     }
 
     public function submit(Project $project, SituationTravaux $situation): JsonResponse
@@ -344,12 +398,42 @@ PROMPT;
     {
         $this->authorize('update', $project);
         abort_if($situation->status !== 'soumise', 422, 'Seule une situation soumise peut être validée MOE.');
+
         $situation->update([
             'status'       => 'validee_moe',
             'validated_by' => $request->user()->id,
             'validated_at' => now(),
         ]);
+
+        // P2: notify creator (typically métreur) when validated
+        if ($situation->created_by && $situation->created_by !== $request->user()->id) {
+            $creator = User::find($situation->created_by);
+            $creator?->notify(new SituationValidatedNotification($situation->load('project:id,name,code'), $request->user()));
+        }
+
         return response()->json(['situation' => $situation]);
+    }
+
+    // ── Private helpers ───────────────────────────────────────────────────────
+
+    /**
+     * Returns base de calcul = (DQE total_ht or montant_marche) + avenants signés.
+     * @return array{base: float, avenants_sum: float}
+     */
+    private function resolveBaseCalcul(Project $project, int|string|null $dqeVersionId): array
+    {
+        $avenants = (float) Avenant::where('project_id', $project->id)
+            ->where('status', 'signe')
+            ->sum('montant_ht');
+
+        if ($dqeVersionId) {
+            $dqe = DqeVersion::find($dqeVersionId);
+            $base = (float) ($dqe?->total_ht ?? $project->montant_marche ?? 0);
+        } else {
+            $base = (float) ($project->montant_marche ?? 0);
+        }
+
+        return ['base' => $base + $avenants, 'avenants_sum' => $avenants];
     }
 
     public function pay(Request $request, Project $project, SituationTravaux $situation): JsonResponse
