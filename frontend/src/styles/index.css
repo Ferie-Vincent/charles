@@ -10627,15 +10627,82 @@ code {
 }
 
 .ai-fab-modal-body {
-  padding: 4px 0 0;
+  padding: 0;
 }
 
-/* Strip inner border/shadow from components inside modal */
-.ai-fab-modal-body .ai-briefing,
-.ai-fab-modal-body .ai-query-panel {
-  border-radius: 0;
-  border: none;
-  box-shadow: none;
+/* ── Light-theme overrides for ai-briefing inside modal ── */
+.ai-fab-modal-body .ai-briefing {
   background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  margin-bottom: 0;
+  padding: 20px 24px 20px;
 }
+.ai-fab-modal-body .ai-briefing::before { display: none; }
+
+/* Hide inner header — modal already shows the title */
+.ai-fab-modal-body .ai-briefing__header { display: none; }
+
+/* Dark text on white background */
+.ai-fab-modal-body .ai-briefing__text {
+  color: #1e293b;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.ai-fab-modal-body .ai-briefing__title  { color: #1e293b; }
+.ai-fab-modal-body .ai-briefing__date   { color: #64748b; }
+
+/* Sources — compact light pills */
+.ai-fab-modal-body .ai-briefing__sources {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-bottom: 12px;
+}
+.ai-fab-modal-body .ai-briefing__sources-label {
+  color: #94a3b8;
+  font-size: 10px;
+  align-self: center;
+}
+.ai-fab-modal-body .ai-briefing__source {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 20px;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Footer */
+.ai-fab-modal-body .ai-briefing__footer {
+  border-top-color: #f1f5f9;
+}
+.ai-fab-modal-body .ai-briefing__model { color: #94a3b8; }
+
+/* Skeleton on light bg */
+.ai-fab-modal-body .ai-briefing__skeleton {
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background-size: 200% 100%;
+}
+.ai-fab-modal-body .ai-briefing--empty .ai-briefing__header { display: flex; }
+.ai-fab-modal-body .ai-briefing--empty .ai-briefing__badge  { display: none; }
+.ai-fab-modal-body .ai-briefing--empty .ai-briefing__title  { color: #64748b; }
+.ai-fab-modal-body .ai-briefing__empty-msg { color: #64748b; padding: 0 24px 20px; }
+
+/* ── query panel inside modal ── */
+.ai-fab-modal-body .ai-query-panel {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  margin-bottom: 0;
+  padding: 16px 24px 20px;
+}
+/* Hide inner header — modal already shows title */
+.ai-fab-modal-body .ai-query-panel__header { display: none; }
 /* ─────────────────────────────────────────────────────────────────── */

@@ -123,7 +123,7 @@ export default function AiFab() {
               </button>
             </div>
             <div className="ai-fab-modal-body">
-              {modal === 'briefing' ? <AiMorningBriefing /> : <AiQueryPanel />}
+              {modal === 'briefing' ? <AiMorningBriefing alwaysExpanded /> : <AiQueryPanel />}
             </div>
           </div>
         </div>

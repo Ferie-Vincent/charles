@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { getAiBriefing } from '../api/ai';
 import AiFeedbackButton from './AiFeedbackButton';
 
-export default function AiMorningBriefing() {
+export default function AiMorningBriefing({ alwaysExpanded = false }: { alwaysExpanded?: boolean }) {
   const [expanded, setExpanded] = useState(true);
 
   const { data, isLoading, error } = useQuery({
@@ -41,7 +41,7 @@ export default function AiMorningBriefing() {
 
   return (
     <div className="ai-briefing">
-      <div className="ai-briefing__header" onClick={() => setExpanded(e => !e)} style={{ cursor: 'pointer' }}>
+      <div className="ai-briefing__header" onClick={() => !alwaysExpanded && setExpanded(e => !e)} style={{ cursor: alwaysExpanded ? 'default' : 'pointer' }}>
         <span className="ai-briefing__badge">IA</span>
         <span className="ai-briefing__title">Briefing matinal</span>
         {data.data_date && (
@@ -57,7 +57,7 @@ export default function AiMorningBriefing() {
         </svg>
       </div>
 
-      {expanded && (
+      {(expanded || alwaysExpanded) && (
         <>
           <p className="ai-briefing__text">{data.text}</p>
 
