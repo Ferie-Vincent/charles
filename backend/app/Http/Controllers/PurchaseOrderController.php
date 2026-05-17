@@ -158,6 +158,38 @@ class PurchaseOrderController extends Controller
             'Vous ne pouvez pas approuver votre propre commande.'
         );
 
+        // BTP seuils validation — montant-based role escalation
+        $user   = $request->user();
+        $amount = (float)$purchaseOrder->total_amount;
+        $seuils = config('btp.bdc_seuils_validation', []);
+
+        $requiredRole = null;
+        foreach ($seuils as $maxAmount => $roleRequired) {
+            if ($amount <= $maxAmount) {
+                $requiredRole = $roleRequired;
+                break;
+            }
+        }
+
+        if ($requiredRole) {
+            $hierarchy = [
+                'chef-chantier'       => 1,
+                'conducteur-travaux'  => 2,
+                'directeur-technique' => 3,
+                'direction'           => 4,
+            ];
+            $userLevel     = $hierarchy[$user->role->name] ?? 0;
+            $requiredLevel = $hierarchy[$requiredRole] ?? 4;
+
+            if ($userLevel < $requiredLevel) {
+                return response()->json([
+                    'message'       => "Ce bon de commande ({$amount} XOF) requiert l'approbation d'un {$requiredRole}.",
+                    'required_role' => $requiredRole,
+                    'amount'        => $amount,
+                ], 403);
+            }
+        }
+
         $purchaseOrder->update([
             'status'      => 'approuve',
             'approved_by' => $request->user()->id,

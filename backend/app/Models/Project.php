@@ -108,4 +108,13 @@ class Project extends Model
     {
         return $this->hasMany(Invoice::class);
     }
+
+    public function getPenalitesRetardCalculeesAttribute(): float
+    {
+        if (!$this->end_date || !$this->penalites_retard_par_jour) {
+            return 0;
+        }
+        $joursRetard = max(0, now()->diffInDays($this->end_date, false) * -1);
+        return round($joursRetard * (float)$this->penalites_retard_par_jour, 2);
+    }
 }
