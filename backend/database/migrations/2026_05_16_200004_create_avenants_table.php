@@ -9,18 +9,16 @@ return new class extends Migration {
         Schema::create('avenants', function (Blueprint $table) {
             $table->id();
             $table->foreignId('project_id')->constrained()->cascadeOnDelete();
-            $table->string('numero')->unique();
-            $table->enum('type', ['extension_delai', 'augmentation_cout', 'reduction_cout', 'modification_travaux', 'autre']);
-            $table->decimal('montant_ht', 12, 2)->nullable();
-            $table->decimal('montant_tva', 12, 2)->nullable();
-            $table->decimal('montant_ttc', 12, 2)->nullable();
-            $table->text('description')->nullable();
-            $table->date('date_demande');
-            $table->date('date_acceptation')->nullable();
-            $table->enum('status', ['en_attente', 'accepte', 'rejete'])->default('en_attente');
+            $table->foreignId('company_id')->constrained()->cascadeOnDelete();
             $table->foreignId('created_by')->constrained('users');
-            $table->foreignId('approved_by')->nullable()->constrained('users')->nullOnDelete();
-            $table->text('notes_approbation')->nullable();
+            $table->string('numero', 20)->unique();
+            $table->string('objet', 255)->nullable();
+            $table->enum('type', ['montant', 'delai', 'montant_et_delai'])->default('montant');
+            $table->decimal('montant_ht', 12, 2)->default(0);
+            $table->integer('delai_supplementaire_jours')->nullable();
+            $table->enum('status', ['brouillon', 'soumis', 'signe', 'refuse'])->default('brouillon');
+            $table->date('date_signature')->nullable();
+            $table->text('notes')->nullable();
             $table->timestamps();
             $table->index('project_id');
             $table->index('status');

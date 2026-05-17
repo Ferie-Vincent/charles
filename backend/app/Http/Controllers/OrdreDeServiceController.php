@@ -36,6 +36,17 @@ class OrdreDeServiceController extends Controller
             'document'            => 'nullable|file|mimes:pdf|max:10240',
         ]);
 
+        // Lifecycle-changing OS types (demarrage/arret/reprise) mutate project contractual state
+        // — restricted to Direction and Directeur Technique only
+        $lifecycleTypes = ['demarrage', 'arret', 'reprise'];
+        if (in_array($data['type'], $lifecycleTypes)) {
+            abort_unless(
+                in_array($request->user()->role->name, Roles::MANAGEMENT),
+                403,
+                "Les ordres de service de type « {$data['type']} » modifient l'état contractuel du chantier — réservés à la Direction ou au Directeur Technique."
+            );
+        }
+
         $path = null;
         if ($request->hasFile('document')) {
             $path = $request->file('document')->store("os/{$project->id}", 'public');

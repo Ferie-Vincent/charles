@@ -60,17 +60,14 @@ class AvenantController extends Controller
             'notes'                      => 'nullable|string',
         ]);
 
-        // Gap #8: signature avenant significatif (> 5% marché) réservée DT/direction
-        if (($data['status'] ?? null) === 'signe' && $project->montant_marche) {
-            $montantSigne = (float)($data['montant_ht'] ?? $avenant->montant_ht ?? 0);
-            $seuil = (float)$project->montant_marche * 0.05;
-            if ($montantSigne > $seuil) {
-                $group = $request->user()->role->name ?? '';
-                $allowed = Roles::MANAGEMENT; // direction + directeur-technique
-                abort_unless(in_array($group, $allowed), 403,
-                    "Avenant > 5% du marché (" . number_format($montantSigne, 0, ',', ' ') . " XOF) — signature réservée au Directeur Technique ou à la Direction."
-                );
-            }
+        // Un avenant est un acte contractuel — toute signature réservée à la Direction/DT
+        // (Le seuil 5% déterminait avant qui pouvait signer — règle unifiée : MANAGEMENT uniquement)
+        if (($data['status'] ?? null) === 'signe') {
+            abort_unless(
+                in_array($request->user()->role->name, Roles::MANAGEMENT),
+                403,
+                'La signature d\'un avenant est un acte contractuel réservé au Directeur Technique ou à la Direction.'
+            );
         }
 
         $avenant->update($data);
