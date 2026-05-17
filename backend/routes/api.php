@@ -38,6 +38,8 @@ use App\Http\Controllers\PortfolioOperationsController;
 use App\Http\Controllers\ProjectWorkerController;
 use App\Http\Controllers\AvenantController;
 use App\Http\Controllers\OrdreDeServiceController;
+use App\Http\Controllers\BpuController;
+use App\Http\Controllers\DgdController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/health', function () {
@@ -237,6 +239,24 @@ Route::middleware('auth')->group(function () {
     Route::post('/projects/{project}/os', [OrdreDeServiceController::class, 'store']);
     Route::patch('/projects/{project}/os/{os}/accuser', [OrdreDeServiceController::class, 'accuser']);
     Route::delete('/projects/{project}/os/{os}', [OrdreDeServiceController::class, 'destroy']);
+
+    // ── BPU ───────────────────────────────────────────────────────────────────
+    Route::get('/projects/{project}/bpu', [BpuController::class, 'index']);
+    Route::get('/projects/{project}/bpu/{version}', [BpuController::class, 'show']);
+    Route::post('/projects/{project}/bpu', [BpuController::class, 'store']);
+    Route::patch('/projects/{project}/bpu/{version}/validate', [BpuController::class, 'validateVersion']);
+
+    // ── Situation Travaux — DB workflow ───────────────────────────────────────
+    Route::get('/projects/{project}/situation-travaux/list', [SituationTravauxController::class, 'list']);
+    Route::post('/projects/{project}/situation-travaux/store', [SituationTravauxController::class, 'storeSituation']);
+    Route::patch('/projects/{project}/situation-travaux/{situation}/submit', [SituationTravauxController::class, 'submit']);
+    Route::patch('/projects/{project}/situation-travaux/{situation}/validate', [SituationTravauxController::class, 'validateSituation']);
+    Route::patch('/projects/{project}/situation-travaux/{situation}/pay', [SituationTravauxController::class, 'pay']);
+
+    // ── DGD ───────────────────────────────────────────────────────────────────
+    Route::get('/projects/{project}/dgd', [DgdController::class, 'show']);
+    Route::post('/projects/{project}/dgd/initialize', [DgdController::class, 'initialize']);
+    Route::patch('/projects/{project}/dgd/sign', [DgdController::class, 'sign']);
 
     // ── DQE ──────────────────────────────────────────────────────────────────
     Route::middleware('permission:dqe')->group(function () {
