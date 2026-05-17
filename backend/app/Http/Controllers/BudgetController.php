@@ -39,7 +39,7 @@ class BudgetController extends Controller
         $orphanPayments = $project->budgetEntries()
             ->where('type', 'paiement')
             ->whereNull('situation_travaux_id')
-            ->get(['id', 'label', 'amount', 'entry_date']);
+            ->get(['id', 'label', 'amount', 'entry_date', 'category']);
 
         return response()->json([
             'entries'         => $entries,

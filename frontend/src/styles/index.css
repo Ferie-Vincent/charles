@@ -4457,6 +4457,7 @@ code {
 .bud-orphan-row { display: flex; align-items: center; gap: 12px; padding: 7px 14px; border-bottom: 1px solid #ffedd5; font-size: 12px; }
 .bud-orphan-row:last-child { border-bottom: none; }
 .bud-orphan-row__date   { color: #9a3412; min-width: 80px; }
+.bud-orphan-row__cat    { font-size: 11px; background: #fed7aa; color: #9a3412; padding: 1px 7px; border-radius: 10px; white-space: nowrap; }
 .bud-orphan-row__label  { flex: 1; color: #431407; }
 .bud-orphan-row__amount { font-weight: 700; color: #dc2626; white-space: nowrap; }
 
