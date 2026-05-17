@@ -44,7 +44,7 @@ it('validates periode format', function () {
 });
 
 it('returns 503 when no ai key configured', function () {
-    $version = DqeVersion::create([
+    DqeVersion::create([
         'project_id'     => $this->project->id,
         'created_by'     => $this->user->id,
         'version_number' => 1,
@@ -52,15 +52,99 @@ it('returns 503 when no ai key configured', function () {
         'status'         => 'validated',
     ]);
 
-    // Remove API keys for this test
-    config(['services.groq.key' => null, 'services.anthropic.key' => null]);
+    config(['services.mistral.key' => null, 'services.groq.key' => null, 'services.anthropic.key' => null]);
 
     $this->actingAs($this->user)
         ->postJson("/api/projects/{$this->project->id}/situation-travaux", [
             'periode' => '2026-05',
         ])
         ->assertStatus(503)
-        ->assertJsonFragment(['error' => 'Aucune clé IA configurée (GROQ_API_KEY ou ANTHROPIC_API_KEY).']);
+        ->assertJsonFragment(['error' => 'Aucune clé IA configurée (MISTRAL_API_KEY, GROQ_API_KEY ou ANTHROPIC_API_KEY).']);
+});
+
+it('uses mistral when mistral key is configured (priority over groq)', function () {
+    DqeVersion::create([
+        'project_id'     => $this->project->id,
+        'created_by'     => $this->user->id,
+        'version_number' => 1,
+        'name'           => 'DQE Mistral',
+        'status'         => 'validated',
+    ]);
+
+    Http::fake([
+        'https://api.mistral.ai/*' => Http::response([
+            'choices' => [['message' => ['content' => '# Généré par Mistral']]],
+        ], 200),
+        'https://api.groq.com/*' => Http::response([
+            'choices' => [['message' => ['content' => '# Généré par Groq']]],
+        ], 200),
+    ]);
+
+    config(['services.mistral.key' => 'mistral-test-key', 'services.groq.key' => 'groq-test-key', 'services.anthropic.key' => null]);
+
+    $response = $this->actingAs($this->user)
+        ->postJson("/api/projects/{$this->project->id}/situation-travaux", [
+            'periode' => '2026-06',
+        ])
+        ->assertOk();
+
+    expect($response->json('situation'))->toContain('Mistral');
+    Http::assertSent(fn ($req) => str_contains($req->url(), 'mistral.ai'));
+    Http::assertNotSent(fn ($req) => str_contains($req->url(), 'groq.com'));
+});
+
+it('falls back to groq when only groq key is configured', function () {
+    DqeVersion::create([
+        'project_id'     => $this->project->id,
+        'created_by'     => $this->user->id,
+        'version_number' => 1,
+        'name'           => 'DQE Groq',
+        'status'         => 'validated',
+    ]);
+
+    Http::fake([
+        'https://api.groq.com/*' => Http::response([
+            'choices' => [['message' => ['content' => '# Généré par Groq fallback']]],
+        ], 200),
+    ]);
+
+    config(['services.mistral.key' => null, 'services.groq.key' => 'groq-test-key', 'services.anthropic.key' => null]);
+
+    $response = $this->actingAs($this->user)
+        ->postJson("/api/projects/{$this->project->id}/situation-travaux", [
+            'periode' => '2026-07',
+        ])
+        ->assertOk();
+
+    expect($response->json('situation'))->toContain('Groq');
+    Http::assertSent(fn ($req) => str_contains($req->url(), 'groq.com'));
+});
+
+it('falls back to anthropic when only anthropic key is configured', function () {
+    DqeVersion::create([
+        'project_id'     => $this->project->id,
+        'created_by'     => $this->user->id,
+        'version_number' => 1,
+        'name'           => 'DQE Anthropic',
+        'status'         => 'validated',
+    ]);
+
+    Http::fake([
+        'https://api.anthropic.com/*' => Http::response([
+            'content' => [['text' => '# Généré par Anthropic fallback']],
+        ], 200),
+    ]);
+
+    config(['services.mistral.key' => null, 'services.groq.key' => null, 'services.anthropic.key' => 'anthropic-test-key']);
+
+    $response = $this->actingAs($this->user)
+        ->postJson("/api/projects/{$this->project->id}/situation-travaux", [
+            'periode' => '2026-08',
+        ])
+        ->assertOk();
+
+    expect($response->json('situation'))->toContain('Anthropic');
+    Http::assertSent(fn ($req) => str_contains($req->url(), 'anthropic.com'));
 });
 
 it('generates situation using specific dqe_version_id', function () {
@@ -72,14 +156,13 @@ it('generates situation using specific dqe_version_id', function () {
         'status'         => 'validated',
     ]);
 
-    // Mock Groq HTTP call
     Http::fake([
         'https://api.groq.com/*' => Http::response([
             'choices' => [['message' => ['content' => '# Situation générée par mock']]],
         ], 200),
     ]);
 
-    config(['services.groq.key' => 'test-key', 'services.anthropic.key' => null]);
+    config(['services.mistral.key' => null, 'services.groq.key' => 'test-key', 'services.anthropic.key' => null]);
 
     $response = $this->actingAs($this->user)
         ->postJson("/api/projects/{$this->project->id}/situation-travaux", [
