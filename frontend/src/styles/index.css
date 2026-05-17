@@ -3137,8 +3137,10 @@ code {
 .topbar-notif-item__dot--warning  { background: #f59e0b; }
 .topbar-notif-item__dot--danger   { background: #ef4444; }
 .topbar-notif-item__dot--critical { background: #ef4444; }
+.topbar-notif-item__dot--success  { background: #22c55e; }
 .topbar-notif-item__dot--meeting  { background: #6366f1; }
-.topbar-notif-item--meeting { border-left: 3px solid #6366f1; }
+.topbar-notif-item--meeting  { border-left: 3px solid #6366f1; }
+.topbar-notif-item--success  { border-left: 3px solid #22c55e; }
 
 .topbar-notif-item__body { flex: 1; min-width: 0; }
 .topbar-notif-item__title { font-size: 0.82rem; font-weight: 600; color: var(--text-main); }

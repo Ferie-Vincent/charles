@@ -247,6 +247,7 @@ Route::middleware('auth')->group(function () {
     Route::patch('/projects/{project}/bpu/{version}/validate', [BpuController::class, 'validateVersion']);
 
     // ── Situation Travaux — DB workflow ───────────────────────────────────────
+    Route::get('/projects/{project}/situations/last-status', [SituationTravauxController::class, 'lastStatus']);
     Route::get('/projects/{project}/situations', [SituationTravauxController::class, 'list']);
     Route::post('/projects/{project}/situations', [SituationTravauxController::class, 'storeSituation']);
     Route::patch('/projects/{project}/situations/{situation}/submit', [SituationTravauxController::class, 'submit']);

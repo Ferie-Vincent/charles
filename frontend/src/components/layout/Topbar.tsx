@@ -59,6 +59,7 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
   const roleGroup = getRoleGroup(user?.role?.name ?? '');
   const canCreateProject = roleGroup === 'direction';
   const canSeeOps = roleGroup !== 'terrain';
+  const isTerrain = roleGroup === 'terrain';
 
   const { data: ops } = useQuery({
     queryKey: ['portfolio-operations'],
@@ -76,6 +77,14 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
 
   const meetingNotifs: UserNotification[] = (userNotifs?.notifications ?? []).filter(
     (n: UserNotification) => n.type === 'meeting_invitation' && !n.read
+  );
+
+  const bdcDbNotifs: UserNotification[] = (userNotifs?.notifications ?? []).filter(
+    (n: UserNotification) => n.type === 'bdc_status_changed' && !n.read
+  );
+
+  const incidentNotifs: UserNotification[] = (userNotifs?.notifications ?? []).filter(
+    (n: UserNotification) => n.type === 'incident_severe' && !n.read
   );
 
   const isManagement = roleGroup === 'direction' || roleGroup === 'dt';
@@ -115,7 +124,7 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
   const criticalProj    = (ops?.critical_projects ?? []).filter((p: any) => !dismissed.has(`proj-${p.id}`));
   const invoicesPending = isManagement ? (ops?.invoices_pending ?? []).filter((i: any) => !dismissed.has(`inv-${i.id}`)) : [];
   const dqePending      = isManagement ? (ops?.dqe_pending      ?? []).filter((d: any) => !dismissed.has(`dqe-${d.id}`)) : [];
-  const notifCount      = bdcPending.length + stockAlerts.length + criticalProj.length + invoicesPending.length + dqePending.length + meetingNotifs.length;
+  const notifCount      = bdcPending.length + stockAlerts.length + criticalProj.length + invoicesPending.length + dqePending.length + meetingNotifs.length + bdcDbNotifs.length + incidentNotifs.length;
 
   useEffect(() => {
     function handleOutside(e: MouseEvent) {
@@ -204,7 +213,7 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
       </div>
 
       <div className="topbar-actions">
-        {canSeeOps && (
+        {(canSeeOps || isTerrain) && (
           <div className="topbar-notif-wrap" ref={notifRef}>
             <button
               type="button"
@@ -289,6 +298,63 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
                             )}
                           </div>
                         </div>
+                      );
+                    })}
+
+                    {bdcDbNotifs.map((notif: UserNotification) => {
+                      const d = notif.data as any;
+                      const isApproved = d.bdc_status === 'approuve';
+                      return (
+                        <button
+                          key={notif.id}
+                          type="button"
+                          className={`topbar-notif-item ${isApproved ? 'topbar-notif-item--success' : 'topbar-notif-item--danger'}`}
+                          onClick={async () => {
+                            await markNotificationRead(notif.id);
+                            queryClient.invalidateQueries({ queryKey: ['user-notifications'] });
+                            if (d.project_id) navigate(`/achats`);
+                            setNotifOpen(false);
+                          }}
+                        >
+                          <span className={`topbar-notif-item__dot ${isApproved ? 'topbar-notif-item__dot--success' : 'topbar-notif-item__dot--danger'}`} />
+                          <div className="topbar-notif-item__body">
+                            <div className="topbar-notif-item__title">
+                              BDC {isApproved ? '✓ Approuvé' : '✗ Rejeté'} — {d.reference}
+                            </div>
+                            <div className="topbar-notif-item__sub">
+                              {d.project_name ?? ''}{d.actor_name ? ` · par ${d.actor_name}` : ''}
+                              {!isApproved && d.reason ? ` · ${d.reason}` : ''}
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })}
+
+                    {incidentNotifs.map((notif: UserNotification) => {
+                      const d = notif.data as any;
+                      const isCritique = d.severity === 'critique';
+                      return (
+                        <button
+                          key={notif.id}
+                          type="button"
+                          className="topbar-notif-item topbar-notif-item--critical"
+                          onClick={async () => {
+                            await markNotificationRead(notif.id);
+                            queryClient.invalidateQueries({ queryKey: ['user-notifications'] });
+                            if (d.project_id) navigate(`/projects/${d.project_id}`);
+                            setNotifOpen(false);
+                          }}
+                        >
+                          <span className="topbar-notif-item__dot topbar-notif-item__dot--critical" />
+                          <div className="topbar-notif-item__body">
+                            <div className="topbar-notif-item__title">
+                              {isCritique ? '🚨' : '⚠️'} Incident {d.severity} — {d.project_code}
+                            </div>
+                            <div className="topbar-notif-item__sub">
+                              {d.incident_type}{d.location ? ` · ${d.location}` : ''}{d.reporter_name ? ` · ${d.reporter_name}` : ''}
+                            </div>
+                          </div>
+                        </button>
                       );
                     })}
 

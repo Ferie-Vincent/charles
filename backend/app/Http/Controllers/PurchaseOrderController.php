@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Events\BdcApproved;
 use App\Events\BdcCancelled;
 use App\Events\BdcReceived;
+use App\Events\BdcRejected;
 use App\Models\PurchaseOrder;
 use App\Support\Roles;
 use Illuminate\Http\JsonResponse;
@@ -217,6 +218,8 @@ class PurchaseOrderController extends Controller
             'approved_by'      => $request->user()->id,
             'rejection_reason' => $request->reason,
         ]);
+
+        event(new BdcRejected($purchaseOrder, $request->user()));
 
         $purchaseOrder->load('supplier:id,name', 'project:id,name,code', 'requester:id,name', 'approver:id,name');
 

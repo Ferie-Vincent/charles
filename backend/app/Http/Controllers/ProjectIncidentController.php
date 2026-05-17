@@ -6,7 +6,9 @@ use App\Models\Incident;
 use App\Models\Project;
 use App\Models\Task;
 use App\Models\User;
+use App\Notifications\IncidentSevereNotification;
 use App\Services\WhatsAppAlertService;
+use App\Support\Roles;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -103,6 +105,13 @@ class ProjectIncidentController extends Controller
                 . "Date : " . now()->format('d/m/Y H:i');
             app(WhatsAppAlertService::class)->send($msg);
         }
+
+        // Notify conducteurs de travaux in this company immediately
+        User::whereHas('role', fn($q) => $q->whereIn('name', [Roles::CONDUCTEUR_TRAVAUX_SLUG, Roles::DIRECTEUR_TECHNIQUE_SLUG]))
+            ->where('company_id', $project->company_id)
+            ->where('id', '!=', $incident->reported_by)
+            ->get()
+            ->each(fn($u) => $u->notify(new IncidentSevereNotification($incident, $project)));
 
         $dueDays = $incident->severity === 'critique' ? 2 : 7;
 

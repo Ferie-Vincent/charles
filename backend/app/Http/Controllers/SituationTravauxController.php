@@ -246,6 +246,19 @@ Style : formel, chiffré, professionnel. Utilise des tableaux Markdown. Ne pas i
 PROMPT;
     }
 
+    // Terrain-accessible: returns last situation status only (no financial data)
+    public function lastStatus(Project $project): JsonResponse
+    {
+        $this->authorize('view', $project);
+
+        $last = SituationTravaux::where('project_id', $project->id)
+            ->orderByDesc('created_at')
+            ->select(['id', 'numero', 'status', 'periode', 'submitted_at', 'validated_at', 'paid_at'])
+            ->first();
+
+        return response()->json(['last_situation' => $last]);
+    }
+
     // ── DB-backed workflow methods ────────────────────────────────────────────
 
     public function list(Project $project): JsonResponse
