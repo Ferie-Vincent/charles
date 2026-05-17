@@ -1,5 +1,5 @@
 import type { DashboardStats } from '../api/get-dashboard';
-import { fmtFCFA, fmtKpi } from '../../../lib/formatters';
+import { fmtKpi } from '../../../lib/formatters';
 import { type RoleGroup, KPI_HIDDEN_FOR } from '../../../lib/roles';
 
 type KpiItem = {

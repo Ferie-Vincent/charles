@@ -33,6 +33,7 @@ export default function AchatsPage() {
   const [receiveForm, setReceiveForm] = useState<ReceiveForm>({ deliveryNote: null, photos: [], notes: '' });
   const [deliveryDocs, setDeliveryDocs] = useState<DeliveryDocs | null>(null);
   const [loadingDocs, setLoadingDocs] = useState(false);
+  const [escaladeError, setEscaladeError] = useState<{ message: string; required_role: string; amount: number } | null>(null);
 
   const blInputRef    = useRef<HTMLInputElement>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
@@ -82,9 +83,17 @@ export default function AchatsPage() {
   };
 
   const handleApprove = async (id: number) => {
-    await approvePurchaseOrder(id);
-    queryClient.invalidateQueries({ queryKey: ['purchase-orders'] });
-    if (detail?.id === id) setDetail(prev => prev ? { ...prev, status: 'approuve' } : null);
+    try {
+      setEscaladeError(null);
+      await approvePurchaseOrder(id);
+      queryClient.invalidateQueries({ queryKey: ['purchase-orders'] });
+      if (detail?.id === id) setDetail(prev => prev ? { ...prev, status: 'approuve' } : null);
+    } catch (err: unknown) {
+      const resp = (err as { response?: { status?: number; data?: { message?: string; required_role?: string; amount?: number } } }).response;
+      if (resp?.status === 403 && resp.data?.required_role) {
+        setEscaladeError({ message: resp.data.message ?? '', required_role: resp.data.required_role, amount: resp.data.amount ?? 0 });
+      }
+    }
   };
 
   const handleReject = async () => {
@@ -134,6 +143,17 @@ export default function AchatsPage() {
           </button>
         }
       />
+
+      {escaladeError && (
+        <div className="acct-escalade-banner" role="alert">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <span>
+            <strong>Autorisation insuffisante</strong> — Ce BDC nécessite un <em>{escaladeError.required_role}</em> pour être approuvé.
+            {' '}Contactez votre supérieur hiérarchique.
+          </span>
+          <button className="acct-escalade-banner__close" onClick={() => setEscaladeError(null)}>×</button>
+        </div>
+      )}
 
       {isApprover && pendingOrders.length > 0 && (
         <div className="acct-pending-banner" style={{ marginBottom: 16 }}>

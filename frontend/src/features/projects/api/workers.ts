@@ -18,9 +18,22 @@ export const TRADES = [
 
 export type Trade = typeof TRADES[number];
 
+export type AttendanceStatut = 'present' | 'absent' | 'conge' | 'maladie' | 'demi_journee';
+
+export const STATUT_OPTIONS: { value: AttendanceStatut; label: string; color: string }[] = [
+  { value: 'present',      label: 'Présent',      color: '#22c55e' },
+  { value: 'absent',       label: 'Absent',        color: '#ef4444' },
+  { value: 'conge',        label: 'Congé',         color: '#f59e0b' },
+  { value: 'maladie',      label: 'Maladie',       color: '#8b5cf6' },
+  { value: 'demi_journee', label: 'Demi-journée',  color: '#3b82f6' },
+];
+
 export interface WorkerAttendance {
   id: number;
   present: boolean;
+  statut: AttendanceStatut;
+  heures_normales: number;
+  heures_sup: number;
   task_assigned: string | null;
 }
 
@@ -59,7 +72,9 @@ export async function deleteWorker(projectId: number, workerId: number): Promise
 export async function upsertAttendance(projectId: number, data: {
   worker_id: number;
   log_date: string;
-  present: boolean;
+  statut: AttendanceStatut;
+  heures_normales?: number;
+  heures_sup?: number;
   task_assigned?: string | null;
 }): Promise<WorkerAttendance> {
   const res = await api.post(`/projects/${projectId}/workers/attendance`, data);

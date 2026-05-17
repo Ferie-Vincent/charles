@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { Worker } from '../../api/workers';
+import { STATUT_OPTIONS, type AttendanceStatut } from '../../api/workers';
 
 const TASK_SUGGESTIONS = [
   'Coulage dalle', 'Ferraillage', 'Coffrage', 'Maçonnerie', 'Enduit',
@@ -10,17 +11,32 @@ const TASK_SUGGESTIONS = [
 interface Props {
   worker: Worker;
   readonly: boolean;
-  onToggle: () => void;
+  onAttendance: (statut: AttendanceStatut, heures_normales: number, heures_sup: number) => void;
   onTaskSave: (task: string | null) => void;
   onDeactivate: () => void;
 }
 
-export default function WorkerRow({ worker: w, readonly, onToggle, onTaskSave, onDeactivate }: Props) {
-  const present = w.attendance?.present ?? false;
-  const task    = w.attendance?.task_assigned;
+export default function WorkerRow({ worker: w, readonly, onAttendance, onTaskSave, onDeactivate }: Props) {
+  const statut       = w.attendance?.statut ?? 'absent';
+  const heuresNorm   = w.attendance?.heures_normales ?? 8;
+  const heuresSup    = w.attendance?.heures_sup ?? 0;
+  const task         = w.attendance?.task_assigned;
 
   const [taskEditing, setTaskEditing] = useState(false);
   const [taskValue, setTaskValue]     = useState('');
+
+  const statutMeta = STATUT_OPTIONS.find(o => o.value === statut) ?? STATUT_OPTIONS[1];
+  const isWorking  = statut === 'present' || statut === 'demi_journee';
+
+  function handleStatutChange(val: AttendanceStatut) {
+    const defaultHours = val === 'demi_journee' ? 4 : 8;
+    const normH        = val === 'absent' || val === 'conge' || val === 'maladie' ? 0 : defaultHours;
+    onAttendance(val, normH, 0);
+  }
+
+  function handleHeuresChange(normales: number, sup: number) {
+    onAttendance(statut, normales, sup);
+  }
 
   function openTaskEdit() {
     setTaskEditing(true);
@@ -33,26 +49,60 @@ export default function WorkerRow({ worker: w, readonly, onToggle, onTaskSave, o
   }
 
   return (
-    <li className={`workers-panel__row${present ? ' workers-panel__row--present' : ''}`}>
-      {readonly ? (
-        <span className={`workers-panel__badge${present ? ' workers-panel__badge--present' : ' workers-panel__badge--absent'}`}>
-          {present ? '✓' : '✗'}
-        </span>
-      ) : (
-        <button
-          type="button"
-          className={`workers-panel__toggle${present ? ' workers-panel__toggle--present' : ''}`}
-          onClick={onToggle}
-          aria-label={present ? 'Marquer absent' : 'Marquer présent'}
-        >
-          {present ? '✓' : '○'}
-        </button>
-      )}
-
+    <li className={`workers-panel__row${isWorking ? ' workers-panel__row--present' : ''}`}>
       <div className="workers-panel__info">
         <span className="workers-panel__name">{w.name}</span>
         <span className="workers-panel__trade">{w.trade}</span>
       </div>
+
+      {readonly ? (
+        <span
+          className="workers-panel__statut-badge"
+          style={{ color: statutMeta.color }}
+        >
+          {statutMeta.label}
+        </span>
+      ) : (
+        <select
+          className="workers-panel__statut-select"
+          value={statut}
+          onChange={e => handleStatutChange(e.target.value as AttendanceStatut)}
+          style={{ borderColor: statutMeta.color }}
+        >
+          {STATUT_OPTIONS.map(o => (
+            <option key={o.value} value={o.value}>{o.label}</option>
+          ))}
+        </select>
+      )}
+
+      {isWorking && !readonly && (
+        <div className="workers-panel__heures">
+          <label className="workers-panel__heures-label">
+            H
+            <input
+              type="number"
+              className="workers-panel__heures-input"
+              min={0}
+              max={12}
+              step={0.5}
+              value={heuresNorm}
+              onChange={e => handleHeuresChange(parseFloat(e.target.value) || 0, heuresSup)}
+            />
+          </label>
+          <label className="workers-panel__heures-label">
+            HS
+            <input
+              type="number"
+              className="workers-panel__heures-input"
+              min={0}
+              max={8}
+              step={0.5}
+              value={heuresSup}
+              onChange={e => handleHeuresChange(heuresNorm, parseFloat(e.target.value) || 0)}
+            />
+          </label>
+        </div>
+      )}
 
       <div className="workers-panel__task-area">
         {taskEditing ? (

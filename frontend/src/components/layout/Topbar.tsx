@@ -5,7 +5,7 @@ import { logout } from '../../features/auth/api/login';
 import { useAuth } from '../../features/auth/stores/auth-store';
 import { getRoleGroup } from '../../lib/roles';
 import { api } from '../../lib/api';
-import { getUserNotifications, markNotificationRead, markAllNotificationsRead, respondToMeeting } from '../../features/meetings/api/meetings-api';
+import { getUserNotifications, markNotificationRead, respondToMeeting } from '../../features/meetings/api/meetings-api';
 import type { UserNotification } from '../../features/meetings/api/meetings-api';
 
 const DISMISSED_KEY = 'topbar_dismissed_notifs';
