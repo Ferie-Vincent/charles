@@ -6,6 +6,7 @@ use App\Models\Avenant;
 use App\Models\DqeVersion;
 use App\Models\GedDocument;
 use App\Models\Project;
+use App\Models\ProjectMember;
 use App\Models\SituationTravaux;
 use App\Models\BudgetEntry;
 use App\Models\User;
@@ -18,8 +19,11 @@ use App\Notifications\SituationPendingDtReviewNotification;
 use App\Notifications\SituationRejectedByDtNotification;
 use App\Notifications\SituationValidatedNotification;
 use App\Support\Roles;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -282,13 +286,11 @@ PROMPT;
         $montantBrut = round($base * ($avancementPct / 100), 2);
 
         $prevAvancement = SituationTravaux::where('project_id', $project->id)
-            ->whereNotIn('status', ['brouillon', 'en_revue_ct', 'contestee'])
+            ->where('status', 'payee')
             ->orderByDesc('created_at')
             ->value('avancement_pct');
 
-        $progressFromJournal = $project->dailyLogs()
-            ->latest('log_date')
-            ->value('progress_percent');
+        $lastLog = $project->dailyLogs()->latest('log_date')->first(['progress_percent', 'log_date']);
 
         return response()->json([
             'base_calcul'               => $base,
@@ -297,7 +299,8 @@ PROMPT;
             'montant_brut_ht'           => $montantBrut,
             'avance_demarrage_montant'  => $project->avance_demarrage_montant,
             'avance_demarrage_pct'      => $project->avance_demarrage_pct,
-            'progress_from_journal'     => $progressFromJournal !== null ? (float) $progressFromJournal : null,
+            'progress_from_journal'     => $lastLog ? (float) $lastLog->progress_percent : null,
+            'last_log_date'             => $lastLog?->log_date,
         ]);
     }
 
@@ -314,15 +317,20 @@ PROMPT;
 
         // Enrich with sequential avancement context
         $prevAvancement = null;
-        $enriched = $situations->map(function ($s) use (&$prevAvancement) {
+        $prevMontant    = null;
+        $enriched = $situations->map(function ($s) use (&$prevAvancement, &$prevMontant) {
             $arr = $s->toArray();
             $arr['avancement_precedent_pct'] = $prevAvancement;
             $arr['delta_pct'] = $prevAvancement !== null
                 ? round($s->avancement_pct - $prevAvancement, 2)
                 : $s->avancement_pct;
+            $arr['delta_montant_ht'] = $prevMontant !== null
+                ? round($s->montant_brut_ht - $prevMontant, 2)
+                : $s->montant_brut_ht;
 
             if ($s->status !== 'brouillon') {
                 $prevAvancement = $s->avancement_pct;
+                $prevMontant    = $s->montant_brut_ht;
             }
             return $arr;
         })->sortByDesc('created_at')->values();
@@ -335,10 +343,12 @@ PROMPT;
         return response()->json([
             'situations'    => $enriched,
             'avance_summary' => [
-                'accordee'  => $avanceAccordee,
-                'pct'       => (float) ($project->avance_demarrage_pct ?? 0),
-                'reimbursee' => (float) $avanceCumulee,
-                'reste'     => max(0, $avanceAccordee - $avanceCumulee),
+                'accordee'    => $avanceAccordee,
+                'pct'         => (float) ($project->avance_demarrage_pct ?? 0),
+                'reimbursee'  => (float) $avanceCumulee,
+                'reste'       => max(0, $avanceAccordee - $avanceCumulee),
+                'is_frozen'   => $project->avance_demarrage_montant_accorde !== null,
+                'accorde_le'  => $project->avance_demarrage_accorde_le?->format('Y-m-d'),
             ],
         ]);
     }
@@ -355,9 +365,9 @@ PROMPT;
             'notes'          => 'nullable|string',
         ]);
 
-        // P0: block avancement regression vs any non-brouillon situation
+        // P0: block regression vs last PAID situation only — in-review situations are not certified yet
         $prevAvancement = SituationTravaux::where('project_id', $project->id)
-            ->whereNotIn('status', ['brouillon', 'en_revue_ct', 'contestee'])
+            ->where('status', 'payee')
             ->orderByDesc('created_at')
             ->value('avancement_pct');
 
@@ -370,6 +380,13 @@ PROMPT;
 
         // P0: compute montant_brut_ht server-side — saisie libre interdite
         ['base' => $base] = $this->resolveBaseCalcul($project, $data['dqe_version_id'] ?? null);
+
+        if ($base <= 0) {
+            return response()->json([
+                'message' => 'Aucune version DQE validée et aucun montant de marché défini — impossible de créer une situation.',
+            ], 422);
+        }
+
         $montantBrutHT = round($base * ($data['avancement_pct'] / 100), 2);
 
         $cumulPrecedent = SituationTravaux::where('project_id', $project->id)
@@ -383,10 +400,13 @@ PROMPT;
         $vatAmount      = round($baseHT * ($vatRate / 100), 2);
         $netAPayer      = round($baseHT + $vatAmount, 2);
 
-        $lastNum = SituationTravaux::where('project_id', $project->id)->count() + 1;
-        $numero  = sprintf('ST-%03d', $lastNum);
+        $situation = DB::transaction(function () use ($project, $request, $data, $montantBrutHT, $cumulPrecedent, $retenueAmount, $avanceRembours, $vatRate, $vatAmount, $netAPayer) {
+            // Lock to prevent concurrent numero duplication (unique constraint is the last resort)
+            SituationTravaux::where('project_id', $project->id)->lockForUpdate()->count();
+            $lastNum = SituationTravaux::where('project_id', $project->id)->count() + 1;
+            $numero  = sprintf('ST-%03d', $lastNum);
 
-        $situation = SituationTravaux::create([
+            return SituationTravaux::create([
             'project_id'              => $project->id,
             'company_id'              => $request->user()->company_id,
             'dqe_version_id'          => $data['dqe_version_id'] ?? null,
@@ -404,8 +424,9 @@ PROMPT;
             'net_a_payer'             => $netAPayer,
             'detail_lots'             => $data['detail_lots'] ?? null,
             'notes'                   => $data['notes'] ?? null,
-            'status'                  => 'brouillon',
-        ]);
+                'status'                  => 'brouillon',
+            ]);
+        });
 
         return response()->json([
             'situation'                => $situation->load('creator:id,name'),
@@ -423,9 +444,11 @@ PROMPT;
         $situation->update(['status' => 'en_revue_ct', 'submitted_at' => now()]);
         $situation->load('project:id,name,code');
 
-        // Notify all conducteurs de travaux — Brice must see it before DT
+        // Notify only project-assigned CTs (not every CT in the company)
+        $projectMemberIds = ProjectMember::where('project_id', $project->id)->pluck('user_id');
         User::whereHas('role', fn($q) => $q->where('name', Roles::CONDUCTEUR_TRAVAUX_SLUG))
             ->where('company_id', $project->company_id)
+            ->whereIn('id', $projectMemberIds)
             ->get()
             ->each(fn($u) => $u->notify(new SituationPendingCtReviewNotification($situation, $request->user())));
 
@@ -446,11 +469,18 @@ PROMPT;
 
         $situation->load('project:id,name,code');
 
-        // Notify all DT users — Kouassi now sees clean, CT-validated work
-        User::whereHas('role', fn($q) => $q->where('name', Roles::DIRECTEUR_TECHNIQUE_SLUG))
+        // Notify project-assigned DTs — prefer explicit members, fall back to all company DTs
+        $projectMemberIds = ProjectMember::where('project_id', $project->id)->pluck('user_id');
+        $dtUsers = User::whereHas('role', fn($q) => $q->where('name', Roles::DIRECTEUR_TECHNIQUE_SLUG))
             ->where('company_id', $project->company_id)
-            ->get()
-            ->each(fn($u) => $u->notify(new SituationPendingDtReviewNotification($situation, $request->user())));
+            ->whereIn('id', $projectMemberIds)
+            ->get();
+        if ($dtUsers->isEmpty()) {
+            $dtUsers = User::whereHas('role', fn($q) => $q->where('name', Roles::DIRECTEUR_TECHNIQUE_SLUG))
+                ->where('company_id', $project->company_id)
+                ->get();
+        }
+        $dtUsers->each(fn($u) => $u->notify(new SituationPendingDtReviewNotification($situation, $request->user())));
 
         return response()->json(['situation' => $situation]);
     }
@@ -598,12 +628,21 @@ PROMPT;
             ->get()
             ->each(fn($u) => $u->notify(new SituationValidatedNotification($situation, $request->user())));
 
-        // Notify DT + direction on first crossing of 80% montant marché
-        $montantMarche = (float) ($project->montant_marche ?? 0);
-        if ($montantMarche > 0) {
-            $cumulAfter   = $cumulBefore + $situation->montant_brut_ht;
-            $ratioBefore  = $cumulBefore / $montantMarche;
-            $ratioAfter   = $cumulAfter  / $montantMarche;
+        // Gap B: notify project-assigned CTs — they track cash flow per chantier
+        $projectMemberIds = ProjectMember::where('project_id', $project->id)->pluck('user_id');
+        User::whereHas('role', fn($q) => $q->where('name', Roles::CONDUCTEUR_TRAVAUX_SLUG))
+            ->where('company_id', $project->company_id)
+            ->whereIn('id', $projectMemberIds)
+            ->where('id', '!=', $request->user()->id)
+            ->get()
+            ->each(fn($u) => $u->notify(new SituationValidatedNotification($situation, $request->user())));
+
+        // First crossing of 80% — base includes signed avenants for correct threshold
+        ['base' => $baseCalcul] = $this->resolveBaseCalcul($project, $situation->dqe_version_id);
+        if ($baseCalcul > 0) {
+            $cumulAfter  = $cumulBefore + $situation->montant_brut_ht;
+            $ratioBefore = $cumulBefore / $baseCalcul;
+            $ratioAfter  = $cumulAfter  / $baseCalcul;
 
             if ($ratioBefore < 0.8 && $ratioAfter >= 0.8) {
                 User::whereHas('role', fn($q) => $q->whereIn('name', Roles::MANAGEMENT))
@@ -638,6 +677,23 @@ PROMPT;
         return ['base' => $base + $avenants, 'avenants_sum' => $avenants];
     }
 
+    public function pdfSituation(Project $project, SituationTravaux $situation): Response
+    {
+        $this->authorize('view', $project);
+        abort_if($situation->project_id !== $project->id, 404);
+
+        $situation->load('creator:id,name', 'dqeVersion:id,name,version_number', 'project:id,name,code,maitre_ouvrage,maitre_oeuvre,montant_marche');
+
+        $pdf = Pdf::loadView('pdf.situation', [
+            'situation' => $situation,
+            'project'   => $project,
+        ])->setPaper('a4');
+
+        $filename = 'situation-' . $situation->numero . '-' . now()->format('Ymd') . '.pdf';
+
+        return $pdf->download($filename);
+    }
+
     public function pay(Request $request, Project $project, SituationTravaux $situation): JsonResponse
     {
         $this->authorize('update', $project);
@@ -664,12 +720,22 @@ PROMPT;
             'situation_travaux_id' => $situation->id,
         ]);
 
-        // P2: notify creator that payment is registered
         $situation->load('project:id,name,code');
+
+        // Notify creator (métreur)
         if ($situation->created_by && $situation->created_by !== $request->user()->id) {
             $creator = User::find($situation->created_by);
             $creator?->notify(new SituationPaidNotification($situation, $request->user()));
         }
+
+        // Notify project-assigned CTs — they track cash flow per chantier
+        $projectMemberIds = ProjectMember::where('project_id', $project->id)->pluck('user_id');
+        User::whereHas('role', fn($q) => $q->where('name', Roles::CONDUCTEUR_TRAVAUX_SLUG))
+            ->where('company_id', $project->company_id)
+            ->whereIn('id', $projectMemberIds)
+            ->where('id', '!=', $request->user()->id)
+            ->get()
+            ->each(fn($u) => $u->notify(new SituationPaidNotification($situation, $request->user())));
 
         return response()->json(['situation' => $situation]);
     }

@@ -170,6 +170,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/projects', [ProjectController::class, 'store']);
     Route::get('/projects/{project}', [ProjectController::class, 'show']);
     Route::put('/projects/{project}', [ProjectController::class, 'update']);
+    Route::patch('/projects/{project}/avance-demarrage', [ProjectController::class, 'setAvanceDemarrage']);
     Route::delete('/projects/{project}', [ProjectController::class, 'destroy']);
 
     Route::get('/projects/{project}/daily-logs', [DailyLogController::class, 'index']);
@@ -260,6 +261,7 @@ Route::middleware('auth')->group(function () {
     Route::patch('/projects/{project}/situations/{situation}/correct', [SituationTravauxController::class, 'correct']);
     Route::patch('/projects/{project}/situations/{situation}/validate', [SituationTravauxController::class, 'validateSituation']);
     Route::patch('/projects/{project}/situations/{situation}/pay', [SituationTravauxController::class, 'pay']);
+    Route::get('/projects/{project}/situations/{situation}/pdf', [SituationTravauxController::class, 'pdfSituation']);
     // Legacy aliases kept for backward compat
     Route::get('/projects/{project}/situation-travaux/list', [SituationTravauxController::class, 'list']);
     Route::post('/projects/{project}/situation-travaux/store', [SituationTravauxController::class, 'storeSituation']);

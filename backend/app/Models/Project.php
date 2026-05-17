@@ -34,6 +34,9 @@ class Project extends Model
         'bureau_controle',
         'montant_marche',
         'avance_demarrage_pct',
+        'avance_demarrage_montant_accorde',
+        'avance_demarrage_accorde_le',
+        'avance_demarrage_accorde_par',
         'delai_execution_jours',
         'date_reception_provisoire',
         'date_reception_definitive',
@@ -48,8 +51,11 @@ class Project extends Model
             'montant_marche'             => 'decimal:2',
             'target_progress'            => 'integer',
             'current_progress'           => 'integer',
-            'avance_demarrage_pct'       => 'integer',
-            'delai_execution_jours'      => 'integer',
+            'avance_demarrage_pct'                => 'integer',
+            'avance_demarrage_montant_accorde'    => 'decimal:2',
+            'avance_demarrage_accorde_le'         => 'date',
+            'avance_demarrage_accorde_par'        => 'integer',
+            'delai_execution_jours'               => 'integer',
             'start_date'                 => 'date',
             'end_date'                   => 'date',
             'date_reception_provisoire'  => 'date',
@@ -118,9 +124,15 @@ class Project extends Model
         return round($joursRetard * (float)$this->penalites_retard_par_jour, 2);
     }
 
-    /** Montant total avance démarrage = montant_marche × avance_demarrage_pct / 100 */
+    /**
+     * Frozen amount takes precedence; falls back to live formula when not yet set.
+     * Freeze via avance_demarrage_montant_accorde to prevent drift on montant_marche edits.
+     */
     public function getAvanceDemarrageMontantAttribute(): float
     {
+        if ($this->avance_demarrage_montant_accorde !== null) {
+            return (float) $this->avance_demarrage_montant_accorde;
+        }
         if (!$this->montant_marche || !$this->avance_demarrage_pct) {
             return 0.0;
         }

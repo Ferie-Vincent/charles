@@ -31,10 +31,18 @@ export type BudgetBucket = {
   paiement: number;
 };
 
+export type OrphanPayment = {
+  id: number;
+  label: string;
+  amount: string;
+  entry_date: string;
+};
+
 export type BudgetData = {
   entries: BudgetEntry[];
   totals: BudgetTotals;
   chart: BudgetBucket[];
+  orphan_payments: OrphanPayment[];
 };
 
 export type BudgetEntryInput = {

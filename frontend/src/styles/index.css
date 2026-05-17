@@ -4448,6 +4448,18 @@ code {
 .bud-row:hover .bud-del { opacity: 1; }
 .bud-del:hover { color: #ef4444; }
 
+/* ─── Budget orphan payments alert ─── */
+.bud-orphan-alert { margin-top: 16px; border: 1px solid #f97316; border-radius: 10px; background: #fff7ed; overflow: hidden; }
+.bud-orphan-alert__header { display: flex; align-items: center; gap: 8px; padding: 10px 14px; color: #9a3412; }
+.bud-orphan-alert__header svg { flex-shrink: 0; color: #f97316; }
+.bud-orphan-alert__sub { font-size: 11px; color: #c2410c; margin-left: 4px; }
+.bud-orphan-list { list-style: none; border-top: 1px solid #fed7aa; padding: 0; }
+.bud-orphan-row { display: flex; align-items: center; gap: 12px; padding: 7px 14px; border-bottom: 1px solid #ffedd5; font-size: 12px; }
+.bud-orphan-row:last-child { border-bottom: none; }
+.bud-orphan-row__date   { color: #9a3412; min-width: 80px; }
+.bud-orphan-row__label  { flex: 1; color: #431407; }
+.bud-orphan-row__amount { font-weight: 700; color: #dc2626; white-space: nowrap; }
+
 /* ─── Report export button (hero) ─── */
 .proj-hero__report-btn {
   display: flex;
@@ -6872,6 +6884,9 @@ code {
 }
 
 /* BTP shared workflow styles */
+.btp-alert { display: flex; align-items: flex-start; gap: 10px; padding: 10px 14px; border-radius: 8px; font-size: 12px; border: 1px solid; }
+.btp-alert--warning { background: #fffbeb; border-color: #fcd34d; color: #78350f; }
+.btp-alert--warning svg { color: #d97706; flex-shrink: 0; margin-top: 1px; }
 .btp-statut-badge {
   display: inline-block; font-size: 11px; font-weight: 600;
   padding: 3px 10px; border-radius: 12px;

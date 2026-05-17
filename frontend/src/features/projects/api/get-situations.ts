@@ -9,6 +9,7 @@ export interface Situation {
   avancement_pct: number;
   avancement_precedent_pct: number | null;
   delta_pct: number;
+  delta_montant_ht: number;
   montant_brut_ht: number;
   cumul_precedent_ht: number;
   retenue_garantie_pct: number;
@@ -39,6 +40,8 @@ export interface AvanceSummary {
   pct: number;
   reimbursee: number;
   reste: number;
+  is_frozen: boolean;
+  accorde_le: string | null;
 }
 
 export interface SituationsResponse {
@@ -59,6 +62,7 @@ export async function fetchPreviewCalcul(projectId: number, avancementPct: numbe
   avance_demarrage_montant: number;
   avance_demarrage_pct: number;
   progress_from_journal: number | null;
+  last_log_date: string | null;
 }> {
   const params = new URLSearchParams({ avancement_pct: String(avancementPct) });
   if (dqeVersionId) params.append('dqe_version_id', String(dqeVersionId));

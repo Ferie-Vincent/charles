@@ -5,7 +5,7 @@ import {
 } from 'recharts';
 import {
   getBudget, createBudgetEntry, deleteBudgetEntry,
-  type BudgetData, type BudgetEntryInput, type BudgetEntryType,
+  type BudgetData, type BudgetEntryInput, type BudgetEntryType, type OrphanPayment,
 } from '../api/get-budget';
 
 // Catégories budget BTP — alignées SYSCOHADA-CI (plan comptable OHADA classe 6)
@@ -105,7 +105,7 @@ export default function BudgetPanel({ projectId }: Props) {
   if (loading) return <p className="bud-empty">Chargement…</p>;
   if (!data)   return <p className="bud-empty">Erreur de chargement.</p>;
 
-  const { totals, chart, entries } = data;
+  const { totals, chart, entries, orphan_payments = [] } = data;
   const filtered = activeTab === 'all' ? entries : entries.filter(e => e.type === activeTab);
 
   const engagePct = totals.previsionnel > 0
@@ -269,6 +269,28 @@ export default function BudgetPanel({ projectId }: Props) {
               </button>
             </div>
           ))}
+        </div>
+      )}
+
+      {orphan_payments.length > 0 && (
+        <div className="bud-orphan-alert">
+          <div className="bud-orphan-alert__header">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+            <strong>{orphan_payments.length} paiement{orphan_payments.length > 1 ? 's' : ''} sans situation de travaux</strong>
+            <span className="bud-orphan-alert__sub">Ces décaissements ne sont pas liés à une situation certifiée — vérifiez la traçabilité comptable.</span>
+          </div>
+          <ul className="bud-orphan-list">
+            {orphan_payments.map((p: OrphanPayment) => (
+              <li key={p.id} className="bud-orphan-row">
+                <span className="bud-orphan-row__date">{new Date(p.entry_date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                <span className="bud-orphan-row__label">{p.label}</span>
+                <span className="bud-orphan-row__amount">{Number(p.amount).toLocaleString('fr-FR')} FCFA</span>
+              </li>
+            ))}
+          </ul>
         </div>
       )}
     </div>

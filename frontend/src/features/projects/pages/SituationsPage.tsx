@@ -138,6 +138,20 @@ export default function SituationsPage() {
         </div>
       )}
 
+      {/* Gap C: alert when avance pct configured but not yet frozen */}
+      {avanceSummary && avanceSummary.pct > 0 && !avanceSummary.is_frozen && isManagement && (
+        <div className="btp-alert btp-alert--warning" style={{ marginBottom: 12 }}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+          <span>
+            Avance de démarrage ({avanceSummary.pct}%) calculée dynamiquement — le montant n'est pas encore gelé.
+            Allez dans les paramètres du projet pour figer le montant accordé et éviter toute dérive sur modification du marché.
+          </span>
+        </div>
+      )}
+
       {/* Reject CT modal */}
       {rejectCtModal && (
         <div className="modal-overlay" onClick={() => setRejectCtModal(null)}>
@@ -267,6 +281,11 @@ export default function SituationsPage() {
               {preview?.progress_from_journal != null && (
                 <span className="form-hint" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   Journal terrain : {preview.progress_from_journal}%
+                  {preview.last_log_date && (
+                    <span style={{ color: 'var(--color-text-muted)', fontSize: '11px' }}>
+                      (basé sur dernier journal du {new Date(preview.last_log_date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })})
+                    </span>
+                  )}
                   {form.avancement_pct !== preview.progress_from_journal && (
                     <button
                       type="button"
@@ -338,6 +357,7 @@ export default function SituationsPage() {
                 <th>Période</th>
                 <th>Avancement</th>
                 <th>Δ période</th>
+                <th>Montant période</th>
                 <th>Brut HT</th>
                 <th>Cumul précédent</th>
                 <th>Retenue</th>
@@ -362,6 +382,9 @@ export default function SituationsPage() {
                   </td>
                   <td style={{ color: s.delta_pct > 0 ? '#22c55e' : '#ef4444' }}>
                     {s.delta_pct > 0 ? '+' : ''}{s.delta_pct}%
+                  </td>
+                  <td style={{ color: 'var(--color-text-muted)', fontSize: '12px' }}>
+                    {s.delta_montant_ht > 0 ? '+' : ''}{fmt(s.delta_montant_ht)}
                   </td>
                   <td>{fmt(s.montant_brut_ht)}</td>
                   <td style={{ color: 'var(--color-text-muted)' }}>{fmt(s.cumul_precedent_ht)}</td>
@@ -491,6 +514,23 @@ export default function SituationsPage() {
                             Payer
                           </button>
                         </div>
+                      )}
+
+                      {/* PDF export — available once situation is certified */}
+                      {(s.status === 'validee_moe' || s.status === 'payee' || s.status === 'soumise') && (
+                        <a
+                          href={`http://localhost:8000/api/projects/${projectId}/situations/${s.id}/pdf`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="btn btn--sm btn--ghost"
+                          title="Télécharger PDF"
+                        >
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="13" height="13">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                            <polyline points="14 2 14 8 20 8"/>
+                          </svg>
+                          PDF
+                        </a>
                       )}
                     </div>
                   </td>
