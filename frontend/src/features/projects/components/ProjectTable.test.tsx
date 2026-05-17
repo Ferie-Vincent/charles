@@ -34,6 +34,8 @@ describe('ProjectTable', () => {
             caution_liberee: false,
             caution_liberee_at: null,
             penalites_retard_par_jour: null,
+            is_arrete: false,
+            arret_depuis: null,
           },
         ]}
       />,

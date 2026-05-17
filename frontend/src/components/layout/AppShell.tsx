@@ -1,12 +1,17 @@
 import { useState } from 'react';
 import type { ReactNode } from 'react';
+import { Navigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
 import MobileBottomNav from './MobileBottomNav';
 import OfflineBanner from '../ui/OfflineBanner';
+import { useAuth } from '../../features/auth/stores/auth-store';
 
 export default function AppShell({ children }: { children: ReactNode }) {
+  const { user } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth > 768);
+
+  if (!user) return <Navigate to="/login" replace />;
 
   return (
     <>
