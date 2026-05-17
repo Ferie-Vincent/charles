@@ -61,7 +61,7 @@ class AvenantController extends Controller
         ]);
         $avenant->update($data);
 
-        // P2: notify metreurs when avenant transitions to signed
+        $situationsActivesCount = 0;
         if (!$wasSigne && ($data['status'] ?? null) === 'signe') {
             $avenant->load('project:id,name,code');
             User::whereHas('role', fn($q) => $q->whereIn('name', [
@@ -71,9 +71,18 @@ class AvenantController extends Controller
                 ->where('company_id', $avenant->company_id)
                 ->get()
                 ->each(fn($u) => $u->notify(new AvenantSigneNotification($avenant)));
+
+            $situationsActivesCount = \App\Models\SituationTravaux::where('project_id', $avenant->project_id)
+                ->whereIn('status', ['brouillon', 'en_revue_ct', 'en_revue_dt', 'soumise', 'contestee'])
+                ->count();
         }
 
-        return response()->json(['avenant' => $avenant]);
+        return response()->json([
+            'avenant' => $avenant,
+            'situations_actives_warning' => $situationsActivesCount > 0
+                ? "Avenant signé avec {$situationsActivesCount} situation(s) en cours. La nouvelle base de calcul s'appliquera aux prochaines situations uniquement."
+                : null,
+        ]);
     }
 
     public function destroy(Project $project, Avenant $avenant): JsonResponse

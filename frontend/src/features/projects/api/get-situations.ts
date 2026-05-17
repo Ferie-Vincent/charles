@@ -44,9 +44,16 @@ export interface AvanceSummary {
   accorde_le: string | null;
 }
 
+export interface RetenueSummary {
+  cumulee: number;
+  liberable: number;
+  pct: number;
+}
+
 export interface SituationsResponse {
   situations: Situation[];
   avance_summary: AvanceSummary;
+  retenue_summary: RetenueSummary;
 }
 
 export async function fetchSituations(projectId: number): Promise<SituationsResponse> {

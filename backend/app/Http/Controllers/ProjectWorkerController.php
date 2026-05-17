@@ -61,7 +61,7 @@ class ProjectWorkerController extends Controller
 
         $data = $request->validate([
             'name'       => 'required|string|max:120',
-            'trade'      => 'required|string|max:80',
+            'trade'      => ['required', 'string', Rule::in(array_values(config('btp.trades_btp')))],
             'phone'      => 'nullable|string|max:30',
             'statut'     => ['sometimes', Rule::in(['permanent','temporaire','interimaire','sous_traitant','etam','cadre'])],
             'date_debut' => 'nullable|date',
@@ -84,7 +84,7 @@ class ProjectWorkerController extends Controller
 
         $data = $request->validate([
             'name'      => 'sometimes|string|max:120',
-            'trade'     => 'sometimes|string|max:80',
+            'trade'     => ['sometimes', 'string', Rule::in(array_values(config('btp.trades_btp')))],
             'phone'     => 'nullable|string|max:30',
             'is_active' => 'sometimes|boolean',
         ]);

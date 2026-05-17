@@ -230,10 +230,16 @@ class PurchaseOrderController extends Controller
     {
         abort_if($purchaseOrder->company_id !== $request->user()->company_id, 403);
         abort_if($purchaseOrder->status !== 'approuve', 422, 'Seuls les BDC approuvés peuvent être marqués reçus.');
+
+        $user = $request->user();
+        $isLogisticsOrManagement = in_array($user->role->name, [...Roles::LOGISTICS, ...Roles::MANAGEMENT]);
+        $isRequesterChef = $user->role->name === Roles::CHEF_CHANTIER_SLUG
+            && $purchaseOrder->requested_by === $user->id;
+
         abort_unless(
-            in_array($request->user()->role->name, [...Roles::LOGISTICS, ...Roles::MANAGEMENT]),
+            $isLogisticsOrManagement || $isRequesterChef,
             403,
-            'Réception BDC réservée à la logistique.'
+            'Réception BDC réservée à la logistique ou au chef de chantier demandeur.'
         );
 
         $request->validate([
