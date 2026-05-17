@@ -34,6 +34,7 @@ export interface Situation {
   creator: { id: number; name: string } | null;
   dqe_version: { id: number; name: string; version_number: number } | null;
   md_url: string | null;
+  ged_document_id: number | null;
 }
 
 export interface AvanceSummary {
