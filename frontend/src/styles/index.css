@@ -9847,3 +9847,77 @@ code {
     font-size: 13px;
   }
 }
+
+/* ─── Toast stack ─────────────────────────────────────────────────────────── */
+/* z: 9998 — below offline banner (9999) */
+.toast-stack {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  z-index: 9998;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+  min-width: 200px;
+  max-width: 340px;
+  animation: toast-slide-in 0.22s cubic-bezier(0.34,1.56,0.64,1);
+}
+
+.toast--success { background: #16a34a; }
+.toast--error   { background: #dc2626; }
+.toast--info    { background: #2563eb; }
+
+@keyframes toast-slide-in {
+  from { opacity: 0; transform: translateX(40px) scale(0.95); }
+  to   { opacity: 1; transform: none; }
+}
+
+@media (max-width: 640px) {
+  .toast-stack {
+    left: 1rem;
+    right: 1rem;
+    bottom: 80px; /* above bottom nav */
+  }
+  .toast { max-width: 100%; }
+}
+
+/* ─── Terrain FAB group ───────────────────────────────────────────────────── */
+.terrain-fab-group {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 190;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.terrain-fab-group .terrain-fab {
+  position: static; /* override fixed on individual buttons */
+}
+
+.terrain-fab--incident { background: #dc2626; box-shadow: 0 4px 20px rgba(220,38,38,0.45); }
+.terrain-fab--incident:active { box-shadow: 0 2px 10px rgba(220,38,38,0.35); }
+
+.terrain-fab--appro { background: #d97706; box-shadow: 0 4px 20px rgba(217,119,6,0.45); }
+.terrain-fab--appro:active { box-shadow: 0 2px 10px rgba(217,119,6,0.35); }
+
+@media (max-width: 1024px) {
+  .terrain-fab-group {
+    bottom: 80px; /* above bottom nav */
+  }
+}
