@@ -40,6 +40,9 @@ class Project extends Model
         'delai_execution_jours',
         'date_reception_provisoire',
         'date_reception_definitive',
+        'caution_liberee',
+        'caution_liberee_at',
+        'caution_liberee_par',
     ];
 
     protected function casts(): array
@@ -60,6 +63,8 @@ class Project extends Model
             'end_date'                   => 'date',
             'date_reception_provisoire'  => 'date',
             'date_reception_definitive'  => 'date',
+            'caution_liberee'            => 'boolean',
+            'caution_liberee_at'         => 'date',
             'latitude'                   => 'float',
             'longitude'                  => 'float',
         ];

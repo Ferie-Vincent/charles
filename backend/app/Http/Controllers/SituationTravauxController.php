@@ -390,7 +390,14 @@ PROMPT;
         }
 
         // P0: compute montant_brut_ht server-side — saisie libre interdite
-        ['base' => $base] = $this->resolveBaseCalcul($project, $data['dqe_version_id'] ?? null);
+        // Item 10: forfait = montant_marche is the fixed price; ignore DQE lines for calculation
+        if ($project->type_marche === 'forfait' && $project->montant_marche) {
+            $avenants = (float) \App\Models\Avenant::where('project_id', $project->id)
+                ->where('status', 'signe')->sum('montant_ht');
+            $base = (float) $project->montant_marche + $avenants;
+        } else {
+            ['base' => $base] = $this->resolveBaseCalcul($project, $data['dqe_version_id'] ?? null);
+        }
 
         if ($base <= 0) {
             return response()->json([
@@ -399,6 +406,14 @@ PROMPT;
         }
 
         $montantBrutHT = round($base * ($data['avancement_pct'] / 100), 2);
+
+        // Règle 3 logique-metier: situation ≤ montant marché + avenants signés
+        // Explicit guard — normally enforced by avancement_pct ≤ 100, but catches DQE/montant drift
+        if ($base > 0 && $montantBrutHT > $base + 0.01) {
+            return response()->json([
+                'message' => "Montant de la situation ({$montantBrutHT} FCFA) dépasse le marché + avenants signés ({$base} FCFA).",
+            ], 422);
+        }
 
         $cumulPrecedent = SituationTravaux::where('project_id', $project->id)
             ->whereIn('status', ['validee_moe', 'payee'])

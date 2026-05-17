@@ -171,6 +171,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/projects/{project}', [ProjectController::class, 'show']);
     Route::put('/projects/{project}', [ProjectController::class, 'update']);
     Route::patch('/projects/{project}/avance-demarrage', [ProjectController::class, 'setAvanceDemarrage']);
+    Route::patch('/projects/{project}/caution-liberation', [ProjectController::class, 'liberateCaution']);
     Route::delete('/projects/{project}', [ProjectController::class, 'destroy']);
 
     Route::get('/projects/{project}/daily-logs', [DailyLogController::class, 'index']);

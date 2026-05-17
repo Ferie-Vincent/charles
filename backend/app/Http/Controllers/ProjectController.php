@@ -142,4 +142,27 @@ class ProjectController extends Controller
 
         return response()->json(['project' => $project->fresh()]);
     }
+
+    // Item 11: libère la caution de bonne exécution (direction/DT uniquement)
+    public function liberateCaution(Request $request, Project $project): JsonResponse
+    {
+        $this->authorize('update', $project);
+        abort_unless(
+            in_array($request->user()->role->name, \App\Support\Roles::MANAGEMENT),
+            403,
+            'Libération de caution réservée à la direction.'
+        );
+        abort_if($project->caution_liberee, 422, 'Caution déjà libérée.');
+        abort_if(!$project->caution_bonne_execution_pct, 422, 'Aucun taux de caution défini sur ce projet.');
+
+        $data = $request->validate(['date_liberation' => 'required|date']);
+
+        $project->update([
+            'caution_liberee'    => true,
+            'caution_liberee_at' => $data['date_liberation'],
+            'caution_liberee_par'=> $request->user()->id,
+        ]);
+
+        return response()->json(['project' => $project->fresh()]);
+    }
 }
