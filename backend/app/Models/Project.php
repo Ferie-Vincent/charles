@@ -117,4 +117,13 @@ class Project extends Model
         $joursRetard = max(0, now()->diffInDays($this->end_date, false) * -1);
         return round($joursRetard * (float)$this->penalites_retard_par_jour, 2);
     }
+
+    /** Montant total avance démarrage = montant_marche × avance_demarrage_pct / 100 */
+    public function getAvanceDemarrageMontantAttribute(): float
+    {
+        if (!$this->montant_marche || !$this->avance_demarrage_pct) {
+            return 0.0;
+        }
+        return round((float)$this->montant_marche * ($this->avance_demarrage_pct / 100), 2);
+    }
 }

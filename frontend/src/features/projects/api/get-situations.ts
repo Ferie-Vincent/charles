@@ -14,6 +14,7 @@ export interface Situation {
   retenue_garantie_pct: number;
   retenue_garantie_amount: number;
   avance_remboursement: number;
+  avance_remboursement: number;
   vat_rate: number;
   vat_amount: number;
   net_a_payer: number;
@@ -38,6 +39,8 @@ export async function fetchPreviewCalcul(projectId: number, avancementPct: numbe
   avenants_signes_sum: number;
   avancement_precedent_pct: number | null;
   montant_brut_ht: number;
+  avance_demarrage_montant: number;
+  avance_demarrage_pct: number;
 }> {
   const params = new URLSearchParams({ avancement_pct: String(avancementPct) });
   if (dqeVersionId) params.append('dqe_version_id', String(dqeVersionId));

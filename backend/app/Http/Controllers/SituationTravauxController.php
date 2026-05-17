@@ -7,7 +7,9 @@ use App\Models\DqeVersion;
 use App\Models\GedDocument;
 use App\Models\Project;
 use App\Models\SituationTravaux;
+use App\Models\BudgetEntry;
 use App\Models\User;
+use App\Notifications\SituationPaidNotification;
 use App\Notifications\SituationValidatedNotification;
 use App\Support\Roles;
 use Illuminate\Http\JsonResponse;
@@ -279,10 +281,12 @@ PROMPT;
             ->value('avancement_pct');
 
         return response()->json([
-            'base_calcul'              => $base,
-            'avenants_signes_sum'      => $avenants,
-            'avancement_precedent_pct' => $prevAvancement,
-            'montant_brut_ht'          => $montantBrut,
+            'base_calcul'               => $base,
+            'avenants_signes_sum'       => $avenants,
+            'avancement_precedent_pct'  => $prevAvancement,
+            'montant_brut_ht'           => $montantBrut,
+            'avance_demarrage_montant'  => $project->avance_demarrage_montant,
+            'avance_demarrage_pct'      => $project->avance_demarrage_pct,
         ]);
     }
 
@@ -405,11 +409,20 @@ PROMPT;
             'validated_at' => now(),
         ]);
 
-        // P2: notify creator (typically métreur) when validated
+        $situation->load('project:id,name,code');
+
+        // P2: notify creator (métreur) when validated
         if ($situation->created_by && $situation->created_by !== $request->user()->id) {
             $creator = User::find($situation->created_by);
-            $creator?->notify(new SituationValidatedNotification($situation->load('project:id,name,code'), $request->user()));
+            $creator?->notify(new SituationValidatedNotification($situation, $request->user()));
         }
+
+        // P2: notify all comptables in company — Fatou must see validated situations immediately
+        User::whereHas('role', fn($q) => $q->where('name', Roles::COMPTABLE_SLUG))
+            ->where('company_id', $project->company_id)
+            ->where('id', '!=', $request->user()->id)
+            ->get()
+            ->each(fn($u) => $u->notify(new SituationValidatedNotification($situation, $request->user())));
 
         return response()->json(['situation' => $situation]);
     }
@@ -441,12 +454,34 @@ PROMPT;
         $this->authorize('update', $project);
         abort_if($situation->status !== 'validee_moe', 422, 'Seule une situation validée MOE peut être payée.');
         $data = $request->validate(['date_paiement' => 'required|date']);
+
         $situation->update([
             'status'        => 'payee',
             'paid_by'       => $request->user()->id,
             'paid_at'       => now(),
             'date_paiement' => $data['date_paiement'],
         ]);
+
+        // Audit trail: budget_entry type=paiement lié à cette situation
+        BudgetEntry::create([
+            'project_id'           => $project->id,
+            'created_by'           => $request->user()->id,
+            'type'                 => 'paiement',
+            'category'             => 'Situations de travaux',
+            'label'                => "Paiement {$situation->numero} – {$situation->periode}",
+            'amount'               => $situation->net_a_payer,
+            'entry_date'           => $data['date_paiement'],
+            'note'                 => "Paiement automatique – situation validée MOE #{$situation->numero}",
+            'situation_travaux_id' => $situation->id,
+        ]);
+
+        // P2: notify creator that payment is registered
+        $situation->load('project:id,name,code');
+        if ($situation->created_by && $situation->created_by !== $request->user()->id) {
+            $creator = User::find($situation->created_by);
+            $creator?->notify(new SituationPaidNotification($situation, $request->user()));
+        }
+
         return response()->json(['situation' => $situation]);
     }
 }

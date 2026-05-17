@@ -119,6 +119,11 @@ export default function SituationsPage() {
                   Base = {fmt(preview.base_calcul)}
                   {preview.avenants_signes_sum > 0 && ` (dont ${fmt(preview.avenants_signes_sum)} avenants signés)`}
                   {' × '}{form.avancement_pct}%
+                  {preview.avance_demarrage_montant > 0 && (
+                    <span style={{ display: 'block', marginTop: 2 }}>
+                      Avance démarrage : {fmt(preview.avance_demarrage_montant)} ({preview.avance_demarrage_pct}%)
+                    </span>
+                  )}
                 </span>
               )}
             </div>
@@ -157,6 +162,7 @@ export default function SituationsPage() {
                 <th>Brut HT</th>
                 <th>Cumul précédent</th>
                 <th>Retenue</th>
+                <th>Avance déduite</th>
                 <th>Net à payer</th>
                 <th>Statut</th>
                 <th>Actions</th>
@@ -181,6 +187,9 @@ export default function SituationsPage() {
                   <td>{fmt(s.montant_brut_ht)}</td>
                   <td style={{ color: 'var(--color-text-muted)' }}>{fmt(s.cumul_precedent_ht)}</td>
                   <td>{fmt(s.retenue_garantie_amount)}</td>
+                  <td style={{ color: s.avance_remboursement > 0 ? '#f59e0b' : 'var(--color-text-muted)' }}>
+                    {s.avance_remboursement > 0 ? `−${fmt(s.avance_remboursement)}` : '—'}
+                  </td>
                   <td><strong>{fmt(s.net_a_payer)}</strong></td>
                   <td>
                     <span

@@ -95,6 +95,10 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
     (n: UserNotification) => n.type === 'avenant_signe' && !n.read
   );
 
+  const situationPaidNotifs: UserNotification[] = (userNotifs?.notifications ?? []).filter(
+    (n: UserNotification) => n.type === 'situation_paid' && !n.read
+  );
+
   const isManagement = roleGroup === 'direction' || roleGroup === 'dt';
 
   const dismissAll = useCallback(() => {
@@ -132,7 +136,7 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
   const criticalProj    = (ops?.critical_projects ?? []).filter((p: any) => !dismissed.has(`proj-${p.id}`));
   const invoicesPending = isManagement ? (ops?.invoices_pending ?? []).filter((i: any) => !dismissed.has(`inv-${i.id}`)) : [];
   const dqePending      = isManagement ? (ops?.dqe_pending      ?? []).filter((d: any) => !dismissed.has(`dqe-${d.id}`)) : [];
-  const notifCount      = bdcPending.length + stockAlerts.length + criticalProj.length + invoicesPending.length + dqePending.length + meetingNotifs.length + bdcDbNotifs.length + incidentNotifs.length + situationValidatedNotifs.length + avenantNotifs.length;
+  const notifCount      = bdcPending.length + stockAlerts.length + criticalProj.length + invoicesPending.length + dqePending.length + meetingNotifs.length + bdcDbNotifs.length + incidentNotifs.length + situationValidatedNotifs.length + avenantNotifs.length + situationPaidNotifs.length;
 
   useEffect(() => {
     function handleOutside(e: MouseEvent) {
@@ -411,6 +415,33 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
                             <div className="topbar-notif-item__sub">
                               {d.project_code} · {d.objet}
                               {d.montant_ht ? ` · ${fmtAmount(d.montant_ht)}` : ''}
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })}
+
+                    {situationPaidNotifs.map((notif: UserNotification) => {
+                      const d = notif.data as any;
+                      return (
+                        <button
+                          key={notif.id}
+                          type="button"
+                          className="topbar-notif-item topbar-notif-item--success"
+                          onClick={async () => {
+                            await markNotificationRead(notif.id);
+                            queryClient.invalidateQueries({ queryKey: ['user-notifications'] });
+                            if (d.project_id) navigate(`/projects/${d.project_id}/situations`);
+                            setNotifOpen(false);
+                          }}
+                        >
+                          <span className="topbar-notif-item__dot topbar-notif-item__dot--success" />
+                          <div className="topbar-notif-item__body">
+                            <div className="topbar-notif-item__title">💰 Situation payée — {d.numero}</div>
+                            <div className="topbar-notif-item__sub">
+                              {d.project_code} · {d.periode}
+                              {d.net_a_payer ? ` · ${fmtAmount(d.net_a_payer)}` : ''}
+                              {d.paid_by ? ` · ${d.paid_by}` : ''}
                             </div>
                           </div>
                         </button>
