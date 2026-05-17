@@ -345,8 +345,15 @@ PROMPT;
         // Enrich with sequential avancement context
         $prevAvancement = null;
         $prevMontant    = null;
-        $enriched = $situations->map(function ($s) use (&$prevAvancement, &$prevMontant) {
+        $safeCode = preg_replace('/[^A-Za-z0-9\-_]/', '', $project->code);
+
+        $enriched = $situations->map(function ($s) use (&$prevAvancement, &$prevMontant, $project, $safeCode) {
             $arr = $s->toArray();
+            $filename = "situation-travaux-{$safeCode}-{$s->periode}.md";
+            $path = "ged/situation-travaux/{$project->id}/{$filename}";
+            $arr['md_url'] = \Storage::disk('public')->exists($path)
+                ? url("storage/{$path}")
+                : null;
             $arr['avancement_precedent_pct'] = $prevAvancement;
             $arr['delta_pct'] = $prevAvancement !== null
                 ? round($s->avancement_pct - $prevAvancement, 2)
