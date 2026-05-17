@@ -94,7 +94,7 @@ export default function AiFab() {
             className="ai-fab-btn__mascot"
             style={{
               opacity: open ? 0 : 1,
-              transform: `translate(-50%, -50%) scale(${open ? 0.7 : 1})`,
+              transform: `translateX(-50%) scale(${open ? 0.8 : 1})`,
             }}
           />
           {/* X — visible when open */}
