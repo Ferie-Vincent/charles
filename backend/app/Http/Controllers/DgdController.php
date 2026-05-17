@@ -21,6 +21,12 @@ class DgdController extends Controller
     public function initialize(Request $request, Project $project): JsonResponse
     {
         $this->authorize('update', $project);
+
+        // Gap #11: DGD uniquement si réception ou clôture
+        abort_unless(in_array($project->lifecycle_status, ['reception', 'cloture']), 422,
+            "DGD non autorisé — chantier en phase « {$project->lifecycle_status} ». Passez en réception avant d'initialiser le DGD."
+        );
+
         abort_if(
             DecompteGeneralDefinitif::where('project_id', $project->id)->exists(),
             422,
@@ -33,8 +39,7 @@ class DgdController extends Controller
         $totalSituations = SituationTravaux::where('project_id', $project->id)
             ->whereIn('status', ['validee_moe', 'payee'])->sum('montant_brut_ht');
 
-        // Gap #3: utiliser date_reception_provisoire comme point d'arrêt des pénalités,
-        // pas now() — le DGD peut être initialisé des semaines après la réception
+        // Gap #3: utiliser date_reception_provisoire comme point d'arrêt des pénalités
         $penalites = 0;
         if ($project->end_date && $project->penalites_retard_par_jour) {
             $dateRef   = $project->date_reception_provisoire ?? now();
@@ -42,23 +47,31 @@ class DgdController extends Controller
             $penalites = $retard * (float)$project->penalites_retard_par_jour;
         }
 
-        // Gap #4: retenue libérée = seulement sur les situations effectivement payées
+        // Gap #4: retenue libérée = seulement sur situations payées
         $retenueGarantie = SituationTravaux::where('project_id', $project->id)
             ->where('status', 'payee')
             ->sum('retenue_garantie_amount');
 
+        // Gap #10: déduire le reliquat d'avance non remboursée
+        $avanceAccordee     = round($project->avance_demarrage_montant, 2);
+        $avanceRemboursee   = (float) SituationTravaux::where('project_id', $project->id)
+            ->where('status', 'payee')
+            ->sum('avance_remboursement');
+        $avanceRestante = max(0.0, $avanceAccordee - $avanceRemboursee);
+
         $dgd = DecompteGeneralDefinitif::create([
-            'project_id'               => $project->id,
-            'company_id'               => $request->user()->company_id,
-            'created_by'               => $request->user()->id,
-            'montant_marche_initial'   => $montantInitial,
-            'montant_avenants'         => $montantAvenants,
-            'montant_marche_final'     => $montantInitial + $montantAvenants,
-            'total_situations_ht'      => $totalSituations,
-            'penalites_retard'         => $penalites,
-            'retenue_garantie_liberee' => $retenueGarantie,
-            'solde_final'              => $totalSituations - $penalites + $retenueGarantie,
-            'status'                   => 'brouillon',
+            'project_id'                   => $project->id,
+            'company_id'                   => $request->user()->company_id,
+            'created_by'                   => $request->user()->id,
+            'montant_marche_initial'        => $montantInitial,
+            'montant_avenants'              => $montantAvenants,
+            'montant_marche_final'          => $montantInitial + $montantAvenants,
+            'total_situations_ht'           => $totalSituations,
+            'penalites_retard'              => $penalites,
+            'retenue_garantie_liberee'      => $retenueGarantie,
+            'avance_remboursement_restant'  => $avanceRestante,
+            'solde_final'                   => $totalSituations - $penalites + $retenueGarantie - $avanceRestante,
+            'status'                        => 'brouillon',
         ]);
 
         return response()->json(['dgd' => $dgd], 201);
@@ -94,6 +107,16 @@ class DgdController extends Controller
             $project->update(['lifecycle_status' => 'cloture', 'status' => 'termine']);
         }
 
+        return response()->json(['dgd' => $dgd]);
+    }
+
+    public function updateObservations(Request $request, Project $project): JsonResponse
+    {
+        $this->authorize('update', $project);
+        $dgd = DecompteGeneralDefinitif::where('project_id', $project->id)->firstOrFail();
+        abort_if($dgd->status === 'signe_moa', 422, 'DGD clôturé — observations non modifiables.');
+        $data = $request->validate(['observations' => 'nullable|string|max:2000']);
+        $dgd->update(['observations' => $data['observations']]);
         return response()->json(['dgd' => $dgd]);
     }
 }
