@@ -1,8 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
-import { getDashboard } from '../api/get-dashboard';
+import { Link } from 'react-router-dom';
+import { getDashboard, type SituationCtPending } from '../api/get-dashboard';
 import SkeletonPage from '../../../components/ui/SkeletonPage';
 import { useAuth } from '../../auth/stores/auth-store';
 import { getRoleGroup, type RoleGroup, ACTIVITY_FEED_FILTER } from '../../../lib/roles';
+import { fmtFCFA } from '../../../lib/formatters';
 import PageHeader from '../../../components/ui/PageHeader';
 import KpiBar from '../components/KpiBar';
 import IndicateursChantiers from '../components/IndicateursChantiers';
@@ -13,6 +15,31 @@ import AiAnalysisWidget from '../components/AiAnalysisWidget';
 import ActivityFeed from '../components/ActivityFeed';
 import ProjectList from '../components/ProjectList';
 import QuickActions from '../components/QuickActions';
+
+function SituationsCtBanner({ situations }: { situations: SituationCtPending[] }) {
+  if (situations.length === 0) return null;
+  return (
+    <div style={{
+      background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 8,
+      padding: '12px 16px', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 12,
+    }}>
+      <span style={{ fontSize: '1.1rem' }}>📋</span>
+      <div style={{ flex: 1 }}>
+        <strong style={{ color: '#1d4ed8' }}>
+          {situations.length} situation{situations.length > 1 ? 's' : ''} en attente de votre validation CT
+        </strong>
+        <div style={{ fontSize: '0.8rem', color: '#3b82f6', marginTop: 2 }}>
+          {situations.map(s => (
+            <Link key={s.id} to={`/projects/${s.project_id}/situations`}
+              style={{ marginRight: 12, color: '#2563eb', textDecoration: 'none', fontWeight: 600 }}>
+              {s.project_code} — {fmtFCFA(s.net_a_payer)} FCFA →
+            </Link>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 const ROLE_HEADER: Record<RoleGroup, { breadcrumb: string; title: string; subtitle: string }> = {
   direction: {
@@ -68,7 +95,7 @@ export default function DashboardPage() {
   if (isLoading) return <div className="page-content"><SkeletonPage rows={4} /></div>;
   if (isError || !data) return <div className="page-content"><p className="form-error">Erreur de chargement.</p></div>;
 
-  const { stats, active_projects, recent_activities, alerts } = data;
+  const { stats, active_projects, recent_activities, alerts, situations_en_revue_ct } = data;
   const roleGroup = getRoleGroup(user?.role?.name ?? '');
   const header = ROLE_HEADER[roleGroup];
 
@@ -122,6 +149,7 @@ export default function DashboardPage() {
 
       {roleGroup === 'conducteur' && (
         <>
+          <SituationsCtBanner situations={situations_en_revue_ct ?? []} />
           <div className="db-sidebar-grid">
             <div className="db-sidebar-grid__main">
               <CriticitéCard activeProjects={active_projects} />
@@ -167,6 +195,20 @@ export default function DashboardPage() {
 
       {roleGroup === 'comptable' && (
         <>
+          {(stats.invoices_pending_count ?? 0) > 0 && (
+            <div style={{
+              background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 8,
+              padding: '12px 16px', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 12,
+            }}>
+              <span style={{ fontSize: '1.1rem' }}>🧾</span>
+              <strong style={{ color: '#92400e', flex: 1 }}>
+                {stats.invoices_pending_count} facture{stats.invoices_pending_count > 1 ? 's' : ''} en attente de validation
+              </strong>
+              <Link to="/accounting" style={{ color: '#b45309', fontWeight: 600, textDecoration: 'none', fontSize: '0.85rem' }}>
+                Voir →
+              </Link>
+            </div>
+          )}
           <AlertsPanel alerts={alerts ?? []} />
           <QuickActions links={[
             { label: 'Comptabilité', sub: 'Factures & fournisseurs', to: '/accounting', icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="20" height="20"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> },

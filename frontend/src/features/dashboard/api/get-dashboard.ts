@@ -12,6 +12,15 @@ export type DashboardStats = {
   health_orange: number;
   health_red: number;
   avg_progress: number;
+  invoices_pending_count: number;
+};
+
+export type SituationCtPending = {
+  id: number;
+  project_id: number;
+  project_name: string;
+  project_code: string;
+  net_a_payer: number;
 };
 
 export type ProjectHealth = {
@@ -58,6 +67,7 @@ export type DashboardData = {
   recent_activities: (ProjectActivity & { project: { id: number; code: string; name: string } })[];
   leaderboard: LeaderboardEntry[];
   alerts: ProjectAlert[];
+  situations_en_revue_ct: SituationCtPending[];
 };
 
 export async function getDashboard(): Promise<DashboardData> {
