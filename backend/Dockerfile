@@ -9,11 +9,11 @@ RUN apt-get update && apt-get install -y \
                     libxml2-dev \
                         zip \
                             unzip \
-                                default-mysql-client \
+                                libpq-dev \
                                     && rm -rf /var/lib/apt/lists/*
 
                                     # Install PHP extensions
-                                    RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
+                                    RUN docker-php-ext-install pdo_pgsql pgsql mbstring exif pcntl bcmath gd
 
                                     # Enable Apache mod_rewrite (required for Laravel)
                                     RUN a2enmod rewrite
@@ -34,7 +34,7 @@ RUN apt-get update && apt-get install -y \
                                         # Create minimal .env for build-time artisan commands only
                                         RUN echo 'APP_KEY=base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=' > .env \
                                             && echo 'APP_ENV=production' >> .env \
-                                                && echo 'DB_CONNECTION=mysql' >> .env \
+                                                && echo 'DB_CONNECTION=pgsql' >> .env \
                                                     && echo 'MISTRAL_API_KEY=' >> .env \
                                                         && echo 'GROQ_API_KEY=' >> .env \
                                                             && echo 'ANTHROPIC_API_KEY=' >> .env
