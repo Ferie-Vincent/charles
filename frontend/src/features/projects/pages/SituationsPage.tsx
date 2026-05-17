@@ -76,7 +76,7 @@ export default function SituationsPage() {
   const [form, setForm] = useState({ periode: currentMonth(), avancement_pct: 0, notes: '' });
   const [payDate, setPayDate] = useState<Record<number, string>>({});
 
-  // Comment modals for reject-ct, reject-dt and contest
+  // Modales de commentaire pour rejet CT, rejet DT et contestation
   const [rejectCtModal, setRejectCtModal] = useState<{ situationId: number; comment: string } | null>(null);
   const [rejectModal, setRejectModal] = useState<{ situationId: number; comment: string } | null>(null);
   const [contestModal, setContestModal] = useState<{ situationId: number; reason: string } | null>(null);
@@ -107,7 +107,7 @@ export default function SituationsPage() {
         }
       />
 
-      {/* Avance démarrage widget — visible only when project has an advance configured */}
+      {/* Widget avance démarrage — visible uniquement si le projet a une avance configurée */}
       {avanceSummary && avanceSummary.accordee > 0 && (
         <div className="card" style={{ display: 'flex', gap: '24px', padding: '16px 20px', marginBottom: '16px', flexWrap: 'wrap' }}>
           <div style={{ flex: 1, minWidth: 140 }}>
@@ -163,7 +163,7 @@ export default function SituationsPage() {
         </div>
       )}
 
-      {/* Gap C: alert when avance pct configured but not yet frozen */}
+      {/* Écart C : alerte si avance % configurée mais pas encore gelée */}
       {avanceSummary && avanceSummary.pct > 0 && !avanceSummary.is_frozen && isManagement && (
         <div className="btp-alert btp-alert--warning" style={{ marginBottom: 12 }}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16">
@@ -546,7 +546,7 @@ export default function SituationsPage() {
                         </div>
                       )}
 
-                      {/* PDF export — soumise excluded: still contestable, must not circulate as official */}
+                      {/* Export PDF — soumise exclue : encore contestable, ne doit pas circuler comme document officiel */}
                       {(s.status === 'validee_moe' || s.status === 'payee') && (
                         <a
                           href={`http://localhost:8000/api/projects/${projectId}/situations/${s.id}/pdf`}

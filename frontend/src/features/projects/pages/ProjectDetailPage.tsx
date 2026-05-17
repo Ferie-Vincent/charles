@@ -155,7 +155,7 @@ function SituationStatusBanner({ situation }: { situation: { status: string; num
 }
 
 
-// ── Icon helpers (avoid JSX repetition) ────────────────────────────────────
+// ── Icônes utilitaires (évite la répétition JSX) ───────────────────────────
 const IcoChart   = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>;
 const IcoCal     = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>;
 const IcoClock   = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>;
@@ -198,7 +198,7 @@ export default function ProjectDetailPage() {
   const group = getRoleGroup(user?.role?.name ?? '');
   // Direction + DT : vue pilotage complète (ordre réunion CT)
   const isDGDT      = group === 'direction' || group === 'dt';
-  // Management élargi : accès trésorerie/DQE
+  // Encadrement élargi : accès trésorerie/DQE
   const isManagement = isDGDT || group === 'metreur' || group === 'comptable';
   const isTerrain = group === 'terrain';
 
@@ -212,13 +212,13 @@ export default function ProjectDetailPage() {
     queryKey: ['project', numId],
     queryFn: () => getProject(numId),
     enabled: !!id,
-    staleTime: 300_000,   // infos projet stables — 5 min
+    staleTime: 300_000,   // informations projet stables — 5 min
   });
   const { data: logsData } = useQuery({
     queryKey: ['daily-logs', numId],
     queryFn: () => getDailyLogs(numId),
     enabled: !!id,
-    staleTime: 120_000,   // journaux quotidiens — 2 min
+    staleTime: 120_000,   // journaux du jour — 2 min
   });
   const logs    = logsData?.data ?? [];
   const logMeta = logsData?.meta ?? null;
@@ -261,18 +261,18 @@ export default function ProjectDetailPage() {
     : daysLeft <= 30 ? '#fbbf24'
     : '#34d399';
 
-  // P1: distinguer "aucun journal" de "avancement calculé"
+  // P1 : distinguer "aucun journal" de "avancement calculé"
   const avancementLabel = avancement !== null
     ? `${avancement} %`
     : jourssuivis === 0 ? 'Aucun journal' : '—';
 
-  // BTP: montant marché (contractuel) vs budget prévisionnel
+  // BTP : montant marché (contractuel) vs budget prévisionnel
   const montantMarche   = project.montant_marche ?? null;
   const budgetPrevision = project.budget_amount ? Number(project.budget_amount) : null;
   const ecartMarche     = montantMarche && budgetPrevision && budgetPrevision !== montantMarche
     ? budgetPrevision - montantMarche : null;
 
-  // ── Section icons ────────────────────────────────────────────
+  // ── Icônes de section ───────────────────────────────────────
   const icons = {
     courbeS:  <div className="card-icon card-icon--blue"><IcoChart /></div>,
     budget:   <div className="card-icon card-icon--green"><IcoMoney /></div>,
@@ -289,7 +289,7 @@ export default function ProjectDetailPage() {
     history:  <div className="card-icon card-icon--gray"><IcoClock /></div>,
   };
 
-  // ── Membres réutilisable ─────────────────────────────────────
+  // ── Composant membres réutilisable ───────────────────────────
   const TeamTable = () => !project.members || project.members.length === 0
     ? <p className="empty-state">Aucun membre assigné.</p>
     : (
@@ -310,7 +310,7 @@ export default function ProjectDetailPage() {
   return (
     <div className="project-detail">
 
-      {/* ── Hero condensé : 3 éléments essentiels ── */}
+      {/* ── Hero condensé : 3 éléments essentiels ─── */}
       <div className="proj-hero">
         <Link to="/projects" className="proj-hero__back">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="14" height="14"><path d="M19 12H5"/><polyline points="12 19 5 12 12 5"/></svg>

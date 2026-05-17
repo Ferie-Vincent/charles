@@ -10,10 +10,12 @@ export function fmtFCFA(n: number): string {
 }
 
 /** Compact without currency suffix: 1 500 000 → "1.5 M", 50 000 → "50 k" */
-export function fmtCompact(n: number): string {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)} M`;
-  if (n >= 1_000)     return `${(n / 1_000).toFixed(0)} k`;
-  return `${n.toFixed(0)}`;
+export function fmtCompact(n: number | string | null | undefined): string {
+  const v = Number(n);
+  if (!isFinite(v)) return '0';
+  if (v >= 1_000_000) return `${(v / 1_000_000).toFixed(1)} M`;
+  if (v >= 1_000)     return `${(v / 1_000).toFixed(0)} k`;
+  return `${v.toFixed(0)}`;
 }
 
 /** Full FCFA with fr-FR thousands: 1 500 000 → "1 500 000 FCFA" */

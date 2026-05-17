@@ -32,7 +32,7 @@ class BudgetController extends Controller
         $totals['realise']    = $canonical['realise'];     // factures payées uniquement
         $totals['solde']      = $canonical['budget_ref'] - $canonical['realise'] - $canonical['engage'];
 
-        // 90-day monthly buckets from today
+        // Tranches mensuelles sur 90 jours à partir d'aujourd'hui
         $buckets = $this->build90jBuckets($entries);
 
         // Paiements manuels sans lien situation — saisie comptable non traçable
@@ -95,12 +95,12 @@ class BudgetController extends Controller
         $today = now()->startOfDay();
         $end   = $today->copy()->addDays(90);
 
-        // Build 3 monthly buckets
+        // Construire 3 tranches mensuelles
         $buckets = [];
         for ($i = 0; $i < 3; $i++) {
             $from = $today->copy()->addMonths($i)->startOfMonth();
             $to   = $from->copy()->endOfMonth();
-            // clamp to today..+90d
+            // borner à aujourd'hui..+90j
             $from = $from->lt($today) ? $today : $from;
             $to   = $to->gt($end) ? $end : $to;
 

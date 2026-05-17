@@ -22,12 +22,12 @@ class PortfolioQhseController extends Controller
 
         $companyScope = fn ($q) => $q->where('company_id', $companyId);
 
-        // KPIs on full dataset — never limit before aggregating
+        // KPIs sur le jeu de données complet — ne jamais limiter avant d'agréger
         $totalIncidents = Incident::whereHas('project', $companyScope)->count();
         $openIncidents  = Incident::whereHas('project', $companyScope)->whereIn('status', ['ouvert', 'en_cours'])->count();
         $critiqueCount  = Incident::whereHas('project', $companyScope)->where('severity', 'critique')->count();
 
-        // List: most recent 50 only (display)
+        // Liste : 50 plus récents uniquement (affichage)
         $incidents = Incident::query()
             ->whereHas('project', $companyScope)
             ->with([
@@ -38,7 +38,7 @@ class PortfolioQhseController extends Controller
             ->limit(50)
             ->get();
 
-        // Safety by project — compute monthly safety score for each active project
+        // Sécurité par projet — calculer le score de sécurité mensuel pour chaque projet actif
         $now       = Carbon::now();
         $monthFrom = $now->copy()->startOfMonth();
         $monthTo   = $now->copy()->endOfMonth();
@@ -85,7 +85,7 @@ class PortfolioQhseController extends Controller
             ? (int) round($safetyByProject->avg('score'))
             : 100;
 
-        // Shape the incidents list
+        // Formater la liste des incidents
         $incidentList = $incidents->map(fn (Incident $inc) => [
             'id'            => $inc->id,
             'project_id'    => $inc->project_id,

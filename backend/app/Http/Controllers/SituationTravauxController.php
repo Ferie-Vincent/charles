@@ -51,7 +51,7 @@ class SituationTravauxController extends Controller
             return response()->json(['error' => 'Aucune clé IA configurée (MISTRAL_API_KEY, GROQ_API_KEY ou ANTHROPIC_API_KEY).'], 503);
         }
 
-        // Load DQE version — prefer the one requested, else highest version_number validated
+        // Charger la version DQE — préférer celle demandée, sinon la plus haute version_number validée
         $dqeVersion = ($data['dqe_version_id'] ?? null)
             ? DqeVersion::with('lines')->find($data['dqe_version_id'])
             : $project->dqeVersions()->with('lines')->where('status', 'validated')->orderByDesc('version_number')->first();
@@ -68,12 +68,12 @@ class SituationTravauxController extends Controller
             'La situation ne peut être générée qu\'à partir d\'un DQE validé (statut actuel : ' . $dqeVersion->status . ').'
         );
 
-        // Gather project context
+        // Collecter le contexte du projet
         $avancement = (float) ($data['avancement']
             ?? $project->dailyLogs()->latest('log_date')->value('progress_percent')
             ?? 0);
 
-        // Engage = BDC entries + validée invoices (canonical, not sum of all budget_entry types)
+        // Engagé = entrées BDC + factures validées (canonique, pas la somme de tous les types budget_entry)
         $budgetEngage = (float) $project->budgetEntries()->where('type', 'engagement')->sum('amount')
             + (float) $project->invoices()->where('status', 'validee')->sum('amount_ht');
         $incidentCount   = $project->incidents()->where('status', 'ouvert')->count();
@@ -221,7 +221,7 @@ class SituationTravauxController extends Controller
         $montantDu   = number_format($dqe->total_ht * $avancement / 100, 0, ',', ' ');
         $budgetFmt   = $budgetTotal > 0 ? number_format($budgetTotal, 0, ',', ' ') . ' FCFA' : 'non renseigné';
 
-        // Build lots summary (group lines by lot)
+        // Construire le résumé des lots (regrouper les lignes par lot)
         $lots = $dqe->lines->groupBy('lot');
         $lotsText = '';
         foreach ($lots as $lotName => $lines) {
@@ -280,7 +280,7 @@ Style : formel, chiffré, professionnel. Utilise des tableaux Markdown. Ne pas i
 PROMPT;
     }
 
-    // ── Terrain-accessible: status badge only (no financial data) ────────────
+    // ── Accessible terrain : badge de statut uniquement (sans données financières) ────────────
     public function lastStatus(Project $project): JsonResponse
     {
         $this->authorize('view', $project);
@@ -293,7 +293,7 @@ PROMPT;
         return response()->json(['last_situation' => $last]);
     }
 
-    // ── Preview calcul avant création (no DB write) ───────────────────────────
+    // ── Prévisualisation du calcul avant création (pas d'écriture en base) ───────────────────────────
     public function previewCalcul(Request $request, Project $project): JsonResponse
     {
         $this->authorize('update', $project);
@@ -331,7 +331,7 @@ PROMPT;
         ]);
     }
 
-    // ── DB-backed workflow methods ────────────────────────────────────────────
+    // ── Méthodes de workflow persistées en base ────────────────────────────────────────────
 
     public function list(Project $project): JsonResponse
     {
@@ -342,7 +342,7 @@ PROMPT;
             ->orderBy('created_at')
             ->get();
 
-        // Enrich with sequential avancement context
+        // Enrichir avec le contexte d'avancement séquentiel
         $prevAvancement = null;
         $prevMontant    = null;
         $safeCode = preg_replace('/[^A-Za-z0-9\-_]/', '', $project->code);
@@ -415,7 +415,7 @@ PROMPT;
             'notes'          => 'nullable|string',
         ]);
 
-        // P0: block regression vs last PAID situation only — in-review situations are not certified yet
+        // P0 : bloquer la régression uniquement par rapport à la dernière situation PAYÉE — les situations en revue ne sont pas encore certifiées
         $prevAvancement = SituationTravaux::where('project_id', $project->id)
             ->where('status', 'payee')
             ->orderByDesc('created_at')
@@ -428,8 +428,8 @@ PROMPT;
             ], 422);
         }
 
-        // P0: compute montant_brut_ht server-side — saisie libre interdite
-        // Item 10: forfait = montant_marche is the fixed price; ignore DQE lines for calculation
+        // P0 : calculer montant_brut_ht côté serveur — saisie libre interdite
+        // Item 10 : forfait = montant_marche est le prix fixe ; ignorer les lignes DQE pour le calcul
         if ($project->type_marche === 'forfait' && $project->montant_marche) {
             $avenants = (float) \App\Models\Avenant::where('project_id', $project->id)
                 ->where('status', 'signe')->sum('montant_ht');
@@ -446,8 +446,8 @@ PROMPT;
 
         $montantBrutHT = round($base * ($data['avancement_pct'] / 100), 2);
 
-        // Règle 3 logique-metier: situation ≤ montant marché + avenants signés
-        // Explicit guard — normally enforced by avancement_pct ≤ 100, but catches DQE/montant drift
+        // Règle 3 logique-metier : situation ≤ montant marché + avenants signés
+        // Garde explicite — normalement appliquée par avancement_pct ≤ 100, mais capture les dérives DQE/montant
         if ($base > 0 && $montantBrutHT > $base + 0.01) {
             return response()->json([
                 'message' => "Montant de la situation ({$montantBrutHT} FCFA) dépasse le marché + avenants signés ({$base} FCFA).",
@@ -466,7 +466,7 @@ PROMPT;
         $netAPayer      = round($baseHT + $vatAmount, 2);
 
         $situation = DB::transaction(function () use ($project, $request, $data, $montantBrutHT, $cumulPrecedent, $retenueAmount, $avanceRembours, $vatRate, $vatAmount, $netAPayer) {
-            // Lock to prevent concurrent numero duplication (unique constraint is the last resort)
+            // Verrou pour éviter la duplication concurrente de numéro (la contrainte unique est le dernier recours)
             SituationTravaux::where('project_id', $project->id)->lockForUpdate()->count();
             $lastNum = SituationTravaux::where('project_id', $project->id)->count() + 1;
             $numero  = sprintf('ST-%03d', $lastNum);
@@ -505,11 +505,11 @@ PROMPT;
         $this->authorize('update', $project);
         abort_if($situation->status !== 'brouillon', 422, 'Seul un brouillon peut être soumis.');
 
-        // Goes to CT first for terrain coherence validation
+        // Passe d'abord au CT pour validation de cohérence terrain
         $situation->update(['status' => 'en_revue_ct', 'submitted_at' => now()]);
         $situation->load('project:id,name,code');
 
-        // Notify only project-assigned CTs (not every CT in the company)
+        // Notifier uniquement les CT affectés au projet (pas tous les CT de l'entreprise)
         $projectMemberIds = ProjectMember::where('project_id', $project->id)->pluck('user_id');
         User::whereHas('role', fn($q) => $q->where('name', Roles::CONDUCTEUR_TRAVAUX_SLUG))
             ->where('company_id', $project->company_id)
@@ -534,7 +534,7 @@ PROMPT;
 
         $situation->load('project:id,name,code');
 
-        // Notify project-assigned DTs — prefer explicit members, fall back to all company DTs
+        // Notifier les DT affectés au projet — préférer les membres explicites, sinon tous les DT de l'entreprise
         $projectMemberIds = ProjectMember::where('project_id', $project->id)->pluck('user_id');
         $dtUsers = User::whereHas('role', fn($q) => $q->where('name', Roles::DIRECTEUR_TECHNIQUE_SLUG))
             ->where('company_id', $project->company_id)
@@ -607,7 +607,7 @@ PROMPT;
 
         $situation->load('project:id,name,code');
 
-        // Notify the métreur who created it
+        // Notifier le métreur qui a créé la situation
         if ($situation->created_by && $situation->created_by !== $request->user()->id) {
             $creator = User::find($situation->created_by);
             $creator?->notify(new SituationRejectedByDtNotification($situation, $request->user()));
@@ -632,7 +632,7 @@ PROMPT;
 
         $situation->load('project:id,name,code');
 
-        // Notify creator (métreur) + DT
+        // Notifier le créateur (métreur) + DT
         $toNotify = collect();
 
         if ($situation->created_by && $situation->created_by !== $request->user()->id) {
@@ -667,7 +667,7 @@ PROMPT;
         $this->authorize('update', $project);
         abort_if($situation->status !== 'soumise', 422, 'Seule une situation soumise peut être validée MOE.');
 
-        // Snapshot cumul BEFORE validation to detect first threshold crossing
+        // Snapshot du cumul AVANT validation pour détecter le premier franchissement de seuil
         $cumulBefore = SituationTravaux::where('project_id', $project->id)
             ->whereIn('status', ['validee_moe', 'payee'])
             ->sum('montant_brut_ht');
@@ -680,20 +680,20 @@ PROMPT;
 
         $situation->load('project:id,name,code');
 
-        // P2: notify creator (métreur) when validated
+        // P2 : notifier le créateur (métreur) lors de la validation
         if ($situation->created_by && $situation->created_by !== $request->user()->id) {
             $creator = User::find($situation->created_by);
             $creator?->notify(new SituationValidatedNotification($situation, $request->user()));
         }
 
-        // P2: notify all comptables in company — Fatou must see validated situations immediately
+        // P2 : notifier tous les comptables de l'entreprise — ils doivent voir les situations validées immédiatement
         User::whereHas('role', fn($q) => $q->where('name', Roles::COMPTABLE_SLUG))
             ->where('company_id', $project->company_id)
             ->where('id', '!=', $request->user()->id)
             ->get()
             ->each(fn($u) => $u->notify(new SituationValidatedNotification($situation, $request->user())));
 
-        // Gap B: notify project-assigned CTs — they track cash flow per chantier
+        // Gap B : notifier les CT affectés au projet — ils suivent les flux de trésorerie par chantier
         $projectMemberIds = ProjectMember::where('project_id', $project->id)->pluck('user_id');
         User::whereHas('role', fn($q) => $q->where('name', Roles::CONDUCTEUR_TRAVAUX_SLUG))
             ->where('company_id', $project->company_id)
@@ -702,7 +702,7 @@ PROMPT;
             ->get()
             ->each(fn($u) => $u->notify(new SituationValidatedNotification($situation, $request->user())));
 
-        // First crossing of 80% — base includes signed avenants for correct threshold
+        // Premier franchissement de 80% — la base inclut les avenants signés pour le seuil correct
         ['base' => $baseCalcul] = $this->resolveBaseCalcul($project, $situation->dqe_version_id);
         if ($baseCalcul > 0) {
             $cumulAfter  = $cumulBefore + $situation->montant_brut_ht;
@@ -720,10 +720,10 @@ PROMPT;
         return response()->json(['situation' => $situation]);
     }
 
-    // ── Private helpers ───────────────────────────────────────────────────────
+    // ── Méthodes privées auxiliaires ───────────────────────────────────────────────────────
 
     /**
-     * Returns base de calcul = (DQE total_ht or montant_marche) + avenants signés.
+     * Retourne la base de calcul = (DQE total_ht ou montant_marche) + avenants signés.
      * @return array{base: float, avenants_sum: float}
      */
     private function resolveBaseCalcul(Project $project, int|string|null $dqeVersionId): array
@@ -772,7 +772,7 @@ PROMPT;
             'date_paiement' => $data['date_paiement'],
         ]);
 
-        // Audit trail: budget_entry type=paiement lié à cette situation
+        // Piste d'audit : budget_entry type=paiement lié à cette situation
         BudgetEntry::create([
             'project_id'           => $project->id,
             'created_by'           => $request->user()->id,
@@ -787,13 +787,13 @@ PROMPT;
 
         $situation->load('project:id,name,code');
 
-        // Notify creator (métreur)
+        // Notifier le créateur (métreur)
         if ($situation->created_by && $situation->created_by !== $request->user()->id) {
             $creator = User::find($situation->created_by);
             $creator?->notify(new SituationPaidNotification($situation, $request->user()));
         }
 
-        // Notify project-assigned CTs — they track cash flow per chantier
+        // Notifier les CT affectés au projet — ils suivent les flux de trésorerie par chantier
         $projectMemberIds = ProjectMember::where('project_id', $project->id)->pluck('user_id');
         User::whereHas('role', fn($q) => $q->where('name', Roles::CONDUCTEUR_TRAVAUX_SLUG))
             ->where('company_id', $project->company_id)

@@ -28,7 +28,7 @@ const PRIORITY_CLASS: Record<string, string> = {
   normal: 'ai-action-priority--normal',
 };
 
-/* ── Inline markdown renderer ─────────────────────────── */
+/* ── Rendu markdown inline ─────────────────────────────── */
 function renderInline(text: string): React.ReactNode {
   const parts = text.split(/(\*\*[^*]+\*\*)/g);
   return parts.map((part, i) =>
@@ -60,7 +60,7 @@ function renderMarkdown(text: string): React.ReactNode {
     } else if (line.startsWith('# ')) {
       nodes.push(<h2 key={i} className="ai-md-h2">{renderInline(line.slice(2))}</h2>);
     } else if (line.startsWith('|')) {
-      // collect entire table block
+      // récupérer le bloc tableau complet
       const tableLines: string[] = [];
       while (i < lines.length && lines[i].startsWith('|')) {
         tableLines.push(lines[i]); i++;
@@ -106,7 +106,7 @@ function renderMarkdown(text: string): React.ReactNode {
   return nodes;
 }
 
-/* ── Action row ───────────────────────────────────────── */
+/* ── Ligne d'action ───────────────────────────────────── */
 function ActionRow({ action, users, assignedTo, onAssign }: {
   action: AiAction; users: AppUser[];
   assignedTo: number | null; onAssign: (id: number | null) => void;
@@ -140,7 +140,7 @@ function ActionRow({ action, users, assignedTo, onAssign }: {
   );
 }
 
-/* ── Modal ────────────────────────────────────────────── */
+/* ── Fenêtre modale ───────────────────────────────────── */
 function AiModal({
   result, onClose, onRefresh, refreshing, assigned, onAssigned,
 }: {
@@ -198,7 +198,7 @@ function AiModal({
   return createPortal(
     <div className="mr-modal-overlay" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="mr-modal mr-modal--wide" role="dialog" aria-modal="true">
-        {/* Header */}
+        {/* En-tête */}
         <div className="mr-modal__head">
           <div className="mr-modal__head-left">
             <p className="mr-modal__title">Analyse IA — Portefeuille</p>
@@ -218,14 +218,14 @@ function AiModal({
           </div>
         </div>
 
-        {/* Body */}
+        {/* Corps */}
         <div className="mr-modal__body">
-          {/* Analysis text */}
+          {/* Texte d'analyse */}
           <div className="ai-md-output" style={{ marginBottom: 24 }}>
             {renderMarkdown(result.analysis)}
           </div>
 
-          {/* Generate actions CTA */}
+          {/* Bouton de génération des actions */}
           <div className="ai-solutions-cta">
             <button className="ai-solutions-btn" onClick={handleSolutions} disabled={solvLoading}>
               {solvLoading ? (
@@ -247,7 +247,7 @@ function AiModal({
             {solvError && <span className="ai-widget__error" style={{ marginTop: 8 }}>{solvError}</span>}
           </div>
 
-          {/* Action plan */}
+          {/* Plan d'action */}
           {actions && (
             <div className="ai-actions-panel" style={{ marginTop: 16 }}>
               <div className="ai-actions-panel__head">
@@ -269,7 +269,7 @@ function AiModal({
           )}
         </div>
 
-        {/* Footer */}
+        {/* Pied de page */}
         {actions && (
           <div className="mr-modal__footer">
             {assigned ? (
@@ -297,7 +297,7 @@ function AiModal({
   );
 }
 
-/* ── Sidebar card (trigger) ───────────────────────────── */
+/* ── Carte de déclenchement (barre latérale) ─────────── */
 export default function AiAnalysisWidget() {
   const [loading, setLoading]   = useState(false);
   const [result, setResult]     = useState<PortfolioAnalysis | null>(null);

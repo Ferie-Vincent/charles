@@ -34,7 +34,7 @@ export type Project = {
   start_date: string | null;
   end_date: string | null;
   target_progress: number | null;
-  // BTP contract fields
+  // Champs contractuels BTP
   type_marche: TypeMarche | null;
   maitre_ouvrage: string | null;
   maitre_oeuvre: string | null;
@@ -62,7 +62,7 @@ export type CreateProjectPayload = {
   budget_amount?: number;
   start_date?: string;
   end_date?: string;
-  // BTP contract fields
+  // Champs contractuels BTP
   type_marche?: TypeMarche;
   maitre_ouvrage?: string;
   maitre_oeuvre?: string;

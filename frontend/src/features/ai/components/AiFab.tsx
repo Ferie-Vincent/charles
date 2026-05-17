@@ -55,11 +55,11 @@ export default function AiFab() {
 
   return (
     <>
-      {/* Backdrop (closes dial) */}
+      {/* Fond (ferme le menu rapide) */}
       {open && <div className="ai-fab-backdrop" onClick={() => setOpen(false)} />}
 
       <div className="ai-fab-root">
-        {/* Speed dial items */}
+        {/* Éléments du menu rapide */}
         {DIAL_ITEMS.map((item, i) => (
           <div
             key={item.id}
@@ -79,15 +79,15 @@ export default function AiFab() {
           </div>
         ))}
 
-        {/* Main FAB */}
+        {/* Bouton FAB principal */}
         <button
           className={`ai-fab-btn${open ? ' ai-fab-btn--open' : ''}`}
           onClick={() => setOpen(o => !o)}
           aria-label="Assistant IA"
         >
-          {/* Spark ring */}
+          {/* Anneau lumineux */}
           <span className="ai-fab-btn__ring" />
-          {/* Mascot — visible when closed */}
+          {/* Mascotte — visible quand fermé */}
           <img
             src="/assets/ai-mascot.png"
             alt="IA"
@@ -97,7 +97,7 @@ export default function AiFab() {
               transform: `translateX(-50%) scale(${open ? 0.8 : 1})`,
             }}
           />
-          {/* X — visible when open */}
+          {/* × — visible quand ouvert */}
           <span
             className="ai-fab-btn__icon ai-fab-btn__close"
             style={{ opacity: open ? 1 : 0, transform: open ? 'rotate(0deg) scale(1)' : 'rotate(-45deg) scale(0.7)' }}
@@ -110,7 +110,7 @@ export default function AiFab() {
         </button>
       </div>
 
-      {/* Modals */}
+      {/* Fenêtres modales */}
       {(modal === 'briefing' || modal === 'assistant') && (
         <div className="ai-fab-modal-overlay" onClick={e => { if (e.target === e.currentTarget) closeModal(); }}>
           <div className="ai-fab-modal-box">

@@ -67,7 +67,7 @@ export default function DailyLogForm({ projectId, projectLatitude, projectLongit
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const recognitionRef = useRef<any>(null);
 
-  // Pre-fill from last log
+  // Pré-remplissage depuis le dernier journal
   const { data: lastLog } = useQuery({
     queryKey: ['daily-log-last', projectId],
     queryFn: () => getLastDailyLog(projectId),
@@ -75,7 +75,7 @@ export default function DailyLogForm({ projectId, projectLatitude, projectLongit
     retry: false,
   });
 
-  // AI material suggestions
+  // Suggestions de matériaux par IA
   const { data: aiSuggestions = [] } = useQuery({
     queryKey: ['ai-material-suggestions', projectId],
     queryFn: () => getMaterialSuggestions(projectId),
@@ -83,7 +83,7 @@ export default function DailyLogForm({ projectId, projectLatitude, projectLongit
     retry: false,
   });
 
-  // Apply pre-fill once last log is loaded (only if user hasn't touched form yet)
+  // Appliquer le pré-remplissage une fois le dernier journal chargé (seulement si l'utilisateur n'a pas encore touché au formulaire)
   useEffect(() => {
     if (!lastLog || prefilled) return;
     setWeather(lastLog.weather ?? '');

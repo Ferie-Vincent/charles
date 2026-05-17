@@ -10,13 +10,13 @@ use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 class PermissionService
 {
     /**
-     * Roles that always bypass all permission checks.
+     * Rôles qui contournent toujours toutes les vérifications de permissions.
      */
     private const DIRECTION_ROLES = ['direction', 'directeur-technique'];
 
     /**
-     * Write-access rules per feature.
-     * Keys are feature names; values are the role slugs allowed to write.
+     * Règles d'accès en écriture par fonctionnalité.
+     * Les clés sont les noms de feature ; les valeurs sont les slugs de rôle autorisés à écrire.
      */
     private const WRITE_RULES = [
         'stocks'          => ['moyens-generaux', 'direction', 'directeur-technique'],
@@ -93,7 +93,7 @@ class PermissionService
     }
 
     // -------------------------------------------------------------------------
-    // Internals
+    // Méthodes internes
     // -------------------------------------------------------------------------
 
     /**

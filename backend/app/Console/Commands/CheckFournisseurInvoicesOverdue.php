@@ -11,15 +11,15 @@ use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
-#[Signature('invoices:check-fournisseur-overdue {--dry-run : List without sending}')]
-#[Description('Alert comptable + direction for supplier invoices soumise > 30 days without validation')]
+#[Signature('invoices:check-fournisseur-overdue {--dry-run : Lister sans envoyer}')]
+#[Description('Alerte comptable + direction pour les factures fournisseur soumises depuis > 30 jours sans validation')]
 class CheckFournisseurInvoicesOverdue extends Command
 {
     public function handle(): int
     {
         $overdueLimit = now()->subDays(30);
 
-        // Cooldown 7 days: skip invoices whose project was already notified this week
+        // Anti-doublon 7 jours : ignorer les factures dont le projet a déjà été notifié cette semaine
         $recentProjectIds = DB::table('notifications')
             ->where('created_at', '>', now()->subDays(7))
             ->get(['data'])
@@ -39,11 +39,11 @@ class CheckFournisseurInvoicesOverdue extends Command
             ->get();
 
         if ($invoices->isEmpty()) {
-            $this->info('No overdue fournisseur invoices.');
+            $this->info('Aucune facture fournisseur en retard.');
             return Command::SUCCESS;
         }
 
-        $this->info("Found {$invoices->count()} overdue invoice(s).");
+        $this->info("Trouvé {$invoices->count()} facture(s) en retard.");
 
         foreach ($invoices as $invoice) {
             $days = (int) $invoice->created_at->diffInDays(now());
@@ -64,7 +64,7 @@ class CheckFournisseurInvoicesOverdue extends Command
         }
 
         if (!$this->option('dry-run')) {
-            $this->info('Notifications sent.');
+            $this->info('Notifications envoyées.');
         }
 
         return Command::SUCCESS;

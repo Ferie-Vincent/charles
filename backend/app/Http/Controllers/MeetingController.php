@@ -41,10 +41,10 @@ class MeetingController extends Controller
             ->where('company_id', $request->user()->company_id)
             ->get();
 
-        // Generate RSVP tokens before transaction
+        // Générer les tokens RSVP avant la transaction
         $tokens = $invitees->mapWithKeys(fn($u) => [$u->id => Str::uuid()->toString()]);
 
-        // Atomic: task + meeting + invitees — notifications sent after commit
+        // Atomique : tâche + réunion + invités — notifications envoyées après le commit
         [$task, $meeting] = DB::transaction(function () use ($data, $project, $request, $invitees, $tokens) {
             $checklist = $this->buildChecklist($data['alert_type'] ?? null);
 
@@ -84,7 +84,7 @@ class MeetingController extends Controller
 
         $meeting->load('project', 'organizer');
 
-        // Send notifications outside transaction — failures don't roll back the meeting
+        // Envoyer les notifications hors transaction — les échecs n'annulent pas la réunion
         $toNotify = $invitees->filter(fn($u) => $u->id !== $request->user()->id);
         try {
             $toNotify->each(function (User $user) use ($meeting, $data, $tokens) {
@@ -109,14 +109,14 @@ class MeetingController extends Controller
     }
 
     /**
-     * Public RSVP via tokenized email link — no auth required.
+     * RSVP public via lien email tokenisé — aucune authentification requise.
      *
-     * Security model (V1): UUID v4 token (128-bit entropy, server-generated).
-     * Brute-force is computationally infeasible. Token expiry is implicit:
-     * the guard below returns 410 Gone once scheduled_at is past, so forwarding
-     * a link after the meeting is harmless. Link forwarding before the meeting
-     * is treated as deliberate delegation (accepted BTP context). Authenticated
-     * users can also update their RSVP via PATCH /api/meeting-invitations/{id}/respond.
+     * Modèle de sécurité (V1) : token UUID v4 (128 bits d'entropie, généré côté serveur).
+     * La force brute est computationnellement infaisable. L'expiration du token est implicite :
+     * le garde ci-dessous retourne 410 Gone une fois scheduled_at dépassé, donc transmettre
+     * un lien après la réunion est sans danger. Le transfert du lien avant la réunion
+     * est traité comme une délégation délibérée (contexte BTP accepté). Les utilisateurs
+     * authentifiés peuvent aussi mettre à jour leur RSVP via PATCH /api/meeting-invitations/{id}/respond.
      */
     public function rsvpViaToken(string $token, string $status): Response
     {
@@ -240,7 +240,7 @@ class MeetingController extends Controller
             return null;
         }
 
-        // Generic 3-item checklist — simplify before measuring usage then refine
+        // Checklist générique de 3 points — simplifier avant de mesurer l'usage puis affiner
         return "- [ ] Définir les actions correctives avec les responsables\n"
              . "- [ ] Assigner les tâches et fixer les délais\n"
              . "- [ ] Planifier un point de vérification dans 48h";

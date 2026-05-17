@@ -155,7 +155,7 @@ class InvoiceController extends Controller
             }
         }
 
-        // Recalculate TVA + BTP retenues if amounts changed
+        // Recalculer TVA + retenues BTP si les montants ont changé
         if (isset($data['amount_ht']) || isset($data['vat_rate']) || isset($data['retenue_garantie_pct']) || isset($data['ras_pct'])) {
             $amountHt  = $data['amount_ht'] ?? $invoice->amount_ht;
             $vatRate   = $data['vat_rate'] ?? $invoice->vat_rate ?? 18;
@@ -178,9 +178,9 @@ class InvoiceController extends Controller
 
         if ($request->hasFile('attachment')) {
             $oldPath = $invoice->attachment_path;
-            $this->storeAttachment($request, $invoice); // store new first
+            $this->storeAttachment($request, $invoice); // enregistrer le nouveau d'abord
             if ($oldPath) {
-                Storage::disk('public')->delete($oldPath); // delete old only after success
+                Storage::disk('public')->delete($oldPath); // supprimer l'ancien seulement après succès
             }
         }
 

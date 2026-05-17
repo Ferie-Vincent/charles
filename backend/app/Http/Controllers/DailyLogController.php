@@ -29,7 +29,7 @@ class DailyLogController extends Controller
             ')
             ->first();
 
-        // FIX M13: latest_progress = most recent log's progress (chronological), not MAX
+        // FIX M13: latest_progress = avancement du journal le plus récent (chronologique), pas le MAX
         $latestLog = $project->dailyLogs()->orderByDesc('log_date')->first();
         $latestProgress = $latestLog ? (float) $latestLog->progress_percent : null;
 
@@ -65,7 +65,7 @@ class DailyLogController extends Controller
 
         $data = $request->validated();
 
-        // FIX M8: log progress regression (do NOT block — legitimate corrections exist)
+        // FIX M8: journaliser la régression d'avancement (NE PAS bloquer — des corrections légitimes existent)
         if (isset($data['progress_percent'])) {
             $maxProgress = $project->dailyLogs()
                 ->where('log_date', '<', $today)

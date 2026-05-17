@@ -173,14 +173,14 @@ class ProjectWorkerController extends Controller
             'task_assigned'   => 'nullable|string|max:120',
         ]);
 
-        // Derive statut from present (backward compat)
+        // Déduire le statut depuis present (compatibilité ascendante)
         if (!isset($data['statut']) && isset($data['present'])) {
             $data['statut'] = $data['present'] ? 'present' : 'absent';
         }
         $data['statut'] ??= 'present';
         $data['present'] = in_array($data['statut'], ['present', 'demi_journee']);
 
-        // Adjust heures_normales for demi-journée
+        // Ajuster heures_normales pour la demi-journée
         if ($data['statut'] === 'demi_journee' && !isset($data['heures_normales'])) {
             $data['heures_normales'] = 4.00;
         }

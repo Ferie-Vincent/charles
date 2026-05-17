@@ -1,7 +1,7 @@
 import { api } from '../../../lib/api';
 import type { DqeVersion, DqeVersionDetail, DqeLineInput, DqeStatus } from '../types';
 
-// ── Versions ──────────────────────────────────────────────────────────────────
+// ── Versions DQE ──────────────────────────────────────────────────────────────
 
 export async function getDqeVersions(projectId: number): Promise<DqeVersion[]> {
   const { data } = await api.get<DqeVersion[]>(`/projects/${projectId}/dqe-versions`);
@@ -56,7 +56,7 @@ export async function duplicateDqeVersion(projectId: number, versionId: number):
   return data;
 }
 
-// ── Lines ─────────────────────────────────────────────────────────────────────
+// ── Lignes ────────────────────────────────────────────────────────────────────
 
 export async function createDqeLine(
   projectId: number,
@@ -91,7 +91,7 @@ export async function deleteDqeLine(
   await api.delete(`/projects/${projectId}/dqe-versions/${versionId}/lines/${lineId}`);
 }
 
-// ── PDF ───────────────────────────────────────────────────────────────────────
+// ── Génération PDF ────────────────────────────────────────────────────────────
 
 export async function downloadDqePdf(
   projectId: number,
@@ -112,7 +112,7 @@ export async function downloadDqePdf(
   URL.revokeObjectURL(url);
 }
 
-// ── Portfolio ─────────────────────────────────────────────────────────────────
+// ── Portefeuille ──────────────────────────────────────────────────────────────
 
 export type PortfolioDqeItem = {
   id: number;

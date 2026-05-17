@@ -100,7 +100,7 @@ export default function ProjectAccountingPage() {
 
       <div className="page-content">
 
-        {/* KPI Strip */}
+        {/* Bandeau KPI */}
         <div className="proj-kpi-row" style={{ gridTemplateColumns: 'repeat(5, 1fr)', marginBottom: '1rem' }}>
 
           <div className="proj-kpi">

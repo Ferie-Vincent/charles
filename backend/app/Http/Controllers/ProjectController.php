@@ -110,16 +110,16 @@ class ProjectController extends Controller
     {
         $this->authorize('delete', $project);
 
-        // Cleanup physical files before DB delete
-        // Project photos
+        // Nettoyage des fichiers physiques avant la suppression en base
+        // Photos du projet
         Storage::disk('public')->deleteDirectory("projects/{$project->id}");
-        // Invoice attachments (scoped by project via sub-directory convention)
+        // Pièces jointes des factures (périmètre projet par convention de sous-dossier)
         Storage::disk('public')->deleteDirectory("invoices/{$project->id}");
-        // Purchase order files (scoped by project via sub-directory convention)
+        // Fichiers des bons de commande (périmètre projet par convention de sous-dossier)
         Storage::disk('public')->deleteDirectory("purchase-orders/{$project->id}");
-        // Note: GED documents have project_id nullOnDelete, files remain in company GED
+        // Note : les documents GED ont project_id nullOnDelete, les fichiers restent dans la GED de l'entreprise
 
-        $project->delete(); // DB cascade handles child rows
+        $project->delete(); // la cascade DB gère les lignes enfants
 
         return response()->noContent();
     }

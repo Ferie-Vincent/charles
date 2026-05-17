@@ -27,7 +27,7 @@ class Project extends Model
         'current_progress',
         'start_date',
         'end_date',
-        // BTP contract fields
+        // Champs contractuels BTP
         'type_marche',
         'maitre_ouvrage',
         'maitre_oeuvre',
@@ -134,8 +134,8 @@ class Project extends Model
     }
 
     /**
-     * Frozen amount takes precedence; falls back to live formula when not yet set.
-     * Freeze via avance_demarrage_montant_accorde to prevent drift on montant_marche edits.
+     * Le montant figé est prioritaire ; retombe sur la formule dynamique si non encore défini.
+     * Figer via avance_demarrage_montant_accorde pour éviter la dérive lors des modifications de montant_marche.
      */
     public function getAvanceDemarrageMontantAttribute(): float
     {

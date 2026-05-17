@@ -73,7 +73,7 @@ class DashboardController extends Controller
         $stats['health_green']  = $activeProjectsWithHealth->filter(fn ($p) => $p['health']['status'] === 'green')->count();
         $stats['health_orange'] = $activeProjectsWithHealth->filter(fn ($p) => $p['health']['status'] === 'orange')->count();
         $stats['health_red']    = $activeProjectsWithHealth->filter(fn ($p) => $p['health']['status'] === 'red')->count();
-        // Weighted avg_progress: weight by budget to avoid micro-projects skewing the mean
+        // avg_progress pondéré : poids par budget pour éviter que les micro-projets faussent la moyenne
         if ($activeProjectsWithHealth->isNotEmpty()) {
             $totalWeight  = $activeProjectsWithHealth->sum(fn ($p) => max(1, (float) ($p['budget_amount'] ?? 0)));
             $weightedSum  = $activeProjectsWithHealth->sum(
@@ -92,7 +92,7 @@ class DashboardController extends Controller
             fn ($a) => ! in_array($a['id'], $dismissedKeys, true)
         ));
 
-        // Situations in en_revue_ct — shown on CT dashboard
+        // Situations en en_revue_ct — affichées sur le tableau de bord CT
         $situationsEnRevueCt = SituationTravaux::query()
             ->where('status', 'en_revue_ct')
             ->whereHas('project', fn ($q) => $q->where('company_id', $companyId))
@@ -107,7 +107,7 @@ class DashboardController extends Controller
                 'net_a_payer'  => (float) $s->net_a_payer,
             ]);
 
-        // Pending invoices count — shown on comptable dashboard
+        // Nombre de factures en attente — affiché sur le tableau de bord comptable
         $invoicesPendingCount = Invoice::query()
             ->where('status', 'soumise')
             ->whereHas('project', fn ($q) => $q->where('company_id', $companyId))
@@ -163,15 +163,15 @@ class DashboardController extends Controller
             $incidentCount = $stats ? (int) $stats->incident_count : 0;
             $progress      = $latest ? (float) $latest->progress_percent : 0.0;
 
-            // Overdue
+            // En retard
             if ($project->end_date && $project->end_date->isPast()) {
                 $days = (int) $project->end_date->diffInDays(now());
                 $alerts[] = $this->alert("overdue-{$project->id}", 'overdue', 'critical', $project,
                     "Dépasse sa date de fin depuis {$days} jour" . ($days > 1 ? 's' : ''));
-                continue; // overdue supersedes other alerts for this project
+                continue; // le retard supplante les autres alertes pour ce projet
             }
 
-            // No journal / stale journal
+            // Pas de journal / journal périmé
             $daysSinceStart = $project->start_date
                 ? max(0, (int) $project->start_date->diffInDays(now()))
                 : 0;
@@ -187,7 +187,7 @@ class DashboardController extends Controller
                 }
             }
 
-            // Planning lag (only if not overdue)
+            // Retard planning (uniquement si pas déjà en retard)
             if ($project->start_date && $project->end_date) {
                 $totalDays   = max(1, (int) $project->start_date->diffInDays($project->end_date));
                 $elapsedDays = max(0, (int) $project->start_date->diffInDays(now()));
@@ -201,13 +201,13 @@ class DashboardController extends Controller
                 }
             }
 
-            // Open incidents
+            // Incidents ouverts
             if ($incidentCount > 0) {
                 $alerts[] = $this->alert("incident-{$project->id}", 'open_incident', 'warning', $project,
                     "{$incidentCount} incident" . ($incidentCount > 1 ? 's' : '') . " signalé" . ($incidentCount > 1 ? 's' : ''));
             }
 
-            // Health score critical — strategic alert, not shown to terrain
+            // Score de santé critique — alerte stratégique, non affichée aux rôles terrain
             $health = $healthMap->get($project->id);
             if (!$isTerrainRole && $health && $health['label'] === 'critical') {
                 $alerts[] = $this->alert("health-{$project->id}", 'health_critical', 'critical', $project,
@@ -238,13 +238,13 @@ class DashboardController extends Controller
     {
         $data = $request->validate([
             'alert_key'      => 'required|string|max:100',
-            // 0 = permanent, 24/72/168 = hours; default 24
+            // 0 = permanent, 24/72/168 = heures ; par défaut 24
             'duration_hours' => 'nullable|integer|in:0,24,72,168',
         ]);
 
         $alertKey      = $data['alert_key'];
         $durationHours = $data['duration_hours'] ?? 24;
-        // reappears_at = NULL means permanent suppression
+        // reappears_at = NULL signifie suppression permanente
         $reappearsAt   = $durationHours === 0 ? null : now()->addHours($durationHours);
 
         DB::table('dismissed_alerts')->upsert(

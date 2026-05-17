@@ -30,7 +30,7 @@ export default function KpiBar({ stats, roleGroup }: Props) {
           : `Sous-consommation vs ${stats.avg_progress}% avancé`
         : `Cohérent avec ${stats.avg_progress}% d'avancement`;
 
-  // Health-first order: signal d'abord, contexte en dernier
+  // Ordre santé en priorité : signal d'abord, contexte en dernier
   const items: KpiItem[] = [
     {
       label: 'Santé portefeuille',

@@ -7,7 +7,7 @@ type Tab = 'carte' | 'chronologie';
 
 type Props = {
   projects: ActiveProject[];
-  /** Hide the Chronologie tab for roles that don't need planning visibility (e.g. terrain) */
+  /** Masquer l'onglet Chronologie pour les rôles qui n'ont pas besoin de visibilité planning (ex. terrain) */
   showTimeline?: boolean;
 };
 
@@ -17,8 +17,8 @@ export default function PortfolioPanel({ projects, showTimeline = true }: Props)
 
   useEffect(() => {
     if (tab === 'carte') {
-      // requestAnimationFrame guarantees we're after browser layout,
-      // so the map container has real dimensions when invalidateSize runs.
+      // requestAnimationFrame garantit qu'on est après le rendu navigateur,
+      // donc le conteneur de carte a des dimensions réelles lors de l'appel à invalidateSize.
       requestAnimationFrame(() => { mapRef.current?.invalidateSize(); });
     }
   }, [tab]);
@@ -58,9 +58,9 @@ export default function PortfolioPanel({ projects, showTimeline = true }: Props)
       </div>
 
       {/*
-        Both panes stay mounted — unmounting Leaflet loses tile cache and map position.
-        CSS display toggle + imperative invalidateSize() via requestAnimationFrame
-        restores map dimensions when the pane becomes visible.
+        Les deux panneaux restent montés — démonter Leaflet fait perdre le cache des tuiles et la position de la carte.
+        La bascule CSS display + invalidateSize() impératif via requestAnimationFrame
+        restaure les dimensions de la carte quand le panneau redevient visible.
       */}
       <div style={{ display: tab === 'carte' ? 'block' : 'none' }}>
         <MapView ref={mapRef} projects={projects} />
