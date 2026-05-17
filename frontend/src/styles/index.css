@@ -4957,6 +4957,19 @@ code {
 .mr-error { font-size: 12px; color: var(--color-danger); margin-top: 8px; padding: 8px 10px; background: #fef2f2; border-radius: 6px; }
 .mr-output { background: var(--bg-app); border-radius: 8px; border: 1px solid var(--color-border); padding: 16px; overflow-y: auto; max-height: 50vh; }
 .mr-markdown { font-size: 12px; line-height: 1.6; color: var(--text-body); white-space: pre-wrap; font-family: 'Courier New', monospace; margin: 0; }
+.mr-markdown-rendered { font-size: 13px; line-height: 1.75; color: var(--text-body); }
+.mr-markdown-rendered h1, .mr-markdown-rendered h2, .mr-markdown-rendered h3 { font-weight: 700; margin: 16px 0 6px; color: var(--text-heading, var(--text-body)); }
+.mr-markdown-rendered h1 { font-size: 17px; }
+.mr-markdown-rendered h2 { font-size: 15px; }
+.mr-markdown-rendered h3 { font-size: 13px; }
+.mr-markdown-rendered p { margin: 6px 0; }
+.mr-markdown-rendered ul, .mr-markdown-rendered ol { padding-left: 20px; margin: 6px 0; }
+.mr-markdown-rendered li { margin: 3px 0; }
+.mr-markdown-rendered strong { font-weight: 600; }
+.mr-markdown-rendered table { width: 100%; border-collapse: collapse; font-size: 12px; margin: 10px 0; }
+.mr-markdown-rendered th, .mr-markdown-rendered td { border: 1px solid var(--border); padding: 6px 10px; text-align: left; }
+.mr-markdown-rendered th { background: var(--surface-2, #f4f6fa); font-weight: 600; }
+.mr-markdown-rendered hr { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
 .mr-spinner { display: inline-block; width: 12px; height: 12px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite; margin-right: 6px; vertical-align: middle; }
 
 /* ── Situation Travaux Modal extensions ──────────────────── */

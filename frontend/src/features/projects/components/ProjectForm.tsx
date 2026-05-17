@@ -21,6 +21,9 @@ export default function ProjectForm({ onSubmit, isLoading }: ProjectFormProps) {
   const [budget, setBudget]     = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate]     = useState('');
+  const [latitude, setLatitude]   = useState<number | null>(null);
+  const [longitude, setLongitude] = useState<number | null>(null);
+  const [geoStatus, setGeoStatus] = useState<'idle' | 'loading' | 'ok' | 'error'>('idle');
 
   // BTP contract fields
   const [typeMarche, setTypeMarche]             = useState<TypeMarche | ''>('');
@@ -30,6 +33,23 @@ export default function ProjectForm({ onSubmit, isLoading }: ProjectFormProps) {
   const [montantMarche, setMontantMarche]       = useState('');
   const [avancePct, setAvancePct]               = useState('');
   const [delaiJours, setDelaiJours]             = useState('');
+
+  function mapZone() {
+    if (!navigator.geolocation) {
+      setGeoStatus('error');
+      return;
+    }
+    setGeoStatus('loading');
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setLatitude(pos.coords.latitude);
+        setLongitude(pos.coords.longitude);
+        setGeoStatus('ok');
+      },
+      () => setGeoStatus('error'),
+      { enableHighAccuracy: true, timeout: 10000 },
+    );
+  }
 
   return (
     <form
@@ -51,6 +71,8 @@ export default function ProjectForm({ onSubmit, isLoading }: ProjectFormProps) {
           montant_marche:        montantMarche ? Number(montantMarche) : undefined,
           avance_demarrage_pct:  avancePct ? Number(avancePct) : undefined,
           delai_execution_jours: delaiJours ? Number(delaiJours) : undefined,
+          latitude:              latitude ?? undefined,
+          longitude:             longitude ?? undefined,
         });
       }}
     >
@@ -77,6 +99,33 @@ export default function ProjectForm({ onSubmit, isLoading }: ProjectFormProps) {
       <div className="form-group">
         <label htmlFor="location">Localisation</label>
         <input id="location" value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Abidjan, Yopougon Selmer" />
+      </div>
+
+      <div className="form-group">
+        <label>Zone GPS du chantier <span style={{ color: '#ef4444' }}>*</span></label>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+          <button type="button" className="btn btn--secondary btn--sm" onClick={mapZone} disabled={geoStatus === 'loading'}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="14" height="14">
+              <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/>
+              <line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/>
+              <line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/>
+            </svg>
+            {geoStatus === 'loading' ? 'Localisation…' : 'Mapper la zone du chantier'}
+          </button>
+          {geoStatus === 'ok' && latitude !== null && longitude !== null && (
+            <span style={{ fontSize: '12px', color: '#22c55e', fontWeight: 500 }}>
+              Zone enregistrée — {latitude.toFixed(5)}, {longitude.toFixed(5)}
+            </span>
+          )}
+          {geoStatus === 'error' && (
+            <span style={{ fontSize: '12px', color: '#ef4444' }}>
+              Impossible de récupérer la position. Vérifiez les permissions GPS.
+            </span>
+          )}
+        </div>
+        <span className="form-hint">
+          Le chef chantier devra être dans un rayon de 2 km pour remplir le journal terrain.
+        </span>
       </div>
 
       {/* ── Données financières ── */}

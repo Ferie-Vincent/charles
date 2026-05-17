@@ -43,11 +43,12 @@ class SituationTravauxController extends Controller
             'avancement'     => ['nullable', 'numeric', 'min:0', 'max:100'],
         ]);
 
+        $mistralKey   = config('services.mistral.key');
         $groqKey      = config('services.groq.key');
         $anthropicKey = config('services.anthropic.key');
 
-        if (! $groqKey && ! $anthropicKey) {
-            return response()->json(['error' => 'Aucune clé IA configurée (GROQ_API_KEY ou ANTHROPIC_API_KEY).'], 503);
+        if (! $mistralKey && ! $groqKey && ! $anthropicKey) {
+            return response()->json(['error' => 'Aucune clé IA configurée (MISTRAL_API_KEY, GROQ_API_KEY ou ANTHROPIC_API_KEY).'], 503);
         }
 
         // Load DQE version — prefer the one requested, else highest version_number validated
@@ -83,9 +84,11 @@ class SituationTravauxController extends Controller
 
         $prompt = $this->buildPrompt($project, $dqeVersion, $avancement, $budgetEngage, $incidentCount, $totalLogs, $workersAvg, $lastLogDate, $data['periode']);
 
-        $content = $groqKey
-            ? $this->callGroq($groqKey, $prompt)
-            : $this->callAnthropic($anthropicKey, $prompt);
+        $content = $mistralKey
+            ? $this->callMistral($mistralKey, $prompt)
+            : ($groqKey
+                ? $this->callGroq($groqKey, $prompt)
+                : $this->callAnthropic($anthropicKey, $prompt));
 
         if (isset($content['error'])) {
             return response()->json(['error' => $content['error']], 502);
@@ -140,6 +143,23 @@ class SituationTravauxController extends Controller
             ->get();
 
         return response()->json($versions);
+    }
+
+    private function callMistral(string $key, string $prompt): array
+    {
+        $response = Http::timeout(45)
+            ->withToken($key)
+            ->post('https://api.mistral.ai/v1/chat/completions', [
+                'model'      => 'mistral-small-latest',
+                'max_tokens' => 2500,
+                'messages'   => [['role' => 'user', 'content' => $prompt]],
+            ]);
+
+        if ($response->failed()) {
+            return ['error' => $response->json('error.message') ?? 'Mistral API error'];
+        }
+
+        return ['text' => $response->json('choices.0.message.content') ?? ''];
     }
 
     private function callGroq(string $key, string $prompt): array

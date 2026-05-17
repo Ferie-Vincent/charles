@@ -32,6 +32,8 @@ class StoreProjectRequest extends FormRequest
             'delai_execution_jours'     => ['nullable', 'integer', 'min:1'],
             'date_reception_provisoire' => ['nullable', 'date'],
             'date_reception_definitive' => ['nullable', 'date'],
+            'latitude'                  => ['nullable', 'numeric', 'between:-90,90'],
+            'longitude'                 => ['nullable', 'numeric', 'between:-180,180'],
         ];
     }
 }

@@ -72,4 +72,6 @@ export type CreateProjectPayload = {
   delai_execution_jours?: number;
   date_reception_provisoire?: string;
   date_reception_definitive?: string;
+  latitude?: number;
+  longitude?: number;
 };
