@@ -31,14 +31,22 @@ RUN apt-get update && apt-get install -y \
                                     RUN sed -i 's|DocumentRoot /var/www/html|DocumentRoot /var/www/html/public|g' /etc/apache2/sites-available/000-default.conf \
                                         && echo '<Directory /var/www/html/public>\n    AllowOverride All\n    Require all granted\n</Directory>' >> /etc/apache2/sites-available/000-default.conf
 
-                                        # Create minimal .env for build-time artisan commands
-                                        RUN echo 'APP_KEY=' > .env && echo 'MISTRAL_API_KEY=' >> .env && echo 'GROQ_API_KEY=' >> .env && echo 'ANTHROPIC_API_KEY=' >> .env
+                                        # Create minimal .env for build-time artisan commands only
+                                        RUN echo 'APP_KEY=base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=' > .env \
+                                            && echo 'APP_ENV=production' >> .env \
+                                                && echo 'DB_CONNECTION=mysql' >> .env \
+                                                    && echo 'MISTRAL_API_KEY=' >> .env \
+                                                        && echo 'GROQ_API_KEY=' >> .env \
+                                                            && echo 'ANTHROPIC_API_KEY=' >> .env
 
-                                        # Install dependencies
-                                        RUN composer install --no-dev --optimize-autoloader
+                                                            # Install dependencies
+                                                            RUN composer install --no-dev --optimize-autoloader
 
-                                        # Set permissions
-                                        RUN chown -R www-data:www-data /var/www/html \
-                                            && chmod -R 755 /var/www/html/storage
+                                                            # Remove build-time .env so runtime uses Render environment variables
+                                                            RUN rm -f .env
 
-                                            EXPOSE 80
+                                                            # Set permissions
+                                                            RUN chown -R www-data:www-data /var/www/html \
+                                                                && chmod -R 755 /var/www/html/storage
+
+                                                                EXPOSE 80
