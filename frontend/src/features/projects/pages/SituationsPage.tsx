@@ -80,7 +80,7 @@ export default function SituationsPage() {
   const [rejectCtModal, setRejectCtModal] = useState<{ situationId: number; comment: string } | null>(null);
   const [rejectModal, setRejectModal] = useState<{ situationId: number; comment: string } | null>(null);
   const [contestModal, setContestModal] = useState<{ situationId: number; reason: string } | null>(null);
-  const [mdViewerUrl, setMdViewerUrl] = useState<string | null>(null);
+  const [mdViewer, setMdViewer] = useState<{ docId: number } | null>(null);
 
   const { data: preview } = useQuery({
     queryKey: ['situation-preview', projectId, form.avancement_pct],
@@ -562,11 +562,11 @@ export default function SituationsPage() {
                           PDF
                         </a>
                       )}
-                      {s.md_url && (
+                      {s.ged_document_id && (
                         <button
                           className="btn btn--sm btn--ghost"
                           title="Voir rapport IA"
-                          onClick={() => setMdViewerUrl(s.md_url)}
+                          onClick={() => setMdViewer({ docId: s.ged_document_id! })}
                         >
                           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="13" height="13">
                             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
@@ -585,11 +585,11 @@ export default function SituationsPage() {
         </div>
       )}
 
-      {mdViewerUrl && (
+      {mdViewer && (
         <MdViewerModal
-          url={mdViewerUrl}
+          docId={mdViewer.docId}
           title="Rapport Situation de Travaux"
-          onClose={() => setMdViewerUrl(null)}
+          onClose={() => setMdViewer(null)}
         />
       )}
     </div>
