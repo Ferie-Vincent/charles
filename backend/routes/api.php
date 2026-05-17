@@ -41,6 +41,8 @@ use App\Http\Controllers\OrdreDeServiceController;
 use App\Http\Controllers\BpuController;
 use App\Http\Controllers\DgdController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\AiBriefingController;
+use App\Http\Controllers\AiFeedbackController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/health', function () {
@@ -182,6 +184,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/projects/{project}', [ProjectController::class, 'destroy']);
 
     Route::get('/projects/{project}/daily-logs', [DailyLogController::class, 'index']);
+    Route::get('/projects/{project}/daily-logs/last', [DailyLogController::class, 'last']);
     Route::post('/projects/{project}/daily-logs', [DailyLogController::class, 'store']);
     Route::patch('/projects/{project}/daily-logs/{dailyLog}', [DailyLogController::class, 'update']);
     Route::delete('/projects/{project}/daily-logs/{dailyLog}', [DailyLogController::class, 'destroy']);
@@ -316,6 +319,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/notifications', [\App\Http\Controllers\MeetingController::class, 'userNotifications']);
     Route::patch('/notifications/{id}/read', [\App\Http\Controllers\MeetingController::class, 'markRead']);
     Route::post('/notifications/read-all', [\App\Http\Controllers\MeetingController::class, 'markAllRead']);
+
+    // ── IA Platform ────────────────────────────────────────────────────────────
+    Route::get('/ai/briefing', [AiBriefingController::class, 'briefing'])->middleware('throttle:30,1');
+    Route::get('/projects/{project}/ai/material-suggestions', [AiBriefingController::class, 'materialSuggestions']);
+    Route::post('/ai/feedback', [AiFeedbackController::class, 'store']);
 });
 
 // ── RSVP sans auth (lien email tokenisé) ──────────────────────────────────────

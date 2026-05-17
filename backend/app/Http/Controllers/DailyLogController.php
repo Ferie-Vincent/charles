@@ -120,4 +120,28 @@ class DailyLogController extends Controller
 
         return response()->noContent();
     }
+
+    public function last(Project $project): JsonResponse
+    {
+        $this->authorize('viewAny', [DailyLog::class, $project]);
+
+        $log = DailyLog::where('project_id', $project->id)
+            ->orderByDesc('log_date')
+            ->first();
+
+        if (! $log) {
+            return response()->json(['data' => null]);
+        }
+
+        return response()->json([
+            'data' => [
+                'weather'           => $log->weather,
+                'workers_count'     => $log->workers_count,
+                'progress_percent'  => $log->progress_percent,
+                'materials_received'=> $log->materials_received,
+                'equipment_status'  => $log->equipment_status,
+                'log_date'          => $log->log_date,
+            ],
+        ]);
+    }
 }
