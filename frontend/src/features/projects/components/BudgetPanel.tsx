@@ -286,6 +286,7 @@ export default function BudgetPanel({ projectId }: Props) {
             {orphan_payments.map((p: OrphanPayment) => (
               <li key={p.id} className="bud-orphan-row">
                 <span className="bud-orphan-row__date">{new Date(p.entry_date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                <span className="bud-orphan-row__cat">{p.category}</span>
                 <span className="bud-orphan-row__label">{p.label}</span>
                 <span className="bud-orphan-row__amount">{Number(p.amount).toLocaleString('fr-FR')} FCFA</span>
               </li>

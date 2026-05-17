@@ -36,6 +36,7 @@ export type OrphanPayment = {
   label: string;
   amount: string;
   entry_date: string;
+  category: string;
 };
 
 export type BudgetData = {

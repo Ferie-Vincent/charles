@@ -516,8 +516,8 @@ export default function SituationsPage() {
                         </div>
                       )}
 
-                      {/* PDF export — available once situation is certified */}
-                      {(s.status === 'validee_moe' || s.status === 'payee' || s.status === 'soumise') && (
+                      {/* PDF export — soumise excluded: still contestable, must not circulate as official */}
+                      {(s.status === 'validee_moe' || s.status === 'payee') && (
                         <a
                           href={`http://localhost:8000/api/projects/${projectId}/situations/${s.id}/pdf`}
                           target="_blank"
