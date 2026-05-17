@@ -1,4 +1,5 @@
 import SkeletonPage from '../../../components/ui/SkeletonPage';
+import MdViewerModal from '../../../components/ui/MdViewerModal';
 import { useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -42,6 +43,7 @@ export default function GedPage() {
   const [projectFilter, setProjectFilter] = useState('');
   const [search, setSearch]     = useState('');
   const [modal, setModal]       = useState(false);
+  const [mdViewer, setMdViewer] = useState<{ url: string; name: string } | null>(null);
   const [saving, setSaving]     = useState(false);
   const [uploadForm, setUploadForm] = useState<{
     file: File | null; type: GedDocument['type']; project_id: string; name: string; description: string;
@@ -85,7 +87,11 @@ export default function GedPage() {
 
   const handleOpen = async (doc: GedDocument) => {
     const url = await getDocumentUrl(doc.id);
-    window.open(url, '_blank', 'noopener,noreferrer');
+    if (doc.mime_type === 'text/markdown' || doc.original_name.endsWith('.md')) {
+      setMdViewer({ url, name: doc.name });
+    } else {
+      window.open(url, '_blank', 'noopener,noreferrer');
+    }
   };
 
   const handleDelete = async (doc: GedDocument) => {
@@ -395,6 +401,14 @@ export default function GedPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {mdViewer && (
+        <MdViewerModal
+          url={mdViewer.url}
+          title={mdViewer.name}
+          onClose={() => setMdViewer(null)}
+        />
       )}
     </div>
   );

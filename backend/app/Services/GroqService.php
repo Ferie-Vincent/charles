@@ -39,6 +39,33 @@ class GroqService
         return ['error' => 'Aucune clé IA configurée (MISTRAL_API_KEY, GROQ_API_KEY ou ANTHROPIC_API_KEY).'];
     }
 
+    public function analyzeImage(string $imageBase64, string $mimeType, string $prompt, int $maxTokens = 800): array
+    {
+        if (! $this->mistralKey) {
+            return ['error' => 'MISTRAL_API_KEY requis pour la vision IA.'];
+        }
+
+        $response = Http::timeout(90)
+            ->withToken($this->mistralKey)
+            ->post('https://api.mistral.ai/v1/chat/completions', [
+                'model'      => 'pixtral-12b-2409',
+                'max_tokens' => $maxTokens,
+                'messages'   => [[
+                    'role'    => 'user',
+                    'content' => [
+                        ['type' => 'text', 'text' => $prompt],
+                        ['type' => 'image_url', 'image_url' => ['url' => "data:{$mimeType};base64,{$imageBase64}"]],
+                    ],
+                ]],
+            ]);
+
+        if ($response->failed()) {
+            return ['error' => $response->json('message') ?? 'Mistral vision API error'];
+        }
+
+        return ['text' => $response->json('choices.0.message.content') ?? ''];
+    }
+
     private function callMistral(string $prompt, int $maxTokens): array
     {
         $response = Http::timeout(60)

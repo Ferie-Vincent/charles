@@ -43,6 +43,8 @@ use App\Http\Controllers\DgdController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\AiBriefingController;
 use App\Http\Controllers\AiFeedbackController;
+use App\Http\Controllers\AiRagController;
+use App\Http\Controllers\AiVisionController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/health', function () {
@@ -324,6 +326,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/ai/briefing', [AiBriefingController::class, 'briefing'])->middleware('throttle:30,1');
     Route::get('/projects/{project}/ai/material-suggestions', [AiBriefingController::class, 'materialSuggestions']);
     Route::post('/ai/feedback', [AiFeedbackController::class, 'store']);
+    Route::post('/ai/query', [AiRagController::class, 'query'])->middleware('throttle:20,1');
+    Route::post('/projects/{project}/photos/{photo}/ai-analyze', [AiVisionController::class, 'analyzePhoto'])->middleware('throttle:10,1');
 });
 
 // ── RSVP sans auth (lien email tokenisé) ──────────────────────────────────────
