@@ -1,4 +1,4 @@
-FROM php:8.4-fpm
+FROM php:8.4-apache
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -15,6 +15,9 @@ RUN apt-get update && apt-get install -y \
                                     # Install PHP extensions
                                     RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
 
+                                    # Enable Apache mod_rewrite (required for Laravel)
+                                    RUN a2enmod rewrite
+
                                     # Install Composer
                                     COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
@@ -24,17 +27,18 @@ RUN apt-get update && apt-get install -y \
                                     # Copy application files
                                     COPY . /var/www/html
 
-                                    # Create minimal .env for build-time artisan commands
-                                    RUN echo 'APP_KEY=' > .env && echo 'MISTRAL_API_KEY=' >> .env && echo 'GROQ_API_KEY=' >> .env && echo 'ANTHROPIC_API_KEY=' >> .env
+                                    # Configure Apache to point to Laravel's public directory
+                                    RUN sed -i 's|DocumentRoot /var/www/html|DocumentRoot /var/www/html/public|g' /etc/apache2/sites-available/000-default.conf \
+                                        && echo '<Directory /var/www/html/public>\n    AllowOverride All\n    Require all granted\n</Directory>' >> /etc/apache2/sites-available/000-default.conf
 
-                                    # Install dependencies
-                                    RUN composer install --no-dev --optimize-autoloader
+                                        # Create minimal .env for build-time artisan commands
+                                        RUN echo 'APP_KEY=' > .env && echo 'MISTRAL_API_KEY=' >> .env && echo 'GROQ_API_KEY=' >> .env && echo 'ANTHROPIC_API_KEY=' >> .env
 
-                                    # Set permissions
-                                    RUN chown -R www-data:www-data /var/www/html \
-                                        && chmod -R 755 /var/www/html/storage
+                                        # Install dependencies
+                                        RUN composer install --no-dev --optimize-autoloader
 
-                                        # Expose port 80 for web service compatibility
-                                        EXPOSE 80
+                                        # Set permissions
+                                        RUN chown -R www-data:www-data /var/www/html \
+                                            && chmod -R 755 /var/www/html/storage
 
-                                        CMD ["php-fpm"]
+                                            EXPOSE 80
