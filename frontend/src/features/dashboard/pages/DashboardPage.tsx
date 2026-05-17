@@ -12,6 +12,7 @@ import DashboardCharts, { BudgetBarsCard, CriticitéCard } from '../components/D
 import AlertsPanel from '../components/AlertsPanel';
 import PortfolioPanel from '../components/PortfolioPanel';
 import AiAnalysisWidget from '../components/AiAnalysisWidget';
+import AiMorningBriefing from '../../ai/components/AiMorningBriefing';
 import ActivityFeed from '../components/ActivityFeed';
 import ProjectList from '../components/ProjectList';
 import QuickActions from '../components/QuickActions';
@@ -116,6 +117,7 @@ export default function DashboardPage() {
 
       {roleGroup === 'direction' && (
         <>
+          <AiMorningBriefing />
           <div className="db-sidebar-grid">
             <div className="db-sidebar-grid__main">
               <CriticitéCard activeProjects={active_projects} />
@@ -133,6 +135,7 @@ export default function DashboardPage() {
 
       {roleGroup === 'dt' && (
         <>
+          <AiMorningBriefing />
           <div className="db-sidebar-grid">
             <div className="db-sidebar-grid__main">
               <CriticitéCard activeProjects={active_projects} />

@@ -1,7 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { createDailyLog } from '../api/create-daily-log';
 import type { CreateDailyLogPayload, EquipmentStatus, IncidentType, MaterialItem, Weather } from '../types';
 import ProgressVisualPicker from './ProgressVisualPicker';
+import { getLastDailyLog, getMaterialSuggestions } from '../../ai/api/ai';
 
 const WEATHER_OPTIONS: { value: Weather; label: string; icon: string }[] = [
   { value: 'Soleil',    label: 'Soleil',     icon: '☀️' },
@@ -60,6 +62,35 @@ export default function DailyLogForm({ projectId, projectLatitude, projectLongit
   const [alreadyLogged, setAlreadyLogged] = useState(false);
   const [geoBlocked, setGeoBlocked] = useState<string | null>(null);
   const [geoChecking, setGeoChecking] = useState(false);
+  const [prefilled, setPrefilled] = useState(false);
+  const [listening, setListening] = useState(false);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
+
+  // Pre-fill from last log
+  const { data: lastLog } = useQuery({
+    queryKey: ['daily-log-last', projectId],
+    queryFn: () => getLastDailyLog(projectId),
+    staleTime: 5 * 60 * 1000,
+    retry: false,
+  });
+
+  // AI material suggestions
+  const { data: aiSuggestions = [] } = useQuery({
+    queryKey: ['ai-material-suggestions', projectId],
+    queryFn: () => getMaterialSuggestions(projectId),
+    staleTime: 60 * 60 * 1000,
+    retry: false,
+  });
+
+  // Apply pre-fill once last log is loaded (only if user hasn't touched form yet)
+  useEffect(() => {
+    if (!lastLog || prefilled) return;
+    setWeather(lastLog.weather ?? '');
+    setWorkersCount(lastLog.workers_count ?? 0);
+    setProgressPercent(lastLog.progress_percent ?? 0);
+    if (lastLog.equipment_status) setEquipmentStatus(lastLog.equipment_status);
+    setPrefilled(true);
+  }, [lastLog, prefilled]);
 
   useEffect(() => {
     if (!projectLatitude || !projectLongitude) return;
@@ -91,6 +122,33 @@ export default function DailyLogForm({ projectId, projectLatitude, projectLongit
 
   function updateQty(name: string, qty: number) {
     setMaterials(prev => prev.map(m => m.name === name ? { ...m, quantity: qty } : m));
+  }
+
+  function toggleVoice() {
+    const SR = (window as typeof window & { SpeechRecognition?: typeof SpeechRecognition; webkitSpeechRecognition?: typeof SpeechRecognition }).SpeechRecognition
+      || (window as typeof window & { SpeechRecognition?: typeof SpeechRecognition; webkitSpeechRecognition?: typeof SpeechRecognition }).webkitSpeechRecognition;
+    if (!SR) return;
+
+    if (listening) {
+      recognitionRef.current?.stop();
+      setListening(false);
+      return;
+    }
+
+    const rec = new SR();
+    rec.lang = 'fr-FR';
+    rec.continuous = true;
+    rec.interimResults = false;
+    rec.onresult = (e) => {
+      const transcript = Array.from(e.results)
+        .map(r => r[0].transcript)
+        .join(' ');
+      setNotes(prev => (prev ? prev + ' ' : '') + transcript);
+    };
+    rec.onend = () => setListening(false);
+    rec.start();
+    recognitionRef.current = rec;
+    setListening(true);
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -167,8 +225,22 @@ export default function DailyLogForm({ projectId, projectLatitude, projectLongit
     );
   }
 
+  const hasSpeech = !!(
+    (window as typeof window & { SpeechRecognition?: unknown; webkitSpeechRecognition?: unknown }).SpeechRecognition
+    || (window as typeof window & { SpeechRecognition?: unknown; webkitSpeechRecognition?: unknown }).webkitSpeechRecognition
+  );
+
   return (
     <form className="daily-log-form" onSubmit={handleSubmit}>
+
+      {prefilled && lastLog && (
+        <div className="ai-prefill-banner">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/>
+          </svg>
+          Pré-rempli depuis le journal du {new Date(lastLog.log_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+        </div>
+      )}
 
       {/* #42 Problème-First */}
       <div className="daily-log-incident-toggle">
@@ -260,19 +332,26 @@ export default function DailyLogForm({ projectId, projectLatitude, projectLongit
 
       {/* #30 Matériaux reçus */}
       <div className="form-group">
-        <label>Matériaux reçus <span className="form-optional">(optionnel)</span></label>
+        <label>
+          Matériaux reçus <span className="form-optional">(optionnel)</span>
+          {aiSuggestions.length > 0 && (
+            <span className="ai-suggestion-label">IA : suggestions basées sur l'historique</span>
+          )}
+        </label>
         <div className="material-grid">
           {MATERIAL_OPTIONS.map(opt => {
             const selected = materials.some(m => m.name === opt.name);
+            const isSuggested = aiSuggestions.includes(opt.name);
             return (
               <button
                 key={opt.name}
                 type="button"
-                className={`material-btn ${selected ? 'material-btn--active' : ''}`}
+                className={`material-btn ${selected ? 'material-btn--active' : ''} ${isSuggested && !selected ? 'material-btn--suggested' : ''}`}
                 onClick={() => toggleMaterial(opt.name)}
               >
                 <span>{opt.icon}</span>
                 <span>{opt.name}</span>
+                {isSuggested && !selected && <span className="material-btn__dot" />}
               </button>
             );
           })}
@@ -305,11 +384,28 @@ export default function DailyLogForm({ projectId, projectLatitude, projectLongit
         )}
       </div>
 
-      {/* ── Observations libres ── */}
+      {/* ── Observations libres + voix ── */}
       <div className="form-group">
-        <label className="form-label">
+        <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           Observations
           <span className="form-optional">optionnel</span>
+          {hasSpeech && (
+            <button
+              type="button"
+              className={`voice-btn ${listening ? 'voice-btn--active' : ''}`}
+              onClick={toggleVoice}
+              title={listening ? 'Arrêter la dictée' : 'Dicter par voix'}
+              aria-label={listening ? 'Arrêter la dictée' : 'Dicter par voix'}
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                <line x1="12" y1="19" x2="12" y2="23"/>
+                <line x1="8" y1="23" x2="16" y2="23"/>
+              </svg>
+              {listening && <span style={{ fontSize: 10 }}>En écoute…</span>}
+            </button>
+          )}
         </label>
         <textarea
           className="form-textarea"

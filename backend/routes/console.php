@@ -34,3 +34,9 @@ Schedule::command('projects:check-budget-depasse')->dailyAt('09:30')->timezone('
 
 // Retenue de garantie libérable (1 an après réception prov.) — weekly Monday 10:00 Abidjan
 Schedule::command('projects:check-retenue-liberable')->weeklyOn(1, '10:00')->timezone('Africa/Abidjan');
+
+// AI project snapshots — nightly 01:00 Abidjan (after all day's data is in)
+Schedule::command('ai:build-snapshots')->dailyAt('01:00')->timezone('Africa/Abidjan');
+
+// Proactive AI alerts — daily 07:15 Abidjan (morning briefing prep)
+Schedule::command('ai:proactive-alerts')->dailyAt('07:15')->timezone('Africa/Abidjan');
