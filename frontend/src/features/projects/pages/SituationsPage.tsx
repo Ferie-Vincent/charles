@@ -177,7 +177,7 @@ export default function SituationsPage() {
         </div>
       )}
 
-      {/* Reject CT modal */}
+      {/* Modale de rejet CT */}
       {rejectCtModal && (
         <div className="modal-overlay" onClick={() => setRejectCtModal(null)}>
           <div className="modal-box" onClick={e => e.stopPropagation()}>
@@ -211,7 +211,7 @@ export default function SituationsPage() {
         </div>
       )}
 
-      {/* Reject DT modal */}
+      {/* Modale de rejet DT */}
       {rejectModal && (
         <div className="modal-overlay" onClick={() => setRejectModal(null)}>
           <div className="modal-box" onClick={e => e.stopPropagation()}>
@@ -245,7 +245,7 @@ export default function SituationsPage() {
         </div>
       )}
 
-      {/* Contest modal */}
+      {/* Modale de contestation */}
       {contestModal && (
         <div className="modal-overlay" onClick={() => setContestModal(null)}>
           <div className="modal-box" onClick={e => e.stopPropagation()}>

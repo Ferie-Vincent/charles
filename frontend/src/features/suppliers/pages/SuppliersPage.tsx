@@ -83,7 +83,7 @@ export default function SuppliersPage() {
         }
       />
 
-      {/* KPI strip */}
+      {/* Bandeau KPI */}
       <div className="proj-kpi-row">
         <div className="proj-kpi">
           <div className="proj-kpi__icon proj-kpi__icon--blue">
@@ -136,10 +136,10 @@ export default function SuppliersPage() {
         </div>
       </div>
 
-      {/* Table card */}
+      {/* Carte tableau */}
       <div style={{ background: 'var(--bg-panel)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
 
-        {/* Toolbar */}
+        {/* Barre d'outils */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderBottom: '1px solid var(--border)', flexWrap: 'wrap' }}>
           <div className="acct-search-wrap" style={{ flex: '0 0 280px' }}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14" className="acct-search-icon">
@@ -254,7 +254,7 @@ export default function SuppliersPage() {
         )}
       </div>
 
-      {/* Supplier modal */}
+      {/* Modale fournisseur */}
       {modal !== null && (
         <div className="mr-modal-overlay" onClick={() => setModal(null)}>
           <div className="mr-modal" style={{ maxWidth: 560 }} onClick={e => e.stopPropagation()}>
@@ -306,7 +306,7 @@ export default function SuppliersPage() {
         </div>
       )}
 
-      {/* Delete confirm */}
+      {/* Confirmation de suppression */}
       {deleteId !== null && (
         <div className="mr-modal-overlay" onClick={() => setDeleteId(null)}>
           <div className="mr-modal" style={{ maxWidth: 400 }} onClick={e => e.stopPropagation()}>

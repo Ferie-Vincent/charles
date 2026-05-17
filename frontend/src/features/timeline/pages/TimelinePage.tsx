@@ -52,7 +52,7 @@ export default function TimelinePage() {
   const todayPct = pct(today);
   const todayIsVisible = todayPct > 0 && todayPct < 100;
 
-  // Adaptive tick interval based on range duration
+  // Intervalle de graduation adaptatif selon la durée de la plage
   const rangeMonths = (viewEnd.getFullYear() - viewStart.getFullYear()) * 12
     + viewEnd.getMonth() - viewStart.getMonth();
   const tickStep = rangeMonths > 24 ? 3 : rangeMonths > 12 ? 2 : 1;
@@ -87,7 +87,7 @@ export default function TimelinePage() {
       </div>
 
       <div className="tl-card">
-          {/* Month axis */}
+          {/* Axe des mois */}
           <div className="tl-axis">
             <div className="tl-axis__labels">
               {ticks.map((t, i) => (
@@ -98,9 +98,9 @@ export default function TimelinePage() {
             </div>
           </div>
 
-          {/* Rows */}
+          {/* Lignes */}
           <div className="tl-rows">
-            {/* Today line */}
+            {/* Ligne du jour */}
             {todayIsVisible && (
               <div className="tl-today-line" style={{ left: `${todayPct}%` }}>
                 <span className="tl-today-line__label">Aujourd'hui</span>
@@ -116,7 +116,7 @@ export default function TimelinePage() {
               const width  = right - left;
               const isOverdue = end < today;
 
-              // Expected progress = elapsed / total * 100
+              // Avancement théorique = écoulé / total × 100
               const totalMs   = end.getTime() - start.getTime();
               const elapsedMs = Math.min(today.getTime() - start.getTime(), totalMs);
               const expectedPct = totalMs > 0 ? Math.max(0, Math.min(100, elapsedMs / totalMs * 100)) : 0;
@@ -130,28 +130,28 @@ export default function TimelinePage() {
                   </Link>
 
                   <div className="tl-row__track">
-                    {/* Bar background (contractual span) */}
+                    {/* Fond de barre (plage contractuelle) */}
                     <div
                       className={`tl-bar ${isOverdue ? 'tl-bar--overdue' : ''}`}
                       style={{ left: `${left}%`, width: `${width}%`, borderColor: color }}
                     >
-                      {/* Expected progress fill (lighter) */}
+                      {/* Remplissage progression théorique (plus clair) */}
                       <div
                         className="tl-bar__expected"
                         style={{ width: `${expectedPct}%`, background: `${color}30` }}
                       />
-                      {/* Actual progress fill */}
+                      {/* Remplissage progression réelle */}
                       <div
                         className="tl-bar__actual"
                         style={{ width: `${actualPct}%`, background: color }}
                       />
-                      {/* Score badge */}
+                      {/* Badge de score */}
                       <span className="tl-bar__score" style={{ color }}>
                         {actualPct}%
                       </span>
                     </div>
 
-                    {/* Date labels */}
+                    {/* Étiquettes de dates */}
                     <span className="tl-bar__date tl-bar__date--start" style={{ left: `${left}%` }}>
                       {fmtShort(start)}
                     </span>

@@ -51,7 +51,7 @@ export async function replayQueue(axiosInstance: AxiosInstance): Promise<ReplayR
     }
   }
 
-  // Persist failed items back — they can be retried on next reconnection
+  // Remettre les éléments échoués — peuvent être réessayés à la prochaine reconnexion
   if (failedRequests.length > 0) {
     localStorage.setItem(QUEUE_KEY, JSON.stringify(failedRequests));
   }

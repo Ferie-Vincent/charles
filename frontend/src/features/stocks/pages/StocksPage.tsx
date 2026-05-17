@@ -151,7 +151,7 @@ export default function StocksPage() {
         </div>
       </div>
 
-      {/* Critical alert */}
+      {/* Alerte critique */}
       {criticalItems.length > 0 && (
         <div className="acct-pending-banner">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
@@ -160,9 +160,9 @@ export default function StocksPage() {
         </div>
       )}
 
-      {/* Table panel */}
+      {/* Panneau tableau */}
       <div className="bg-panel" style={{ borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
-        {/* Toolbar */}
+        {/* Barre d'outils */}
         <div style={{ display: 'flex', gap: 12, alignItems: 'center', padding: '14px 18px', borderBottom: '1px solid var(--border)', flexWrap: 'wrap' }}>
           <div className="acct-search-wrap" style={{ flex: 1, minWidth: 200, maxWidth: 340 }}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="14" height="14" className="acct-search-icon"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -179,7 +179,7 @@ export default function StocksPage() {
           </div>
         </div>
 
-        {/* Table */}
+        {/* Tableau */}
         {loading ? <SkeletonPage rows={2} /> : (
           <table className="data-table stocks-table">
             <thead>
@@ -276,7 +276,7 @@ export default function StocksPage() {
         )}
       </div>
 
-      {/* Item modal */}
+      {/* Modale élément */}
       {itemModal !== null && (
         <div className="mr-modal-overlay" onClick={() => setItemModal(null)}>
           <div className="mr-modal" style={{ maxWidth: 520 }} onClick={e => e.stopPropagation()}>
@@ -330,7 +330,7 @@ export default function StocksPage() {
         </div>
       )}
 
-      {/* Movements panel */}
+      {/* Panneau mouvements */}
       {movModal !== null && (
         <div className="mr-modal-overlay" onClick={() => setMovModal(null)}>
           <div className="mr-modal" style={{ maxWidth: 560 }} onClick={e => e.stopPropagation()}>
@@ -344,7 +344,7 @@ export default function StocksPage() {
               <button className="mr-modal__close" aria-label="Fermer" onClick={() => setMovModal(null)}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
             </div>
             <div className="mr-modal__body" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {/* New movement form */}
+              {/* Formulaire nouveau mouvement */}
               <div className="stocks-mov-form">
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.75rem' }}>
                   <div className="form-field">
@@ -372,7 +372,7 @@ export default function StocksPage() {
                   {saving ? '…' : 'Enregistrer mouvement'}
                 </button>
               </div>
-              {/* History */}
+              {/* Historique */}
               <div>
                 <p className="form-label" style={{ marginBottom: 8 }}>Historique</p>
                 {movements.length === 0 ? (
@@ -405,7 +405,7 @@ export default function StocksPage() {
         </div>
       )}
 
-      {/* Delete */}
+      {/* Supprimer */}
       {deleteId !== null && (
         <div className="mr-modal-overlay" onClick={() => setDeleteId(null)}>
           <div className="mr-modal" style={{ maxWidth: 380 }} onClick={e => e.stopPropagation()}>

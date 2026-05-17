@@ -58,11 +58,11 @@ export function PermissionsProvider({ children }: { children: ReactNode }) {
   function canAccess(feature: string, group: RoleGroup): boolean {
     // direction and dt are LOCKED roles — all features enabled at backend level
     if (group === 'direction' || group === 'dt') return true;
-    // Use own features map (loaded via /my-permissions for all roles)
+    // Utiliser la carte de fonctionnalités propre (chargée via /my-permissions pour tous les rôles)
     if (Object.keys(myFeatures).length > 0) {
       return myFeatures[feature] ?? false;
     }
-    // Fallback: check matrix (direction admin view)
+    // Repli : vérifier la matrice (vue admin direction)
     const roleNames = GROUP_ROLES[group];
     return roleNames.some(roleName => matrix[roleName]?.features[feature] ?? false);
   }

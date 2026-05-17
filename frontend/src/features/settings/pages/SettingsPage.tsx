@@ -103,7 +103,7 @@ function TabProfil() {
 
   return (
     <div className="settings-content">
-      {/* Profil info */}
+      {/* Informations du profil */}
       <Section title="Informations personnelles" desc="Votre nom et adresse email dans la plateforme.">
         <div className="settings-profile-card">
           <div className="settings-avatar">{(user?.name ?? '?').split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()}</div>
@@ -684,7 +684,7 @@ export default function SettingsPage() {
       />
       <div className="page-content">
         <div className="settings-layout">
-          {/* Sidebar nav */}
+          {/* Navigation latérale */}
           <nav className="settings-nav">
             {visibleTabs.map(t => (
               <button
@@ -699,7 +699,7 @@ export default function SettingsPage() {
             ))}
           </nav>
 
-          {/* Content area */}
+          {/* Zone de contenu */}
           <div className="settings-main">
             {tab === 'profil'        && <TabProfil />}
             {tab === 'entreprise'    && <TabEntreprise />}

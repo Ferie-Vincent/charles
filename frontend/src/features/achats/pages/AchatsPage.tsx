@@ -348,7 +348,7 @@ export default function AchatsPage() {
                   onChange={e => { const f = e.target.files?.[0]; if (f) setReceiveForm(r => ({ ...r, deliveryNote: f })); e.target.value = ''; }} />
               </div>
 
-              {/* Photos upload */}
+              {/* Upload de photos */}
               <div className="form-field">
                 <label className="form-label">Photos attestant la livraison (max 10)</label>
                 <div className="bdc-file-drop bdc-photos-drop" onClick={() => photoInputRef.current?.click()}>
@@ -531,7 +531,7 @@ export default function AchatsPage() {
               {detail.notes && <p style={{ fontSize: '0.84rem', color: 'var(--text-muted)', fontStyle: 'italic', marginBottom: 12 }}>Note : {detail.notes}</p>}
               {detail.rejection_reason && <p className="acct-rejection-reason" style={{ marginBottom: 12 }}>Motif rejet : {detail.rejection_reason}</p>}
 
-              {/* Workflow timeline */}
+              {/* Chronologie du workflow */}
               {(() => {
                 const steps: { label: string; actor?: string; date?: string | null; color: string; note?: string }[] = [
                   { label: 'Créé', actor: detail.requester?.name, date: detail.created_at, color: '#64748b' },
@@ -563,7 +563,7 @@ export default function AchatsPage() {
                 );
               })()}
 
-              {/* Delivery docs section (only for received orders) */}
+              {/* Section documents de livraison (commandes reçues uniquement) */}
               {detail.status === 'recu' && (
                 <div className="bdc-delivery-docs">
                   <div className="bdc-delivery-docs__header">

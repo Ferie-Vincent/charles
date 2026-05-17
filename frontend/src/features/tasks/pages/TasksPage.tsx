@@ -75,11 +75,11 @@ function TaskCardContent({
       className={`kb-card kb-card--${task.priority}${isDragging ? ' kb-card--dragging' : ''}${isCancelled ? ' kb-card--cancelled' : ''}`}
       style={{ '--col-accent': colAccent } as React.CSSProperties}
     >
-      {/* Priority stripe */}
+      {/* Bande de priorité */}
       <div className="kb-card__stripe" style={{ background: prio.color }} />
 
       <div className="kb-card__body">
-        {/* Top row */}
+        {/* Ligne du haut */}
         <div className="kb-card__top">
           <span className="kb-card__source" style={{ color: src.color }}>{src.label}</span>
           <span className="kb-card__prio" style={{ color: prio.color, background: prio.bg }}>
@@ -87,11 +87,11 @@ function TaskCardContent({
           </span>
         </div>
 
-        {/* Title */}
+        {/* Titre */}
         <p className="kb-card__title">{task.title}</p>
         {task.detail && <p className="kb-card__detail">{task.detail}</p>}
 
-        {/* Tags */}
+        {/* Étiquettes */}
         {(task.project_code || task.role_target) && (
           <div className="kb-card__tags">
             {task.project_code && (
@@ -103,7 +103,7 @@ function TaskCardContent({
           </div>
         )}
 
-        {/* Footer */}
+        {/* Pied de page */}
         <div className="kb-card__footer">
           <div className="kb-card__avatars">
             <div className="kb-avatar" title={`Créé par ${task.creator.name}`} style={{ background: '#6366f1' }}>

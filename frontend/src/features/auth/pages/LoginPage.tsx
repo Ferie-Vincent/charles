@@ -28,7 +28,7 @@ export default function LoginPage() {
 
   return (
     <div className="login-page">
-      {/* Left panel — brand */}
+      {/* Panneau gauche — marque */}
       <div className="login-panel">
         <div className="login-panel__brand">
           <img src="/charles.png" alt="Charles" className="login-panel__logo-img" />
@@ -61,7 +61,7 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* Right panel — form */}
+      {/* Panneau droit — formulaire */}
       <div className="login-form-side">
         <div className="login-icon-wrap">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="32" height="32">

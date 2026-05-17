@@ -184,7 +184,7 @@ export default function DqeEditorPage() {
         }
       />
 
-      {/* Meta strip */}
+      {/* Bandeau méta */}
       <div className="proj-kpi-row">
         <div className="proj-kpi">
           <div className="proj-kpi__icon proj-kpi__icon--blue">
@@ -345,7 +345,7 @@ export default function DqeEditorPage() {
           </tbody>
         </table>
 
-        {/* Add line form */}
+        {/* Formulaire d'ajout de ligne */}
         <div style={{ padding: '12px 16px', borderTop: '1px solid var(--border)' }}>
           {showAddForm ? (
             <form className="dqe-add-form" onSubmit={handleAddSubmit}>
@@ -408,14 +408,14 @@ export default function DqeEditorPage() {
           )}
         </div>
 
-        {/* Grand total */}
+        {/* Total général */}
         <div className="dqe-grand-total">
           <span className="dqe-grand-total__label">TOTAL GÉNÉRAL HT</span>
           <span className="dqe-grand-total__value">{fmtHT(version.total_ht)} FCFA</span>
         </div>
       </div>
 
-      {/* Reject modal */}
+      {/* Modale de rejet */}
       {rejectModal && (
         <div className="mr-overlay" onClick={() => setRejectModal(false)}>
           <div className="mr-modal" style={{ maxWidth: 440 }} onClick={e => e.stopPropagation()}>

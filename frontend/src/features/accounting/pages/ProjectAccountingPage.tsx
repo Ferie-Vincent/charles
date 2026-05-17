@@ -167,7 +167,7 @@ export default function ProjectAccountingPage() {
 
         </div>
 
-        {/* Progress bar panel */}
+        {/* Panneau barre de progression */}
         <div className="acct-panel" style={{ marginBottom: '1.25rem' }}>
           <div className="acct-panel__head">
             <h3 className="acct-panel__title">Avancement budgétaire</h3>
@@ -194,7 +194,7 @@ export default function ProjectAccountingPage() {
           </div>
         </div>
 
-        {/* Tabs */}
+        {/* Onglets */}
         <div className="dqe-page__toolbar" style={{ marginBottom: 0 }}>
           {(['synthese', 'factures', 'fournisseurs'] as Tab[]).map(t => (
             <button
@@ -328,7 +328,7 @@ export default function ProjectAccountingPage() {
                       </td>
                       <td onClick={e => e.stopPropagation()}>
                         <div className="table-actions">
-                          {/* Workflow: direction/DT valide soumise */}
+                          {/* Workflow : direction/DT valide une facture soumise */}
                           {isDirection && inv.status === 'soumise' && (
                             <button
                               className="btn btn--primary"
@@ -339,7 +339,7 @@ export default function ProjectAccountingPage() {
                               {busy ? '…' : 'Valider'}
                             </button>
                           )}
-                          {/* Workflow: comptable enregistre paiement sur validee */}
+                          {/* Workflow : le comptable enregistre le paiement sur une facture validée */}
                           {isComptable && inv.status === 'validee' && (() => {
                             const blockers: string[] = [];
                             if (!inv.attachment_path) blockers.push('PJ manquante');
@@ -374,7 +374,7 @@ export default function ProjectAccountingPage() {
                               Reçu
                             </a>
                           )}
-                          {/* Edit/delete — comptable only, unlocked statuses */}
+                          {/* Modifier/supprimer — comptable uniquement, statuts non verrouillés */}
                           {isComptable && !['validee', 'payee'].includes(inv.status) && (
                             <>
                               <button className="btn-icon btn-icon--edit" onClick={() => setInvoiceModal(inv)}>
@@ -458,7 +458,7 @@ export default function ProjectAccountingPage() {
 
       </div>
 
-      {/* Supplier Modal */}
+      {/* Modale fournisseur */}
       {supplierModal !== null && (
         <SupplierModal
           supplier={supplierModal === 'new' ? null : supplierModal}
@@ -473,7 +473,7 @@ export default function ProjectAccountingPage() {
         />
       )}
 
-      {/* Invoice Modal */}
+      {/* Modale facture */}
       {invoiceModal !== null && (
         <InvoiceModal
           invoice={invoiceModal === 'new' ? null : invoiceModal}
@@ -489,7 +489,7 @@ export default function ProjectAccountingPage() {
         />
       )}
 
-      {/* Delete confirm */}
+      {/* Confirmation de suppression */}
       {deleteTarget && (
         <div className="mr-modal-overlay" onClick={() => setDeleteTarget(null)}>
           <div className="mr-modal" style={{ maxWidth: 380 }} onClick={e => e.stopPropagation()}>
@@ -517,7 +517,7 @@ export default function ProjectAccountingPage() {
         </div>
       )}
 
-      {/* Payment modal */}
+      {/* Modale de paiement */}
       {paymentModal && (
         <PaymentModal
           invoice={paymentModal}
@@ -531,7 +531,7 @@ export default function ProjectAccountingPage() {
         />
       )}
 
-      {/* Invoice detail */}
+      {/* Détail facture */}
       {detailItem && (
         <ActivityDetailModal
           type="invoice"
@@ -733,7 +733,7 @@ function InvoiceModal({ invoice, suppliers, projectId, onSave, onClose }: {
     note:                 invoice?.note ?? '',
   });
 
-  // Derived BTP amounts (computed on render)
+  // Montants BTP dérivés (calculés au rendu)
   const vatAmount  = Math.round(form.amount_ht * form.vat_rate / 100 * 100) / 100;
   const amountTtc  = Math.round((form.amount_ht + vatAmount) * 100) / 100;
   const rdgAmount  = Math.round(amountTtc * form.retenue_garantie_pct / 100 * 100) / 100;

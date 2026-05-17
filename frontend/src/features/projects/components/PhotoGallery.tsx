@@ -153,7 +153,7 @@ export default function PhotoGallery({ projectId }: Props) {
 
   return (
     <div className="pg-wrap">
-      {/* Upload zone */}
+      {/* Zone d'upload */}
       <div
         className={`pg-upload ${dragOver ? 'pg-upload--drag' : ''}`}
         onDragOver={e => { e.preventDefault(); setDragOver(true); }}
@@ -202,7 +202,7 @@ export default function PhotoGallery({ projectId }: Props) {
         )}
       </div>
 
-      {/* Tag filter + compare toggle */}
+      {/* Filtre par tag + bascule comparaison */}
       {photos.length > 0 && (
         <div className="pg-toolbar">
           <div className="pg-filter">
@@ -249,7 +249,7 @@ export default function PhotoGallery({ projectId }: Props) {
         </div>
       )}
 
-      {/* Grid */}
+      {/* Grille */}
       {loading ? (
         <p className="pg-empty">Chargement…</p>
       ) : filtered.length === 0 ? (

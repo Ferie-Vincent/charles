@@ -76,7 +76,7 @@ export default function CostsPage() {
         subtitle="Synthèse des budgets, engagements et paiements par chantier."
       />
 
-      {/* KPI strip */}
+      {/* Bandeau KPI */}
       <div className="proj-kpi-row">
         <div className="proj-kpi">
           <div className="proj-kpi__icon proj-kpi__icon--blue">
@@ -137,7 +137,7 @@ export default function CostsPage() {
         <p style={{ padding: 24, color: 'var(--text-muted)' }}>Aucun chantier avec données budgétaires.</p>
       ) : (
         <>
-          {/* Grouped BarChart */}
+          {/* Histogramme groupé */}
           <div style={{ background: 'var(--bg-panel)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', overflow: 'hidden', marginBottom: 16 }}>
             <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)' }}>
               <span style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-body)' }}>Répartition par chantier</span>
@@ -178,7 +178,7 @@ export default function CostsPage() {
             </div>
           </div>
 
-          {/* Detail Table */}
+          {/* Tableau de détail */}
           <div style={{ background: 'var(--bg-panel)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
             <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)' }}>
               <span style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-body)' }}>Détail par chantier</span>
