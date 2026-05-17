@@ -124,7 +124,9 @@ export default function Sidebar({ open, onClose }: { open?: boolean; onClose?: (
     <aside className={`sidebar${open ? ' sidebar--open' : ''}`}>
       <button type="button" className="sidebar-close" onClick={onClose} aria-label="Fermer le menu">x</button>
       <div className="sidebar-brand">
-        <img src="/charles.png" alt="Charles" className="sidebar-brand__mascot" />
+        <div className="sidebar-brand__mascot-wrap">
+          <img src="/charles.png" alt="Charles" className="sidebar-brand__mascot" />
+        </div>
         <div>
           <h2>Charles</h2>
           <div className="sidebar-brand__sub">Gestion BTP</div>

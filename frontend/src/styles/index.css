@@ -148,7 +148,7 @@ body {
   height: 36px;
   width: auto;
   object-fit: contain;
-  filter: brightness(0) invert(1);
+  /*filter: brightness(0) invert(1);*/
 }
 
 .sidebar-brand h2 {
@@ -753,9 +753,8 @@ button[type="submit"]:disabled {
 }
 
 .login-panel__logo-img {
-  height: 48px;
+  height: 150px;
   width: auto;
-  filter: brightness(0) invert(1);
   object-fit: contain;
 }
 
