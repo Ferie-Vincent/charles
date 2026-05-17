@@ -8,9 +8,9 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const { user, setUser } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string>();
 
   if (user) return <Navigate to="/" replace />;
-  const [error, setError] = useState<string>();
 
   async function handleSubmit(payload: LoginPayload) {
     setIsLoading(true);
@@ -32,6 +32,7 @@ export default function LoginPage() {
       <div className="login-panel">
         <div className="login-panel__brand">
           <img src="/heleman.png" alt="Helaman Expertise" className="login-panel__logo-img" />
+          <span className="login-panel__mobile-tag">Gestion chantiers</span>
         </div>
 
         <div className="login-panel__content">
