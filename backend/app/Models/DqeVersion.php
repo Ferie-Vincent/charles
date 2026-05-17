@@ -11,6 +11,7 @@ class DqeVersion extends Model
     protected $fillable = [
         'project_id', 'created_by', 'version_number',
         'name', 'status', 'total_ht', 'notes', 'rejection_reason',
+        'bpu_version_id',
     ];
 
     protected $casts = [
@@ -40,5 +41,10 @@ class DqeVersion extends Model
     {
         $this->total_ht = (float) $this->lines()->sum('montant_ht');
         $this->saveQuietly();
+    }
+
+    public function bpuVersion(): BelongsTo
+    {
+        return $this->belongsTo(BpuVersion::class);
     }
 }
