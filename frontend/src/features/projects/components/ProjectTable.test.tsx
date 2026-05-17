@@ -30,6 +30,8 @@ describe('ProjectTable', () => {
             delai_execution_jours: null,
             date_reception_provisoire: null,
             date_reception_definitive: null,
+            caution_bonne_execution_pct: null,
+            penalites_retard_par_jour: null,
           },
         ]}
       />,

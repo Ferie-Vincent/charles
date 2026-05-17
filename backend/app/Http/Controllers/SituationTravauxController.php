@@ -340,6 +340,12 @@ PROMPT;
             ->whereIn('status', ['validee_moe', 'payee'])
             ->sum('avance_remboursement');
 
+        $retenueCumulee = SituationTravaux::where('project_id', $project->id)
+            ->sum('retenue_garantie_amount');
+        $retenueLiberable = SituationTravaux::where('project_id', $project->id)
+            ->where('status', 'payee')
+            ->sum('retenue_garantie_amount');
+
         return response()->json([
             'situations'    => $enriched,
             'avance_summary' => [
@@ -349,6 +355,11 @@ PROMPT;
                 'reste'       => max(0, $avanceAccordee - $avanceCumulee),
                 'is_frozen'   => $project->avance_demarrage_montant_accorde !== null,
                 'accorde_le'  => $project->avance_demarrage_accorde_le?->format('Y-m-d'),
+            ],
+            'retenue_summary' => [
+                'cumulee'        => (float) $retenueCumulee,
+                'liberable'      => (float) $retenueLiberable,
+                'pct'            => config('btp.retenue_garantie_pct'),
             ],
         ]);
     }

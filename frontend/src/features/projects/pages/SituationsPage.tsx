@@ -7,7 +7,7 @@ import {
   validateSituation, paySituation, fetchPreviewCalcul,
   approveCtSituation, rejectCtSituation,
   approveDtSituation, rejectDtSituation, contestSituation, correctSituation,
-  type Situation, type SituationStatut, type AvanceSummary,
+  type Situation, type SituationStatut, type AvanceSummary, type RetenueSummary,
 } from '../api/get-situations';
 import PageHeader from '../../../components/ui/PageHeader';
 
@@ -56,6 +56,7 @@ export default function SituationsPage() {
   });
   const situations: Situation[] = situationsData?.situations ?? [];
   const avanceSummary: AvanceSummary | null = situationsData?.avance_summary ?? null;
+  const retenueSummary: RetenueSummary | null = situationsData?.retenue_summary ?? null;
 
   const invalidate = () => qc.invalidateQueries({ queryKey: ['situations', projectId] });
 
@@ -133,6 +134,28 @@ export default function SituationsPage() {
                 width: `${Math.min(100, avanceSummary.accordee > 0 ? (avanceSummary.reimbursee / avanceSummary.accordee) * 100 : 0)}%`,
                 transition: 'width 0.3s',
               }} />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Retenue de garantie cumulée — visible quand des situations existent */}
+      {retenueSummary && retenueSummary.cumulee > 0 && (
+        <div className="card" style={{ display: 'flex', gap: '24px', padding: '16px 20px', marginBottom: '16px', flexWrap: 'wrap', borderLeft: '3px solid #8b5cf6' }}>
+          <div style={{ flex: 1, minWidth: 140 }}>
+            <div style={{ fontSize: '11px', color: 'var(--color-text-muted)', marginBottom: 2 }}>Retenue de garantie ({retenueSummary.pct}%) — cumulée toutes situations</div>
+            <div style={{ fontWeight: 700, fontSize: '15px', color: '#8b5cf6' }}>{fmt(retenueSummary.cumulee)}</div>
+          </div>
+          <div style={{ flex: 1, minWidth: 140 }}>
+            <div style={{ fontSize: '11px', color: 'var(--color-text-muted)', marginBottom: 2 }}>Libérable à la réception définitive</div>
+            <div style={{ fontWeight: 700, fontSize: '15px', color: retenueSummary.liberable > 0 ? '#22c55e' : 'var(--color-text-muted)' }}>
+              {fmt(retenueSummary.liberable)}
+            </div>
+          </div>
+          <div style={{ flex: 1, minWidth: 140 }}>
+            <div style={{ fontSize: '11px', color: 'var(--color-text-muted)', marginBottom: 2 }}>Encore retenue</div>
+            <div style={{ fontWeight: 700, fontSize: '15px', color: '#ef4444' }}>
+              {fmt(retenueSummary.cumulee - retenueSummary.liberable)}
             </div>
           </div>
         </div>

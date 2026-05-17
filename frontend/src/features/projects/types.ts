@@ -44,6 +44,8 @@ export type Project = {
   delai_execution_jours: number | null;
   date_reception_provisoire: string | null;
   date_reception_definitive: string | null;
+  caution_bonne_execution_pct: number | null;
+  penalites_retard_par_jour: number | null;
   members?: ProjectMember[];
   activities?: ProjectActivity[];
 };

@@ -33,8 +33,12 @@ class UpdateProjectRequest extends FormRequest
             'montant_marche'            => ['sometimes', 'nullable', 'numeric', 'min:0'],
             'avance_demarrage_pct'      => ['sometimes', 'nullable', 'integer', 'min:0', 'max:50'],
             'delai_execution_jours'     => ['sometimes', 'nullable', 'integer', 'min:1'],
-            'date_reception_provisoire' => ['sometimes', 'nullable', 'date'],
-            'date_reception_definitive' => ['sometimes', 'nullable', 'date'],
+            'date_reception_provisoire'   => ['sometimes', 'nullable', 'date'],
+            'date_reception_definitive'   => ['sometimes', 'nullable', 'date'],
+            // Execution contract fields — direction/DT only
+            'lifecycle_status'            => ['sometimes', 'nullable', Rule::in(['ao', 'attribution', 'preparation', 'execution', 'reception', 'cloture'])],
+            'caution_bonne_execution_pct' => ['sometimes', 'nullable', 'numeric', 'min:0', 'max:20'],
+            'penalites_retard_par_jour'   => ['sometimes', 'nullable', 'numeric', 'min:0'],
         ];
     }
 }

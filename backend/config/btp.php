@@ -10,13 +10,36 @@ return [
     'avance_demarrage_pct' => 15,
     'devise' => 'XOF',
 
-    // Holidays (Côte d'Ivoire)
+    // Holidays (Côte d'Ivoire) — jours fériés officiels fixes
+    // Les fêtes islamiques (Aïd el-Fitr, Aïd el-Adha, Mouloud, Laylat al-Qadr)
+    // et les fêtes chrétiennes mobiles (Pâques, Ascension, Pentecôte)
+    // varient chaque année — les ajouter manuellement via 'jours_feries_annee'.
     'jours_feries' => [
         '01-01' => 'Jour de l\'an',
         '05-01' => 'Fête du travail',
-        '08-07' => 'Fête d\'Indépendance',
+        '08-07' => 'Fête de l\'Indépendance',
+        '08-15' => 'Assomption',
         '11-01' => 'Toussaint',
+        '11-15' => 'Fête nationale de la paix',
         '12-25' => 'Noël',
+    ],
+
+    // Fériés variables pour l'année en cours (format YYYY-MM-DD)
+    // À mettre à jour chaque année. Couvre Pâques, Ascension, Pentecôte, fêtes islamiques.
+    'jours_feries_annee' => [
+        '2026-04-06' => 'Lundi de Pâques',
+        '2026-05-14' => 'Ascension',
+        '2026-05-25' => 'Lundi de Pentecôte',
+        '2026-03-31' => 'Aïd el-Fitr (Korité)',
+        '2026-06-07' => 'Aïd el-Adha (Tabaski)',
+        '2026-08-28' => 'Mouloud',
+    ],
+
+    // Majorations heures supplémentaires (Code du travail CI)
+    'majorations_heures_sup' => [
+        'semaine'   => 1.25, // Heures sup jour ouvré  (25%)
+        'semaine_8' => 1.50, // Heures sup > 8h jour ouvré (50%)
+        'dimanche'  => 2.00, // Dimanche et jours fériés (100%)
     ],
 
     // BTP Trades

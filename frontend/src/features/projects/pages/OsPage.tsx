@@ -6,6 +6,8 @@ import {
   type OrdreDeService, type OsType,
 } from '../api/get-os';
 import PageHeader from '../../../components/ui/PageHeader';
+import { useAuth } from '../../auth/stores/auth-store';
+import { getRoleGroup } from '../../../lib/roles';
 
 const TYPE_LABELS: Record<OsType, string> = {
   demarrage:              'Démarrage',
@@ -28,6 +30,9 @@ const BLANK  = { objet: '', type: 'demarrage' as OsType, date_emission: today(),
 export default function OsPage() {
   const { id } = useParams<{ id: string }>();
   const projectId = Number(id);
+  const { user } = useAuth();
+  const group = getRoleGroup(user?.role?.name ?? '');
+  const canCreate = group !== 'terrain' && group !== 'lecture';
   const qc = useQueryClient();
 
   const { data: ordres = [], isLoading } = useQuery({
@@ -63,14 +68,14 @@ export default function OsPage() {
       <PageHeader
         title="Ordres de Service"
         subtitle="Instructions contractuelles émises au chantier"
-        action={
-          <button className="btn btn--primary btn--sm" onClick={() => setShowForm(s => !s)}>
+        action={canCreate ? (
+          <button className="btn btn--primary btn--sm" onClick={() => setShowForm((s: boolean) => !s)}>
             + Nouvel OS
           </button>
-        }
+        ) : undefined}
       />
 
-      {showForm && (
+      {showForm && canCreate && (
         <form className="card card--form" onSubmit={handleCreate}>
           <h3 className="card__title">Émettre un ordre de service</h3>
           <div className="form-grid form-grid--2">
