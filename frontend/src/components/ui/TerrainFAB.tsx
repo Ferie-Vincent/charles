@@ -1,14 +1,17 @@
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../features/auth/stores/auth-store';
 import { getRoleGroup } from '../../lib/roles';
 
 interface Props {
   targetId: string;
+  projectId?: number;
   onIncident?: () => void;
 }
 
-export default function TerrainFAB({ targetId, onIncident }: Props) {
+export default function TerrainFAB({ targetId, projectId, onIncident }: Props) {
   const { user } = useAuth();
   const group = getRoleGroup(user?.role?.name ?? '');
+  const navigate = useNavigate();
 
   if (group !== 'terrain' && group !== 'conducteur') return null;
 
@@ -21,6 +24,11 @@ export default function TerrainFAB({ targetId, onIncident }: Props) {
     onIncident?.();
     const el = document.getElementById('incidents-section');
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function handleAppro() {
+    const url = projectId ? `/besoins?project=${projectId}` : '/besoins';
+    navigate(url);
   }
 
   return (
@@ -40,6 +48,19 @@ export default function TerrainFAB({ targetId, onIncident }: Props) {
           <span>Incident</span>
         </button>
       )}
+      <button
+        type="button"
+        className="terrain-fab terrain-fab--appro"
+        onClick={handleAppro}
+        aria-label="Demander matériaux"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="20" height="20">
+          <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+          <line x1="3" y1="6" x2="21" y2="6"/>
+          <path d="M16 10a4 4 0 0 1-8 0"/>
+        </svg>
+        <span>Matériaux</span>
+      </button>
       <button
         type="button"
         className="terrain-fab"

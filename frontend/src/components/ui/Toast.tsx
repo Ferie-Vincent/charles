@@ -1,0 +1,21 @@
+import { createContext, useContext, type ReactNode } from 'react';
+
+type ToastType = 'success' | 'error' | 'info';
+
+interface ToastContextValue {
+  showToast: (message: string, type?: ToastType) => void;
+}
+
+const ToastContext = createContext<ToastContextValue>({ showToast: () => {} });
+
+export function ToastProvider({ children }: { children: ReactNode }) {
+  return (
+    <ToastContext.Provider value={{ showToast: () => {} }}>
+      {children}
+    </ToastContext.Provider>
+  );
+}
+
+export function useToast(): ToastContextValue {
+  return useContext(ToastContext);
+}

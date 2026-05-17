@@ -144,6 +144,7 @@ export default function ProjectDetailPage() {
   const [showMeetingModal, setShowMeetingModal]   = useState(false);
   const [showSituationModal, setShowSituationModal] = useState(false);
   const [exportingPdf, setExportingPdf] = useState(false);
+  const [incidentOpen, setIncidentOpen] = useState(false);
 
   async function handleExportPdf() {
     if (exportingPdf) return;
@@ -691,9 +692,9 @@ export default function ProjectDetailPage() {
           </CollapsibleSection>
 
           {/* ── 3. Incidents & Sécurité ─────────────────────────────────────── */}
-          <CollapsibleSection title="Incidents chantier" subtitle="Incidents déclarés — classés par gravité" icon={icons.incident}>
+          <CollapsibleSection id="incidents-section" title="Incidents chantier" subtitle="Incidents déclarés — classés par gravité" icon={icons.incident} defaultOpen={incidentOpen}>
             <PanelErrorBoundary title="Incidents">
-              <IncidentPanel projectId={project.id} />
+              <IncidentPanel projectId={project.id} autoOpen={incidentOpen} />
             </PanelErrorBoundary>
           </CollapsibleSection>
 
@@ -779,7 +780,7 @@ export default function ProjectDetailPage() {
         </>
       )}
 
-      <TerrainFAB targetId="journal-section" />
+      <TerrainFAB targetId="journal-section" projectId={project.id} onIncident={() => setIncidentOpen(true)} />
     </div>
   );
 }
