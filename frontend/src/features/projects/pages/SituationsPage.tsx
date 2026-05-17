@@ -5,6 +5,7 @@ import { useAuth } from '../../auth/stores/auth-store';
 import {
   fetchSituations, createSituation, submitSituation,
   validateSituation, paySituation, fetchPreviewCalcul,
+  approveCtSituation, rejectCtSituation,
   approveDtSituation, rejectDtSituation, contestSituation, correctSituation,
   type Situation, type SituationStatut, type AvanceSummary,
 } from '../api/get-situations';
@@ -12,6 +13,7 @@ import PageHeader from '../../../components/ui/PageHeader';
 
 const STATUT_LABELS: Record<SituationStatut, string> = {
   brouillon:    'Brouillon',
+  en_revue_ct:  'En revue CT',
   en_revue_dt:  'En revue DT',
   soumise:      'Soumise',
   contestee:    'Contestée',
@@ -20,6 +22,7 @@ const STATUT_LABELS: Record<SituationStatut, string> = {
 };
 const STATUT_COLORS: Record<SituationStatut, string> = {
   brouillon:    '#6b7280',
+  en_revue_ct:  '#0ea5e9',
   en_revue_dt:  '#8b5cf6',
   soumise:      '#f59e0b',
   contestee:    '#ef4444',
@@ -42,6 +45,7 @@ export default function SituationsPage() {
   const { user } = useAuth();
   const roleName = user?.role?.name ?? '';
   const isManagement = ['direction', 'directeur-technique'].includes(roleName);
+  const isCt         = roleName === 'conducteur-travaux' || isManagement;
   const isMoe        = ['conducteur-travaux', 'direction', 'directeur-technique'].includes(roleName);
   const isMetreur    = roleName === 'metreur-economiste';
 
@@ -57,6 +61,8 @@ export default function SituationsPage() {
 
   const createMut    = useMutation({ mutationFn: (d: Parameters<typeof createSituation>[1]) => createSituation(projectId, d), onSuccess: invalidate });
   const submitMut    = useMutation({ mutationFn: (sid: number) => submitSituation(projectId, sid), onSuccess: invalidate });
+  const approveCtMut = useMutation({ mutationFn: (sid: number) => approveCtSituation(projectId, sid), onSuccess: invalidate });
+  const rejectCtMut  = useMutation({ mutationFn: ({ sid, comment }: { sid: number; comment: string }) => rejectCtSituation(projectId, sid, comment), onSuccess: invalidate });
   const approveDtMut = useMutation({ mutationFn: (sid: number) => approveDtSituation(projectId, sid), onSuccess: invalidate });
   const rejectDtMut  = useMutation({ mutationFn: ({ sid, comment }: { sid: number; comment: string }) => rejectDtSituation(projectId, sid, comment), onSuccess: invalidate });
   const contestMut   = useMutation({ mutationFn: ({ sid, reason }: { sid: number; reason: string }) => contestSituation(projectId, sid, reason), onSuccess: invalidate });
@@ -68,7 +74,8 @@ export default function SituationsPage() {
   const [form, setForm] = useState({ periode: currentMonth(), avancement_pct: 0, notes: '' });
   const [payDate, setPayDate] = useState<Record<number, string>>({});
 
-  // Comment modals for reject-dt and contest
+  // Comment modals for reject-ct, reject-dt and contest
+  const [rejectCtModal, setRejectCtModal] = useState<{ situationId: number; comment: string } | null>(null);
   const [rejectModal, setRejectModal] = useState<{ situationId: number; comment: string } | null>(null);
   const [contestModal, setContestModal] = useState<{ situationId: number; reason: string } | null>(null);
 
@@ -126,6 +133,40 @@ export default function SituationsPage() {
                 width: `${Math.min(100, avanceSummary.accordee > 0 ? (avanceSummary.reimbursee / avanceSummary.accordee) * 100 : 0)}%`,
                 transition: 'width 0.3s',
               }} />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reject CT modal */}
+      {rejectCtModal && (
+        <div className="modal-overlay" onClick={() => setRejectCtModal(null)}>
+          <div className="modal-box" onClick={e => e.stopPropagation()}>
+            <h3 className="modal-title">Rejeter (Conducteur de travaux)</h3>
+            <div className="form-group">
+              <label className="form-label">Motif de rejet terrain *</label>
+              <textarea
+                className="form-control"
+                rows={4}
+                value={rejectCtModal.comment}
+                onChange={e => setRejectCtModal(m => m ? { ...m, comment: e.target.value } : null)}
+                placeholder="Incohérence avancement, ouvrage non terminé…"
+              />
+            </div>
+            <div className="form-actions">
+              <button
+                className="btn btn--danger btn--sm"
+                disabled={!rejectCtModal.comment.trim() || rejectCtMut.isPending}
+                onClick={() => {
+                  rejectCtMut.mutate(
+                    { sid: rejectCtModal.situationId, comment: rejectCtModal.comment },
+                    { onSuccess: () => setRejectCtModal(null) },
+                  );
+                }}
+              >
+                {rejectCtMut.isPending ? 'Enregistrement…' : 'Rejeter'}
+              </button>
+              <button className="btn btn--ghost btn--sm" onClick={() => setRejectCtModal(null)}>Annuler</button>
             </div>
           </div>
         </div>
@@ -223,6 +264,21 @@ export default function SituationsPage() {
                 value={form.avancement_pct}
                 onChange={e => setForm(f => ({ ...f, avancement_pct: parseFloat(e.target.value) || 0 }))}
               />
+              {preview?.progress_from_journal != null && (
+                <span className="form-hint" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  Journal terrain : {preview.progress_from_journal}%
+                  {form.avancement_pct !== preview.progress_from_journal && (
+                    <button
+                      type="button"
+                      className="btn btn--ghost btn--sm"
+                      style={{ fontSize: '11px', padding: '1px 8px' }}
+                      onClick={() => setForm(f => ({ ...f, avancement_pct: preview.progress_from_journal! }))}
+                    >
+                      Utiliser
+                    </button>
+                  )}
+                </span>
+              )}
               {preview?.avancement_precedent_pct != null && (
                 <span className="form-hint">
                   Précédent certifié : {preview.avancement_precedent_pct}%
@@ -326,7 +382,12 @@ export default function SituationsPage() {
                         {s.contest_reason.slice(0, 60)}{s.contest_reason.length > 60 ? '…' : ''}
                       </span>
                     )}
-                    {s.status === 'brouillon' && s.dt_rejection_comment && (
+                    {s.status === 'brouillon' && s.ct_rejection_comment && (
+                      <span style={{ display: 'block', fontSize: '11px', color: '#0ea5e9', marginTop: 2 }}>
+                        CT : {s.ct_rejection_comment.slice(0, 60)}{s.ct_rejection_comment.length > 60 ? '…' : ''}
+                      </span>
+                    )}
+                    {s.status === 'brouillon' && s.dt_rejection_comment && !s.ct_rejection_comment && (
                       <span style={{ display: 'block', fontSize: '11px', color: '#8b5cf6', marginTop: 2 }}>
                         DT : {s.dt_rejection_comment.slice(0, 60)}{s.dt_rejection_comment.length > 60 ? '…' : ''}
                       </span>
@@ -334,15 +395,34 @@ export default function SituationsPage() {
                   </td>
                   <td>
                     <div className="btp-actions">
-                      {/* Métreur: submit brouillon → en_revue_dt */}
+                      {/* Métreur: submit brouillon → en_revue_ct */}
                       {s.status === 'brouillon' && (
                         <button
                           className="btn btn--sm btn--secondary"
                           onClick={() => submitMut.mutate(s.id)}
                           disabled={submitMut.isPending}
                         >
-                          Soumettre au DT
+                          Soumettre au CT
                         </button>
+                      )}
+
+                      {/* CT/direction: approve en_revue_ct → en_revue_dt */}
+                      {s.status === 'en_revue_ct' && isCt && (
+                        <>
+                          <button
+                            className="btn btn--sm btn--primary"
+                            onClick={() => approveCtMut.mutate(s.id)}
+                            disabled={approveCtMut.isPending}
+                          >
+                            Valider CT
+                          </button>
+                          <button
+                            className="btn btn--sm btn--danger"
+                            onClick={() => setRejectCtModal({ situationId: s.id, comment: '' })}
+                          >
+                            Rejeter CT
+                          </button>
+                        </>
                       )}
 
                       {/* DT/direction: approve en_revue_dt → soumise */}

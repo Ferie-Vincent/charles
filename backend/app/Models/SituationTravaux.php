@@ -11,12 +11,13 @@ class SituationTravaux extends Model
 
     protected $fillable = [
         'project_id', 'company_id', 'dqe_version_id', 'created_by', 'validated_by', 'paid_by',
-        'dt_reviewed_by', 'contested_by',
+        'ct_reviewed_by', 'dt_reviewed_by', 'contested_by',
         'numero', 'periode', 'avancement_pct',
         'montant_brut_ht', 'cumul_precedent_ht',
         'retenue_garantie_pct', 'retenue_garantie_amount',
         'avance_remboursement', 'vat_rate', 'vat_amount', 'net_a_payer',
         'status', 'submitted_at', 'validated_at', 'paid_at', 'date_paiement',
+        'ct_reviewed_at', 'ct_rejection_comment',
         'dt_reviewed_at', 'dt_rejection_comment',
         'contest_reason', 'contested_at',
         'detail_lots', 'rapport_ia', 'ged_document_id', 'notes',
@@ -37,6 +38,7 @@ class SituationTravaux extends Model
         'validated_at'            => 'datetime',
         'paid_at'                 => 'datetime',
         'date_paiement'           => 'date',
+        'ct_reviewed_at'          => 'datetime',
         'dt_reviewed_at'          => 'datetime',
         'contested_at'            => 'datetime',
     ];

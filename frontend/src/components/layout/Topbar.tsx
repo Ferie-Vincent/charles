@@ -99,8 +99,16 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
     (n: UserNotification) => n.type === 'situation_paid' && !n.read
   );
 
+  const situationPendingCtNotifs: UserNotification[] = (userNotifs?.notifications ?? []).filter(
+    (n: UserNotification) => n.type === 'situation_pending_ct_review' && !n.read
+  );
+
   const situationPendingDtNotifs: UserNotification[] = (userNotifs?.notifications ?? []).filter(
     (n: UserNotification) => n.type === 'situation_pending_dt_review' && !n.read
+  );
+
+  const incidentMineurDigestNotifs: UserNotification[] = (userNotifs?.notifications ?? []).filter(
+    (n: UserNotification) => n.type === 'incident_mineur_digest' && !n.read
   );
 
   const situationRejectedDtNotifs: UserNotification[] = (userNotifs?.notifications ?? []).filter(
@@ -156,7 +164,7 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
   const criticalProj    = (ops?.critical_projects ?? []).filter((p: any) => !dismissed.has(`proj-${p.id}`));
   const invoicesPending = isManagement ? (ops?.invoices_pending ?? []).filter((i: any) => !dismissed.has(`inv-${i.id}`)) : [];
   const dqePending      = isManagement ? (ops?.dqe_pending      ?? []).filter((d: any) => !dismissed.has(`dqe-${d.id}`)) : [];
-  const notifCount      = bdcPending.length + stockAlerts.length + criticalProj.length + invoicesPending.length + dqePending.length + meetingNotifs.length + bdcDbNotifs.length + incidentNotifs.length + situationValidatedNotifs.length + avenantNotifs.length + situationPaidNotifs.length + situationPendingDtNotifs.length + situationRejectedDtNotifs.length + situationContestedNotifs.length + paymentOverdueNotifs.length + contractThresholdNotifs.length;
+  const notifCount      = bdcPending.length + stockAlerts.length + criticalProj.length + invoicesPending.length + dqePending.length + meetingNotifs.length + bdcDbNotifs.length + incidentNotifs.length + situationValidatedNotifs.length + avenantNotifs.length + situationPaidNotifs.length + situationPendingCtNotifs.length + situationPendingDtNotifs.length + situationRejectedDtNotifs.length + situationContestedNotifs.length + paymentOverdueNotifs.length + contractThresholdNotifs.length + incidentMineurDigestNotifs.length;
 
   useEffect(() => {
     function handleOutside(e: MouseEvent) {
@@ -462,6 +470,55 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
                               {d.project_code} · {d.periode}
                               {d.net_a_payer ? ` · ${fmtAmount(d.net_a_payer)}` : ''}
                               {d.paid_by ? ` · ${d.paid_by}` : ''}
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })}
+
+                    {situationPendingCtNotifs.map((notif: UserNotification) => {
+                      const d = notif.data as any;
+                      return (
+                        <button
+                          key={notif.id}
+                          type="button"
+                          className="topbar-notif-item topbar-notif-item--warning"
+                          onClick={async () => {
+                            await markNotificationRead(notif.id);
+                            queryClient.invalidateQueries({ queryKey: ['user-notifications'] });
+                            if (d.project_id) navigate(`/projects/${d.project_id}/situations`);
+                            setNotifOpen(false);
+                          }}
+                        >
+                          <span className="topbar-notif-item__dot" style={{ background: '#0ea5e9' }} />
+                          <div className="topbar-notif-item__body">
+                            <div className="topbar-notif-item__title">📋 Situation à réviser CT — {d.situation_num}</div>
+                            <div className="topbar-notif-item__sub">
+                              {d.project_name} · {d.periode}{d.submitted_by ? ` · par ${d.submitted_by}` : ''}
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })}
+
+                    {incidentMineurDigestNotifs.map((notif: UserNotification) => {
+                      const d = notif.data as any;
+                      return (
+                        <button
+                          key={notif.id}
+                          type="button"
+                          className="topbar-notif-item"
+                          onClick={async () => {
+                            await markNotificationRead(notif.id);
+                            queryClient.invalidateQueries({ queryKey: ['user-notifications'] });
+                            setNotifOpen(false);
+                          }}
+                        >
+                          <span className="topbar-notif-item__dot" style={{ background: '#6b7280' }} />
+                          <div className="topbar-notif-item__body">
+                            <div className="topbar-notif-item__title">📋 {d.count} incident(s) mineur(s) — {d.date}</div>
+                            <div className="topbar-notif-item__sub">
+                              {(d.incidents ?? []).slice(0, 3).map((i: any) => i.project_code).filter(Boolean).join(', ')}
                             </div>
                           </div>
                         </button>

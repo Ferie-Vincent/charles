@@ -1,6 +1,6 @@
 import { api } from '../../../lib/api';
 
-export type SituationStatut = 'brouillon' | 'en_revue_dt' | 'soumise' | 'contestee' | 'validee_moe' | 'payee';
+export type SituationStatut = 'brouillon' | 'en_revue_ct' | 'en_revue_dt' | 'soumise' | 'contestee' | 'validee_moe' | 'payee';
 
 export interface Situation {
   id: number;
@@ -23,6 +23,8 @@ export interface Situation {
   validated_at: string | null;
   paid_at: string | null;
   date_paiement: string | null;
+  ct_reviewed_at: string | null;
+  ct_rejection_comment: string | null;
   dt_reviewed_at: string | null;
   dt_rejection_comment: string | null;
   contest_reason: string | null;
@@ -56,6 +58,7 @@ export async function fetchPreviewCalcul(projectId: number, avancementPct: numbe
   montant_brut_ht: number;
   avance_demarrage_montant: number;
   avance_demarrage_pct: number;
+  progress_from_journal: number | null;
 }> {
   const params = new URLSearchParams({ avancement_pct: String(avancementPct) });
   if (dqeVersionId) params.append('dqe_version_id', String(dqeVersionId));
@@ -85,6 +88,16 @@ export async function validateSituation(projectId: number, situationId: number):
 
 export async function paySituation(projectId: number, situationId: number, date_paiement: string): Promise<Situation> {
   const res = await api.patch(`/projects/${projectId}/situations/${situationId}/pay`, { date_paiement });
+  return res.data.situation;
+}
+
+export async function approveCtSituation(projectId: number, situationId: number): Promise<Situation> {
+  const res = await api.patch(`/projects/${projectId}/situations/${situationId}/approve-ct`);
+  return res.data.situation;
+}
+
+export async function rejectCtSituation(projectId: number, situationId: number, ct_rejection_comment: string): Promise<Situation> {
+  const res = await api.patch(`/projects/${projectId}/situations/${situationId}/reject-ct`, { ct_rejection_comment });
   return res.data.situation;
 }
 

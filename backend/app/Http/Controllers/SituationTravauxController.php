@@ -11,6 +11,7 @@ use App\Models\BudgetEntry;
 use App\Models\User;
 use App\Notifications\ContractThresholdNotification;
 use App\Notifications\SituationContestedNotification;
+use App\Notifications\SituationPendingCtReviewNotification;
 use App\Notifications\SituationPaidNotification;
 use App\Notifications\SituationPendingDtReviewNotification;
 use App\Notifications\SituationRejectedByDtNotification;
@@ -280,9 +281,13 @@ PROMPT;
         $montantBrut = round($base * ($avancementPct / 100), 2);
 
         $prevAvancement = SituationTravaux::where('project_id', $project->id)
-            ->whereNotIn('status', ['brouillon', 'contestee'])
+            ->whereNotIn('status', ['brouillon', 'en_revue_ct', 'contestee'])
             ->orderByDesc('created_at')
             ->value('avancement_pct');
+
+        $progressFromJournal = $project->dailyLogs()
+            ->latest('log_date')
+            ->value('progress_percent');
 
         return response()->json([
             'base_calcul'               => $base,
@@ -291,6 +296,7 @@ PROMPT;
             'montant_brut_ht'           => $montantBrut,
             'avance_demarrage_montant'  => $project->avance_demarrage_montant,
             'avance_demarrage_pct'      => $project->avance_demarrage_pct,
+            'progress_from_journal'     => $progressFromJournal !== null ? (float) $progressFromJournal : null,
         ]);
     }
 
@@ -350,7 +356,7 @@ PROMPT;
 
         // P0: block avancement regression vs any non-brouillon situation
         $prevAvancement = SituationTravaux::where('project_id', $project->id)
-            ->whereNotIn('status', ['brouillon', 'contestee'])
+            ->whereNotIn('status', ['brouillon', 'en_revue_ct', 'contestee'])
             ->orderByDesc('created_at')
             ->value('avancement_pct');
 
@@ -412,14 +418,63 @@ PROMPT;
         $this->authorize('update', $project);
         abort_if($situation->status !== 'brouillon', 422, 'Seul un brouillon peut être soumis.');
 
-        $situation->update(['status' => 'en_revue_dt', 'submitted_at' => now()]);
+        // Goes to CT first for terrain coherence validation
+        $situation->update(['status' => 'en_revue_ct', 'submitted_at' => now()]);
         $situation->load('project:id,name,code');
 
-        // Notify all DT users so Kouassi sees it immediately
+        // Notify all conducteurs de travaux — Brice must see it before DT
+        User::whereHas('role', fn($q) => $q->where('name', Roles::CONDUCTEUR_TRAVAUX_SLUG))
+            ->where('company_id', $project->company_id)
+            ->get()
+            ->each(fn($u) => $u->notify(new SituationPendingCtReviewNotification($situation, $request->user())));
+
+        return response()->json(['situation' => $situation]);
+    }
+
+    public function approveCt(Request $request, Project $project, SituationTravaux $situation): JsonResponse
+    {
+        $this->authorize('update', $project);
+        abort_unless(in_array($request->user()->role->name, [Roles::CONDUCTEUR_TRAVAUX_SLUG, ...Roles::MANAGEMENT]), 403, 'Seul le CT ou la direction peut approuver en revue CT.');
+        abort_if($situation->status !== 'en_revue_ct', 422, 'Seule une situation en revue CT peut être approuvée par le CT.');
+
+        $situation->update([
+            'status'         => 'en_revue_dt',
+            'ct_reviewed_by' => $request->user()->id,
+            'ct_reviewed_at' => now(),
+        ]);
+
+        $situation->load('project:id,name,code');
+
+        // Notify all DT users — Kouassi now sees clean, CT-validated work
         User::whereHas('role', fn($q) => $q->where('name', Roles::DIRECTEUR_TECHNIQUE_SLUG))
             ->where('company_id', $project->company_id)
             ->get()
             ->each(fn($u) => $u->notify(new SituationPendingDtReviewNotification($situation, $request->user())));
+
+        return response()->json(['situation' => $situation]);
+    }
+
+    public function rejectCt(Request $request, Project $project, SituationTravaux $situation): JsonResponse
+    {
+        $this->authorize('update', $project);
+        abort_unless(in_array($request->user()->role->name, [Roles::CONDUCTEUR_TRAVAUX_SLUG, ...Roles::MANAGEMENT]), 403, 'Seul le CT ou la direction peut rejeter en revue CT.');
+        abort_if($situation->status !== 'en_revue_ct', 422, 'Seule une situation en revue CT peut être rejetée par le CT.');
+
+        $data = $request->validate(['ct_rejection_comment' => 'required|string|max:2000']);
+
+        $situation->update([
+            'status'               => 'brouillon',
+            'ct_reviewed_by'       => $request->user()->id,
+            'ct_reviewed_at'       => now(),
+            'ct_rejection_comment' => $data['ct_rejection_comment'],
+        ]);
+
+        $situation->load('project:id,name,code');
+
+        if ($situation->created_by && $situation->created_by !== $request->user()->id) {
+            $creator = User::find($situation->created_by);
+            $creator?->notify(new SituationRejectedByDtNotification($situation, $request->user()));
+        }
 
         return response()->json(['situation' => $situation]);
     }

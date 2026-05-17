@@ -125,6 +125,7 @@ function formatDate(d: string | null) {
 
 const SITUATION_STATUS_CONFIG: Record<string, { label: string; dot: string; border: string }> = {
   brouillon:   { label: 'Brouillon',        dot: '#94a3b8', border: '#e2e8f0' },
+  en_revue_ct: { label: 'En revue CT',      dot: '#0ea5e9', border: '#e0f2fe' },
   en_revue_dt: { label: 'En revue DT',      dot: '#8b5cf6', border: '#ede9fe' },
   soumise:     { label: 'Soumise',          dot: '#f59e0b', border: '#fef3c7' },
   contestee:   { label: 'Contestée ⚠',      dot: '#ef4444', border: '#fee2e2' },

@@ -16,3 +16,6 @@ Schedule::command('meetings:send-reminders')->everyFifteenMinutes();
 
 // Payment overdue — daily 08:00, alert DT + comptable on situations validée_moe > 30 days
 Schedule::command('situations:check-payment-overdue')->dailyAt('08:00');
+
+// Mineur incident daily digest — CT + DT at 18:00
+Schedule::command('incidents:send-mineur-digest')->dailyAt('18:00');
