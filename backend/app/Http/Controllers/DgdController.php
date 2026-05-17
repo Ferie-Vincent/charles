@@ -63,6 +63,16 @@ class DgdController extends Controller
     {
         $this->authorize('update', $project);
         $dgd  = DecompteGeneralDefinitif::where('project_id', $project->id)->firstOrFail();
+
+        $unsettled = SituationTravaux::where('project_id', $project->id)
+            ->whereIn('status', ['en_revue_ct', 'en_revue_dt', 'soumise', 'contestee', 'validee_moe'])
+            ->count();
+        abort_if(
+            $unsettled > 0,
+            422,
+            "DGD non signable : {$unsettled} situation(s) non soldée(s) en cours. Toutes les situations doivent être payées avant la signature du DGD."
+        );
+
         $data = $request->validate([
             'signataire' => 'required|in:entreprise,moa',
             'date'       => 'required|date',
