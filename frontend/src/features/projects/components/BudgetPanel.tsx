@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from 'recharts';
@@ -246,6 +247,16 @@ export default function BudgetPanel({ projectId }: Props) {
               <span className="bud-row__date">{new Date(entry.entry_date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })}</span>
               <span className={`bud-badge bud-badge--${entry.type}`}>{entry.category}</span>
               <span className="bud-row__label">{entry.label}</span>
+              {entry.situation_travaux && (
+                <Link
+                  to={`/projects/${entry.project_id}/situations`}
+                  className="bud-row__source"
+                  title="Voir la situation de travaux"
+                  onClick={e => e.stopPropagation()}
+                >
+                  ↗ {entry.situation_travaux.numero}
+                </Link>
+              )}
               {entry.note && <span className="bud-row__note">{entry.note}</span>}
               <span className="bud-row__amount" style={{ color: TYPE_COLORS[entry.type] }}>
                 {Number(entry.amount).toLocaleString('fr-FR')} FCFA

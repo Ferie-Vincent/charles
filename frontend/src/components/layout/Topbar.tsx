@@ -111,6 +111,14 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
     (n: UserNotification) => n.type === 'situation_contested' && !n.read
   );
 
+  const paymentOverdueNotifs: UserNotification[] = (userNotifs?.notifications ?? []).filter(
+    (n: UserNotification) => n.type === 'payment_overdue' && !n.read
+  );
+
+  const contractThresholdNotifs: UserNotification[] = (userNotifs?.notifications ?? []).filter(
+    (n: UserNotification) => n.type === 'contract_threshold_80pct' && !n.read
+  );
+
   const isManagement = roleGroup === 'direction' || roleGroup === 'dt';
 
   const dismissAll = useCallback(() => {
@@ -148,7 +156,7 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
   const criticalProj    = (ops?.critical_projects ?? []).filter((p: any) => !dismissed.has(`proj-${p.id}`));
   const invoicesPending = isManagement ? (ops?.invoices_pending ?? []).filter((i: any) => !dismissed.has(`inv-${i.id}`)) : [];
   const dqePending      = isManagement ? (ops?.dqe_pending      ?? []).filter((d: any) => !dismissed.has(`dqe-${d.id}`)) : [];
-  const notifCount      = bdcPending.length + stockAlerts.length + criticalProj.length + invoicesPending.length + dqePending.length + meetingNotifs.length + bdcDbNotifs.length + incidentNotifs.length + situationValidatedNotifs.length + avenantNotifs.length + situationPaidNotifs.length + situationPendingDtNotifs.length + situationRejectedDtNotifs.length + situationContestedNotifs.length;
+  const notifCount      = bdcPending.length + stockAlerts.length + criticalProj.length + invoicesPending.length + dqePending.length + meetingNotifs.length + bdcDbNotifs.length + incidentNotifs.length + situationValidatedNotifs.length + avenantNotifs.length + situationPaidNotifs.length + situationPendingDtNotifs.length + situationRejectedDtNotifs.length + situationContestedNotifs.length + paymentOverdueNotifs.length + contractThresholdNotifs.length;
 
   useEffect(() => {
     function handleOutside(e: MouseEvent) {
@@ -531,6 +539,58 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
                             <div className="topbar-notif-item__sub">
                               {d.project_name} · {d.periode}{d.contested_by ? ` · par ${d.contested_by}` : ''}
                               {d.reason ? ` · ${String(d.reason).slice(0, 50)}` : ''}
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })}
+
+                    {paymentOverdueNotifs.map((notif: UserNotification) => {
+                      const d = notif.data as any;
+                      return (
+                        <button
+                          key={notif.id}
+                          type="button"
+                          className="topbar-notif-item topbar-notif-item--critical"
+                          onClick={async () => {
+                            await markNotificationRead(notif.id);
+                            queryClient.invalidateQueries({ queryKey: ['user-notifications'] });
+                            if (d.project_id) navigate(`/projects/${d.project_id}/situations`);
+                            setNotifOpen(false);
+                          }}
+                        >
+                          <span className="topbar-notif-item__dot topbar-notif-item__dot--critical" />
+                          <div className="topbar-notif-item__body">
+                            <div className="topbar-notif-item__title">⏰ Paiement en retard — {d.situation_num}</div>
+                            <div className="topbar-notif-item__sub">
+                              {d.project_name} · {d.periode} · {d.days_overdue}j sans paiement
+                              {d.net_a_payer ? ` · ${fmtAmount(d.net_a_payer)}` : ''}
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })}
+
+                    {contractThresholdNotifs.map((notif: UserNotification) => {
+                      const d = notif.data as any;
+                      return (
+                        <button
+                          key={notif.id}
+                          type="button"
+                          className="topbar-notif-item topbar-notif-item--warning"
+                          onClick={async () => {
+                            await markNotificationRead(notif.id);
+                            queryClient.invalidateQueries({ queryKey: ['user-notifications'] });
+                            if (d.project_id) navigate(`/projects/${d.project_id}/situations`);
+                            setNotifOpen(false);
+                          }}
+                        >
+                          <span className="topbar-notif-item__dot topbar-notif-item__dot--warning" />
+                          <div className="topbar-notif-item__body">
+                            <div className="topbar-notif-item__title">📊 Seuil 80% marché atteint — {d.project_code}</div>
+                            <div className="topbar-notif-item__sub">
+                              {d.project_name} · {d.ratio_pct}% du marché certifié
+                              {d.montant_marche ? ` · ${fmtAmount(d.montant_marche)}` : ''}
                             </div>
                           </div>
                         </button>

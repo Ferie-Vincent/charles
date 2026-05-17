@@ -32,9 +32,21 @@ export interface Situation {
   dqe_version: { id: number; name: string; version_number: number } | null;
 }
 
-export async function fetchSituations(projectId: number): Promise<Situation[]> {
+export interface AvanceSummary {
+  accordee: number;
+  pct: number;
+  reimbursee: number;
+  reste: number;
+}
+
+export interface SituationsResponse {
+  situations: Situation[];
+  avance_summary: AvanceSummary;
+}
+
+export async function fetchSituations(projectId: number): Promise<SituationsResponse> {
   const res = await api.get(`/projects/${projectId}/situations`);
-  return res.data.situations;
+  return res.data;
 }
 
 export async function fetchPreviewCalcul(projectId: number, avancementPct: number, dqeVersionId?: number | null): Promise<{

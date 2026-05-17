@@ -12,6 +12,8 @@ export type BudgetEntry = {
   entry_date: string;
   note: string | null;
   created_at: string;
+  situation_travaux_id?: number | null;
+  situation_travaux?: { id: number; numero: string } | null;
 };
 
 export type BudgetTotals = {

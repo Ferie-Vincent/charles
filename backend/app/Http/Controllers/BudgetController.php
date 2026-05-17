@@ -15,7 +15,7 @@ class BudgetController extends Controller
     {
         $this->authorize('view', $project);
 
-        $project->load(['budgetEntries', 'invoices', 'dqeVersions']);
+        $project->load(['budgetEntries.situationTravaux:id,numero', 'invoices', 'dqeVersions']);
         $entries = $project->budgetEntries->sortBy('entry_date');
 
         $totals = [

@@ -9,6 +9,7 @@ use App\Models\Project;
 use App\Models\SituationTravaux;
 use App\Models\BudgetEntry;
 use App\Models\User;
+use App\Notifications\ContractThresholdNotification;
 use App\Notifications\SituationContestedNotification;
 use App\Notifications\SituationPaidNotification;
 use App\Notifications\SituationPendingDtReviewNotification;
@@ -319,7 +320,20 @@ PROMPT;
             return $arr;
         })->sortByDesc('created_at')->values();
 
-        return response()->json(['situations' => $enriched]);
+        $avanceAccordee  = (float) $project->avance_demarrage_montant;
+        $avanceCumulee   = SituationTravaux::where('project_id', $project->id)
+            ->whereIn('status', ['validee_moe', 'payee'])
+            ->sum('avance_remboursement');
+
+        return response()->json([
+            'situations'    => $enriched,
+            'avance_summary' => [
+                'accordee'  => $avanceAccordee,
+                'pct'       => (float) ($project->avance_demarrage_pct ?? 0),
+                'reimbursee' => (float) $avanceCumulee,
+                'reste'     => max(0, $avanceAccordee - $avanceCumulee),
+            ],
+        ]);
     }
 
     public function storeSituation(Request $request, Project $project): JsonResponse
@@ -502,6 +516,11 @@ PROMPT;
         $this->authorize('update', $project);
         abort_if($situation->status !== 'soumise', 422, 'Seule une situation soumise peut être validée MOE.');
 
+        // Snapshot cumul BEFORE validation to detect first threshold crossing
+        $cumulBefore = SituationTravaux::where('project_id', $project->id)
+            ->whereIn('status', ['validee_moe', 'payee'])
+            ->sum('montant_brut_ht');
+
         $situation->update([
             'status'       => 'validee_moe',
             'validated_by' => $request->user()->id,
@@ -522,6 +541,21 @@ PROMPT;
             ->where('id', '!=', $request->user()->id)
             ->get()
             ->each(fn($u) => $u->notify(new SituationValidatedNotification($situation, $request->user())));
+
+        // Notify DT + direction on first crossing of 80% montant marché
+        $montantMarche = (float) ($project->montant_marche ?? 0);
+        if ($montantMarche > 0) {
+            $cumulAfter   = $cumulBefore + $situation->montant_brut_ht;
+            $ratioBefore  = $cumulBefore / $montantMarche;
+            $ratioAfter   = $cumulAfter  / $montantMarche;
+
+            if ($ratioBefore < 0.8 && $ratioAfter >= 0.8) {
+                User::whereHas('role', fn($q) => $q->whereIn('name', Roles::MANAGEMENT))
+                    ->where('company_id', $project->company_id)
+                    ->get()
+                    ->each(fn($u) => $u->notify(new ContractThresholdNotification($situation, $project, $ratioAfter)));
+            }
+        }
 
         return response()->json(['situation' => $situation]);
     }

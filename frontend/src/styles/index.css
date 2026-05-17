@@ -4424,8 +4424,18 @@ code {
 .bud-badge--engagement   { background: #fef3c7; color: #92400e; }
 .bud-badge--paiement     { background: #d1fae5; color: #065f46; }
 .bud-row__label { flex: 1; color: var(--text-body); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.bud-row__note  { font-size: 11px; color: var(--text-subtle); font-style: italic; }
+.bud-row__note   { font-size: 11px; color: var(--text-subtle); font-style: italic; }
 .bud-row__amount { font-weight: 700; white-space: nowrap; margin-left: auto; }
+.bud-row__source {
+  font-size: 11px;
+  color: var(--color-primary);
+  text-decoration: none;
+  white-space: nowrap;
+  padding: 1px 6px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+}
+.bud-row__source:hover { text-decoration: underline; }
 .bud-del {
   background: none;
   border: none;

@@ -6,7 +6,7 @@ import {
   fetchSituations, createSituation, submitSituation,
   validateSituation, paySituation, fetchPreviewCalcul,
   approveDtSituation, rejectDtSituation, contestSituation, correctSituation,
-  type Situation, type SituationStatut,
+  type Situation, type SituationStatut, type AvanceSummary,
 } from '../api/get-situations';
 import PageHeader from '../../../components/ui/PageHeader';
 
@@ -45,11 +45,13 @@ export default function SituationsPage() {
   const isMoe        = ['conducteur-travaux', 'direction', 'directeur-technique'].includes(roleName);
   const isMetreur    = roleName === 'metreur-economiste';
 
-  const { data: situations = [], isLoading } = useQuery({
+  const { data: situationsData, isLoading } = useQuery({
     queryKey: ['situations', projectId],
     queryFn: () => fetchSituations(projectId),
     staleTime: 30_000,
   });
+  const situations: Situation[] = situationsData?.situations ?? [];
+  const avanceSummary: AvanceSummary | null = situationsData?.avance_summary ?? null;
 
   const invalidate = () => qc.invalidateQueries({ queryKey: ['situations', projectId] });
 
@@ -94,6 +96,40 @@ export default function SituationsPage() {
           </button>
         }
       />
+
+      {/* Avance démarrage widget — visible only when project has an advance configured */}
+      {avanceSummary && avanceSummary.accordee > 0 && (
+        <div className="card" style={{ display: 'flex', gap: '24px', padding: '16px 20px', marginBottom: '16px', flexWrap: 'wrap' }}>
+          <div style={{ flex: 1, minWidth: 140 }}>
+            <div style={{ fontSize: '11px', color: 'var(--color-text-muted)', marginBottom: 2 }}>Avance démarrage accordée ({avanceSummary.pct}%)</div>
+            <div style={{ fontWeight: 700, fontSize: '15px' }}>{fmt(avanceSummary.accordee)}</div>
+          </div>
+          <div style={{ flex: 1, minWidth: 140 }}>
+            <div style={{ fontSize: '11px', color: 'var(--color-text-muted)', marginBottom: 2 }}>Remboursée (situations certifiées)</div>
+            <div style={{ fontWeight: 700, fontSize: '15px', color: '#f59e0b' }}>{fmt(avanceSummary.reimbursee)}</div>
+          </div>
+          <div style={{ flex: 1, minWidth: 140 }}>
+            <div style={{ fontSize: '11px', color: 'var(--color-text-muted)', marginBottom: 2 }}>Reste à rembourser</div>
+            <div style={{ fontWeight: 700, fontSize: '15px', color: avanceSummary.reste > 0 ? '#ef4444' : '#22c55e' }}>
+              {fmt(avanceSummary.reste)}
+            </div>
+          </div>
+          <div style={{ flex: 2, minWidth: 180, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+            <div style={{ fontSize: '10px', color: 'var(--color-text-muted)', marginBottom: 4 }}>
+              Progression remboursement
+            </div>
+            <div style={{ height: 6, background: 'var(--color-surface-2)', borderRadius: 3, overflow: 'hidden' }}>
+              <div style={{
+                height: '100%',
+                borderRadius: 3,
+                background: '#f59e0b',
+                width: `${Math.min(100, avanceSummary.accordee > 0 ? (avanceSummary.reimbursee / avanceSummary.accordee) * 100 : 0)}%`,
+                transition: 'width 0.3s',
+              }} />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Reject DT modal */}
       {rejectModal && (
