@@ -48,6 +48,13 @@ class DailyLogController extends Controller
     {
         $this->authorize('create', [DailyLog::class, $project]);
 
+        // Guard: journal uniquement si chantier en cours d'exécution
+        if ($project->lifecycle_status !== 'execution') {
+            return response()->json([
+                'message' => "Journal non autorisé — le chantier est en phase « {$project->lifecycle_status} ». Un OS de démarrage doit être émis avant toute saisie.",
+            ], 422);
+        }
+
         $today = now()->toDateString();
 
         if (DailyLog::where('project_id', $project->id)->where('log_date', $today)->exists()) {
@@ -77,7 +84,11 @@ class DailyLogController extends Controller
 
         event(new DailyLogCreated($log, $project));
 
-        return response()->json(['data' => $log], 201);
+        $warning = $project->is_arrete
+            ? "Chantier déclaré en arrêt depuis le {$project->arret_depuis} — ce journal est saisi pendant la période d'arrêt."
+            : null;
+
+        return response()->json(['data' => $log, 'arret_warning' => $warning], 201);
     }
 
     public function update(Request $request, Project $project, DailyLog $dailyLog): JsonResponse
