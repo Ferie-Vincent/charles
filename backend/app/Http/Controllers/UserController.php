@@ -4,10 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\Role;
 use App\Models\User;
+use App\Notifications\UserInvitedNotification;
 use App\Support\Roles;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class UserController extends Controller
@@ -48,27 +50,36 @@ class UserController extends Controller
         $this->authorize('create', User::class);
 
         $data = $request->validate([
-            'name'     => ['required', 'string', 'max:255'],
-            'email'    => ['required', 'email', 'unique:users,email'],
-            'password' => ['required', 'string', 'min:8'],
-            'role_id'  => ['required', 'exists:roles,id'],
+            'name'    => ['required', 'string', 'max:255'],
+            'email'   => ['required', 'email', 'unique:users,email'],
+            'role_id' => ['required', 'exists:roles,id'],
         ]);
 
+        $token = Str::random(64);
+
         $user = User::create([
-            'name'       => $data['name'],
-            'email'      => $data['email'],
-            'password'   => Hash::make($data['password']),
-            'company_id' => $request->user()->company_id,
-            'role_id'    => $data['role_id'],
+            'name'                   => $data['name'],
+            'email'                  => $data['email'],
+            'password'               => Hash::make(Str::random(32)),
+            'company_id'             => $request->user()->company_id,
+            'role_id'                => $data['role_id'],
+            'invitation_token'       => $token,
+            'invitation_expires_at'  => now()->addDays(7),
+            'must_change_password'   => true,
         ]);
 
         $user->load('role');
 
+        $invitationUrl = config('app.frontend_url', 'http://localhost:5174') . '/invitation/' . $token;
+
+        $user->notify(new UserInvitedNotification($invitationUrl, $request->user()->name));
+
         return response()->json([
-            'id'    => $user->id,
-            'name'  => $user->name,
-            'email' => $user->email,
-            'role'  => ['id' => $user->role->id, 'name' => $user->role->name, 'label' => $user->role->label],
+            'id'             => $user->id,
+            'name'           => $user->name,
+            'email'          => $user->email,
+            'role'           => ['id' => $user->role->id, 'name' => $user->role->name, 'label' => $user->role->label],
+            'invitation_url' => $invitationUrl,
         ], 201);
     }
 

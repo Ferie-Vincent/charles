@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 import LoginForm from '../components/LoginForm';
 import { login, type LoginPayload } from '../api/login';
 import { useAuth } from '../stores/auth-store';
@@ -18,7 +18,7 @@ export default function LoginPage() {
     try {
       const data = await login(payload);
       setUser(data.user);
-      navigate('/');
+      navigate(data.user.must_change_password ? '/change-password' : '/');
     } catch {
       setError('Identifiants incorrects. Vérifiez votre email et mot de passe.');
     } finally {
@@ -72,6 +72,11 @@ export default function LoginPage() {
         <h1>Connexion</h1>
         <p>Accédez à votre espace de gestion</p>
         <LoginForm onSubmit={handleSubmit} isLoading={isLoading} error={error} />
+        <p style={{ textAlign: 'center', marginTop: '1rem', fontSize: '0.875rem' }}>
+          <Link to="/forgot-password" style={{ color: 'var(--color-text-muted)' }}>
+            Mot de passe oublié ?
+          </Link>
+        </p>
       </div>
     </div>
   );

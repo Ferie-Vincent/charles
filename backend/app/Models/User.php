@@ -17,18 +17,24 @@ class User extends Authenticatable
         'password',
         'company_id',
         'role_id',
+        'invitation_token',
+        'invitation_expires_at',
+        'must_change_password',
     ];
 
     protected $hidden = [
         'password',
         'remember_token',
+        'invitation_token',
     ];
 
     protected function casts(): array
     {
         return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
+            'email_verified_at'     => 'datetime',
+            'invitation_expires_at' => 'datetime',
+            'password'              => 'hashed',
+            'must_change_password'  => 'boolean',
         ];
     }
 

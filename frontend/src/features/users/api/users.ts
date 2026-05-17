@@ -17,7 +17,10 @@ export interface UserPayload {
   name: string;
   email: string;
   role_id: number;
-  password?: string;
+}
+
+export interface CreatedUser extends AppUser {
+  invitation_url: string;
 }
 
 export async function getUsers(): Promise<AppUser[]> {
@@ -30,7 +33,7 @@ export async function getRoles(): Promise<Role[]> {
   return res.data;
 }
 
-export async function createUser(payload: UserPayload & { password: string }): Promise<AppUser> {
+export async function createUser(payload: UserPayload): Promise<CreatedUser> {
   const res = await api.post('/users', payload);
   return res.data;
 }
