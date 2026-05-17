@@ -59,6 +59,7 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
   const roleGroup = getRoleGroup(user?.role?.name ?? '');
   const canCreateProject = roleGroup === 'direction';
   const canSeeOps = roleGroup !== 'terrain';
+  const isTerrain = roleGroup === 'terrain';
 
   const { data: ops } = useQuery({
     queryKey: ['portfolio-operations'],
@@ -76,6 +77,62 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
 
   const meetingNotifs: UserNotification[] = (userNotifs?.notifications ?? []).filter(
     (n: UserNotification) => n.type === 'meeting_invitation' && !n.read
+  );
+
+  const bdcDbNotifs: UserNotification[] = (userNotifs?.notifications ?? []).filter(
+    (n: UserNotification) => n.type === 'bdc_status_changed' && !n.read
+  );
+
+  const incidentNotifs: UserNotification[] = (userNotifs?.notifications ?? []).filter(
+    (n: UserNotification) => n.type === 'incident_severe' && !n.read
+  );
+
+  const situationValidatedNotifs: UserNotification[] = (userNotifs?.notifications ?? []).filter(
+    (n: UserNotification) => n.type === 'situation_validated' && !n.read
+  );
+
+  const avenantNotifs: UserNotification[] = (userNotifs?.notifications ?? []).filter(
+    (n: UserNotification) => n.type === 'avenant_signe' && !n.read
+  );
+
+  const situationPaidNotifs: UserNotification[] = (userNotifs?.notifications ?? []).filter(
+    (n: UserNotification) => n.type === 'situation_paid' && !n.read
+  );
+
+  const situationPendingCtNotifs: UserNotification[] = (userNotifs?.notifications ?? []).filter(
+    (n: UserNotification) => n.type === 'situation_pending_ct_review' && !n.read
+  );
+
+  const situationPendingDtNotifs: UserNotification[] = (userNotifs?.notifications ?? []).filter(
+    (n: UserNotification) => n.type === 'situation_pending_dt_review' && !n.read
+  );
+
+  const incidentMineurDigestNotifs: UserNotification[] = (userNotifs?.notifications ?? []).filter(
+    (n: UserNotification) => n.type === 'incident_mineur_digest' && !n.read
+  );
+
+  const situationRejectedCtNotifs: UserNotification[] = (userNotifs?.notifications ?? []).filter(
+    (n: UserNotification) => n.type === 'situation_rejected_by_ct' && !n.read
+  );
+
+  const situationRejectedDtNotifs: UserNotification[] = (userNotifs?.notifications ?? []).filter(
+    (n: UserNotification) => n.type === 'situation_rejected_by_dt' && !n.read
+  );
+
+  const situationContestedNotifs: UserNotification[] = (userNotifs?.notifications ?? []).filter(
+    (n: UserNotification) => n.type === 'situation_contested' && !n.read
+  );
+
+  const paymentOverdueNotifs: UserNotification[] = (userNotifs?.notifications ?? []).filter(
+    (n: UserNotification) => n.type === 'payment_overdue' && !n.read
+  );
+
+  const contractThresholdNotifs: UserNotification[] = (userNotifs?.notifications ?? []).filter(
+    (n: UserNotification) => n.type === 'contract_threshold_80pct' && !n.read
+  );
+
+  const contestationDelayNotifs: UserNotification[] = (userNotifs?.notifications ?? []).filter(
+    (n: UserNotification) => n.type === 'contestation_delay' && !n.read
   );
 
   const isManagement = roleGroup === 'direction' || roleGroup === 'dt';
@@ -115,7 +172,7 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
   const criticalProj    = (ops?.critical_projects ?? []).filter((p: any) => !dismissed.has(`proj-${p.id}`));
   const invoicesPending = isManagement ? (ops?.invoices_pending ?? []).filter((i: any) => !dismissed.has(`inv-${i.id}`)) : [];
   const dqePending      = isManagement ? (ops?.dqe_pending      ?? []).filter((d: any) => !dismissed.has(`dqe-${d.id}`)) : [];
-  const notifCount      = bdcPending.length + stockAlerts.length + criticalProj.length + invoicesPending.length + dqePending.length + meetingNotifs.length;
+  const notifCount      = bdcPending.length + stockAlerts.length + criticalProj.length + invoicesPending.length + dqePending.length + meetingNotifs.length + bdcDbNotifs.length + incidentNotifs.length + situationValidatedNotifs.length + avenantNotifs.length + situationPaidNotifs.length + situationPendingCtNotifs.length + situationPendingDtNotifs.length + situationRejectedCtNotifs.length + situationRejectedDtNotifs.length + situationContestedNotifs.length + paymentOverdueNotifs.length + contractThresholdNotifs.length + incidentMineurDigestNotifs.length;
 
   useEffect(() => {
     function handleOutside(e: MouseEvent) {
@@ -204,7 +261,7 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
       </div>
 
       <div className="topbar-actions">
-        {canSeeOps && (
+        {(canSeeOps || isTerrain) && (
           <div className="topbar-notif-wrap" ref={notifRef}>
             <button
               type="button"
@@ -289,6 +346,370 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
                             )}
                           </div>
                         </div>
+                      );
+                    })}
+
+                    {bdcDbNotifs.map((notif: UserNotification) => {
+                      const d = notif.data as any;
+                      const isApproved = d.bdc_status === 'approuve';
+                      return (
+                        <button
+                          key={notif.id}
+                          type="button"
+                          className={`topbar-notif-item ${isApproved ? 'topbar-notif-item--success' : 'topbar-notif-item--danger'}`}
+                          onClick={async () => {
+                            await markNotificationRead(notif.id);
+                            queryClient.invalidateQueries({ queryKey: ['user-notifications'] });
+                            if (d.project_id) navigate(`/achats`);
+                            setNotifOpen(false);
+                          }}
+                        >
+                          <span className={`topbar-notif-item__dot ${isApproved ? 'topbar-notif-item__dot--success' : 'topbar-notif-item__dot--danger'}`} />
+                          <div className="topbar-notif-item__body">
+                            <div className="topbar-notif-item__title">
+                              BDC {isApproved ? '✓ Approuvé' : '✗ Rejeté'} — {d.reference}
+                            </div>
+                            <div className="topbar-notif-item__sub">
+                              {d.project_name ?? ''}{d.actor_name ? ` · par ${d.actor_name}` : ''}
+                              {!isApproved && d.reason ? ` · ${d.reason}` : ''}
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })}
+
+                    {incidentNotifs.map((notif: UserNotification) => {
+                      const d = notif.data as any;
+                      const isCritique = d.severity === 'critique';
+                      return (
+                        <button
+                          key={notif.id}
+                          type="button"
+                          className="topbar-notif-item topbar-notif-item--critical"
+                          onClick={async () => {
+                            await markNotificationRead(notif.id);
+                            queryClient.invalidateQueries({ queryKey: ['user-notifications'] });
+                            if (d.project_id) navigate(`/projects/${d.project_id}`);
+                            setNotifOpen(false);
+                          }}
+                        >
+                          <span className="topbar-notif-item__dot topbar-notif-item__dot--critical" />
+                          <div className="topbar-notif-item__body">
+                            <div className="topbar-notif-item__title">
+                              {isCritique ? '🚨' : '⚠️'} Incident {d.severity} — {d.project_code}
+                            </div>
+                            <div className="topbar-notif-item__sub">
+                              {d.incident_type}{d.location ? ` · ${d.location}` : ''}{d.reporter_name ? ` · ${d.reporter_name}` : ''}
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })}
+
+                    {situationValidatedNotifs.map((notif: UserNotification) => {
+                      const d = notif.data as any;
+                      return (
+                        <button
+                          key={notif.id}
+                          type="button"
+                          className="topbar-notif-item topbar-notif-item--success"
+                          onClick={async () => {
+                            await markNotificationRead(notif.id);
+                            queryClient.invalidateQueries({ queryKey: ['user-notifications'] });
+                            if (d.project_id) navigate(`/projects/${d.project_id}/situations`);
+                            setNotifOpen(false);
+                          }}
+                        >
+                          <span className="topbar-notif-item__dot topbar-notif-item__dot--success" />
+                          <div className="topbar-notif-item__body">
+                            <div className="topbar-notif-item__title">✓ Situation validée — {d.numero}</div>
+                            <div className="topbar-notif-item__sub">
+                              {d.project_code} · {d.periode}{d.validator ? ` · par ${d.validator}` : ''}
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })}
+
+                    {avenantNotifs.map((notif: UserNotification) => {
+                      const d = notif.data as any;
+                      return (
+                        <button
+                          key={notif.id}
+                          type="button"
+                          className="topbar-notif-item topbar-notif-item--warning"
+                          onClick={async () => {
+                            await markNotificationRead(notif.id);
+                            queryClient.invalidateQueries({ queryKey: ['user-notifications'] });
+                            if (d.project_id) navigate(`/projects/${d.project_id}/avenants`);
+                            setNotifOpen(false);
+                          }}
+                        >
+                          <span className="topbar-notif-item__dot topbar-notif-item__dot--warning" />
+                          <div className="topbar-notif-item__body">
+                            <div className="topbar-notif-item__title">Avenant signé — {d.numero}</div>
+                            <div className="topbar-notif-item__sub">
+                              {d.project_code} · {d.objet}
+                              {d.montant_ht ? ` · ${fmtAmount(d.montant_ht)}` : ''}
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })}
+
+                    {situationPaidNotifs.map((notif: UserNotification) => {
+                      const d = notif.data as any;
+                      return (
+                        <button
+                          key={notif.id}
+                          type="button"
+                          className="topbar-notif-item topbar-notif-item--success"
+                          onClick={async () => {
+                            await markNotificationRead(notif.id);
+                            queryClient.invalidateQueries({ queryKey: ['user-notifications'] });
+                            if (d.project_id) navigate(`/projects/${d.project_id}/situations`);
+                            setNotifOpen(false);
+                          }}
+                        >
+                          <span className="topbar-notif-item__dot topbar-notif-item__dot--success" />
+                          <div className="topbar-notif-item__body">
+                            <div className="topbar-notif-item__title">💰 Situation payée — {d.numero}</div>
+                            <div className="topbar-notif-item__sub">
+                              {d.project_code} · {d.periode}
+                              {d.net_a_payer ? ` · ${fmtAmount(d.net_a_payer)}` : ''}
+                              {d.paid_by ? ` · ${d.paid_by}` : ''}
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })}
+
+                    {situationPendingCtNotifs.map((notif: UserNotification) => {
+                      const d = notif.data as any;
+                      return (
+                        <button
+                          key={notif.id}
+                          type="button"
+                          className="topbar-notif-item topbar-notif-item--warning"
+                          onClick={async () => {
+                            await markNotificationRead(notif.id);
+                            queryClient.invalidateQueries({ queryKey: ['user-notifications'] });
+                            if (d.project_id) navigate(`/projects/${d.project_id}/situations`);
+                            setNotifOpen(false);
+                          }}
+                        >
+                          <span className="topbar-notif-item__dot" style={{ background: '#0ea5e9' }} />
+                          <div className="topbar-notif-item__body">
+                            <div className="topbar-notif-item__title">📋 Situation à réviser CT — {d.situation_num}</div>
+                            <div className="topbar-notif-item__sub">
+                              {d.project_name} · {d.periode}{d.submitted_by ? ` · par ${d.submitted_by}` : ''}
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })}
+
+                    {incidentMineurDigestNotifs.map((notif: UserNotification) => {
+                      const d = notif.data as any;
+                      return (
+                        <button
+                          key={notif.id}
+                          type="button"
+                          className="topbar-notif-item"
+                          onClick={async () => {
+                            await markNotificationRead(notif.id);
+                            queryClient.invalidateQueries({ queryKey: ['user-notifications'] });
+                            setNotifOpen(false);
+                          }}
+                        >
+                          <span className="topbar-notif-item__dot" style={{ background: '#6b7280' }} />
+                          <div className="topbar-notif-item__body">
+                            <div className="topbar-notif-item__title">📋 {d.count} incident(s) mineur(s) — {d.date}</div>
+                            <div className="topbar-notif-item__sub">
+                              {(d.incidents ?? []).slice(0, 3).map((i: any) => i.project_code).filter(Boolean).join(', ')}
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })}
+
+                    {situationPendingDtNotifs.map((notif: UserNotification) => {
+                      const d = notif.data as any;
+                      return (
+                        <button
+                          key={notif.id}
+                          type="button"
+                          className="topbar-notif-item topbar-notif-item--warning"
+                          onClick={async () => {
+                            await markNotificationRead(notif.id);
+                            queryClient.invalidateQueries({ queryKey: ['user-notifications'] });
+                            if (d.project_id) navigate(`/projects/${d.project_id}/situations`);
+                            setNotifOpen(false);
+                          }}
+                        >
+                          <span className="topbar-notif-item__dot topbar-notif-item__dot--warning" />
+                          <div className="topbar-notif-item__body">
+                            <div className="topbar-notif-item__title">🔍 Situation à réviser — {d.situation_num}</div>
+                            <div className="topbar-notif-item__sub">
+                              {d.project_name} · {d.periode}{d.submitted_by ? ` · par ${d.submitted_by}` : ''}
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })}
+
+                    {situationRejectedCtNotifs.map((notif: UserNotification) => {
+                      const d = notif.data as any;
+                      return (
+                        <button
+                          key={notif.id}
+                          type="button"
+                          className="topbar-notif-item topbar-notif-item--danger"
+                          onClick={async () => {
+                            await markNotificationRead(notif.id);
+                            queryClient.invalidateQueries({ queryKey: ['user-notifications'] });
+                            if (d.project_id) navigate(`/projects/${d.project_id}/situations`);
+                            setNotifOpen(false);
+                          }}
+                        >
+                          <span className="topbar-notif-item__dot topbar-notif-item__dot--danger" />
+                          <div className="topbar-notif-item__body">
+                            <div className="topbar-notif-item__title">✗ Situation rejetée CT — {d.situation_num}</div>
+                            <div className="topbar-notif-item__sub">
+                              {d.project_name} · {d.periode}{d.rejected_by ? ` · par ${d.rejected_by}` : ''}
+                              {d.comment ? ` · ${String(d.comment).slice(0, 50)}` : ''}
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })}
+
+                    {situationRejectedDtNotifs.map((notif: UserNotification) => {
+                      const d = notif.data as any;
+                      return (
+                        <button
+                          key={notif.id}
+                          type="button"
+                          className="topbar-notif-item topbar-notif-item--danger"
+                          onClick={async () => {
+                            await markNotificationRead(notif.id);
+                            queryClient.invalidateQueries({ queryKey: ['user-notifications'] });
+                            if (d.project_id) navigate(`/projects/${d.project_id}/situations`);
+                            setNotifOpen(false);
+                          }}
+                        >
+                          <span className="topbar-notif-item__dot topbar-notif-item__dot--danger" />
+                          <div className="topbar-notif-item__body">
+                            <div className="topbar-notif-item__title">✗ Situation rejetée DT — {d.situation_num}</div>
+                            <div className="topbar-notif-item__sub">
+                              {d.project_name} · {d.periode}{d.rejected_by ? ` · par ${d.rejected_by}` : ''}
+                              {d.comment ? ` · ${String(d.comment).slice(0, 50)}` : ''}
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })}
+
+                    {situationContestedNotifs.map((notif: UserNotification) => {
+                      const d = notif.data as any;
+                      return (
+                        <button
+                          key={notif.id}
+                          type="button"
+                          className="topbar-notif-item topbar-notif-item--critical"
+                          onClick={async () => {
+                            await markNotificationRead(notif.id);
+                            queryClient.invalidateQueries({ queryKey: ['user-notifications'] });
+                            if (d.project_id) navigate(`/projects/${d.project_id}/situations`);
+                            setNotifOpen(false);
+                          }}
+                        >
+                          <span className="topbar-notif-item__dot topbar-notif-item__dot--critical" />
+                          <div className="topbar-notif-item__body">
+                            <div className="topbar-notif-item__title">⚠️ Situation contestée — {d.situation_num}</div>
+                            <div className="topbar-notif-item__sub">
+                              {d.project_name} · {d.periode}{d.contested_by ? ` · par ${d.contested_by}` : ''}
+                              {d.reason ? ` · ${String(d.reason).slice(0, 50)}` : ''}
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })}
+
+                    {paymentOverdueNotifs.map((notif: UserNotification) => {
+                      const d = notif.data as any;
+                      return (
+                        <button
+                          key={notif.id}
+                          type="button"
+                          className="topbar-notif-item topbar-notif-item--critical"
+                          onClick={async () => {
+                            await markNotificationRead(notif.id);
+                            queryClient.invalidateQueries({ queryKey: ['user-notifications'] });
+                            if (d.project_id) navigate(`/projects/${d.project_id}/situations`);
+                            setNotifOpen(false);
+                          }}
+                        >
+                          <span className="topbar-notif-item__dot topbar-notif-item__dot--critical" />
+                          <div className="topbar-notif-item__body">
+                            <div className="topbar-notif-item__title">⏰ Paiement en retard — {d.situation_num}</div>
+                            <div className="topbar-notif-item__sub">
+                              {d.project_name} · {d.periode} · {d.days_overdue}j sans paiement
+                              {d.net_a_payer ? ` · ${fmtAmount(d.net_a_payer)}` : ''}
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })}
+
+                    {contractThresholdNotifs.map((notif: UserNotification) => {
+                      const d = notif.data as any;
+                      return (
+                        <button
+                          key={notif.id}
+                          type="button"
+                          className="topbar-notif-item topbar-notif-item--warning"
+                          onClick={async () => {
+                            await markNotificationRead(notif.id);
+                            queryClient.invalidateQueries({ queryKey: ['user-notifications'] });
+                            if (d.project_id) navigate(`/projects/${d.project_id}/situations`);
+                            setNotifOpen(false);
+                          }}
+                        >
+                          <span className="topbar-notif-item__dot topbar-notif-item__dot--warning" />
+                          <div className="topbar-notif-item__body">
+                            <div className="topbar-notif-item__title">📊 Seuil 80% marché atteint — {d.project_code}</div>
+                            <div className="topbar-notif-item__sub">
+                              {d.project_name} · {d.ratio_pct}% du marché certifié
+                              {d.montant_marche ? ` · ${fmtAmount(d.montant_marche)}` : ''}
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })}
+
+                    {contestationDelayNotifs.map((notif: UserNotification) => {
+                      const d = notif.data as any;
+                      return (
+                        <button
+                          key={notif.id}
+                          type="button"
+                          className="topbar-notif-item topbar-notif-item--critical"
+                          onClick={async () => {
+                            await markNotificationRead(notif.id);
+                            queryClient.invalidateQueries({ queryKey: ['user-notifications'] });
+                            if (d.project_id) navigate(`/projects/${d.project_id}/situations`);
+                            setNotifOpen(false);
+                          }}
+                        >
+                          <span className="topbar-notif-item__dot topbar-notif-item__dot--critical" />
+                          <div className="topbar-notif-item__body">
+                            <div className="topbar-notif-item__title">⏳ Situation sans réponse MOE — {d.situation_num}</div>
+                            <div className="topbar-notif-item__sub">
+                              {d.project_name} · {d.periode} · {d.days_waiting}j sans validation MOE
+                            </div>
+                          </div>
+                        </button>
                       );
                     })}
 

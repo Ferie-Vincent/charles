@@ -123,6 +123,38 @@ function formatDate(d: string | null) {
   return new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
+const SITUATION_STATUS_CONFIG: Record<string, { label: string; dot: string; border: string }> = {
+  brouillon:   { label: 'Brouillon',        dot: '#94a3b8', border: '#e2e8f0' },
+  en_revue_ct: { label: 'En revue CT',      dot: '#0ea5e9', border: '#e0f2fe' },
+  en_revue_dt: { label: 'En revue DT',      dot: '#8b5cf6', border: '#ede9fe' },
+  soumise:     { label: 'Soumise',          dot: '#f59e0b', border: '#fef3c7' },
+  contestee:   { label: 'Contestée ⚠',      dot: '#ef4444', border: '#fee2e2' },
+  validee:     { label: 'Validée ✓',        dot: '#3b82f6', border: '#dbeafe' },
+  validee_moe: { label: 'Validée MOE ✓',   dot: '#3b82f6', border: '#dbeafe' },
+  payee:       { label: 'Payée ✓',          dot: '#22c55e', border: '#dcfce7' },
+};
+
+function SituationStatusBanner({ situation }: { situation: { status: string; numero: number; periode: string } | null }) {
+  if (!situation) return null;
+  const cfg = SITUATION_STATUS_CONFIG[situation.status] ?? { label: situation.status, dot: '#94a3b8', border: '#e2e8f0' };
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: '10px',
+      padding: '10px 16px', margin: '0 0 12px',
+      borderRadius: '8px', border: `1px solid ${cfg.border}`,
+      background: 'var(--color-surface)',
+    }}>
+      <span style={{ width: 10, height: 10, borderRadius: '50%', background: cfg.dot, flexShrink: 0 }} />
+      <span style={{ fontWeight: 600, fontSize: '13px' }}>Situation n°{situation.numero}</span>
+      <span style={{ fontSize: '13px', color: 'var(--color-text-muted)' }}>{situation.periode}</span>
+      <span style={{
+        marginLeft: 'auto', fontSize: '12px', fontWeight: 700,
+        color: cfg.dot, background: `${cfg.border}`, padding: '2px 10px', borderRadius: '99px',
+      }}>{cfg.label}</span>
+    </div>
+  );
+}
+
 
 // ── Icon helpers (avoid JSX repetition) ────────────────────────────────────
 const IcoChart   = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>;
@@ -168,6 +200,7 @@ export default function ProjectDetailPage() {
   const isDGDT      = group === 'direction' || group === 'dt';
   // Management élargi : accès trésorerie/DQE
   const isManagement = isDGDT || group === 'metreur' || group === 'comptable';
+  const isTerrain = group === 'terrain';
 
   const { data: project, isLoading, isError } = useQuery({
     queryKey: ['project', numId],
@@ -183,6 +216,13 @@ export default function ProjectDetailPage() {
   });
   const logs    = logsData?.data ?? [];
   const logMeta = logsData?.meta ?? null;
+
+  const { data: lastSituationData } = useQuery({
+    queryKey: ['situation-last-status', numId],
+    queryFn: () => api.get(`/projects/${numId}/situations/last-status`).then(r => r.data.last_situation),
+    enabled: !!id && isTerrain,
+    staleTime: 300_000,
+  });
 
   if (isLoading) return (
     <div className="project-detail">
@@ -414,6 +454,10 @@ export default function ProjectDetailPage() {
 
       {showMeetingModal && <MeetingReportModal projectId={project.id} onClose={() => setShowMeetingModal(false)} />}
       {showSituationModal && <SituationTravauxModal projectId={project.id} onClose={() => setShowSituationModal(false)} />}
+
+      {isTerrain && (
+        <SituationStatusBanner situation={lastSituationData ?? null} />
+      )}
 
       {/* ── KPI strip — ordre pilotage BTP ── */}
       <div className="proj-kpi-row">

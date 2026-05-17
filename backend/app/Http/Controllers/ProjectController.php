@@ -123,4 +123,23 @@ class ProjectController extends Controller
 
         return response()->noContent();
     }
+
+    public function setAvanceDemarrage(Request $request, Project $project): JsonResponse
+    {
+        $this->authorize('update', $project);
+        abort_unless(in_array($request->user()->role->name, \App\Support\Roles::MANAGEMENT), 403, 'Seule la direction peut geler le montant d\'avance de démarrage.');
+
+        $data = $request->validate([
+            'montant_accorde'  => 'required|numeric|min:0',
+            'accorde_le'       => 'required|date',
+        ]);
+
+        $project->update([
+            'avance_demarrage_montant_accorde' => $data['montant_accorde'],
+            'avance_demarrage_accorde_le'      => $data['accorde_le'],
+            'avance_demarrage_accorde_par'     => $request->user()->id,
+        ]);
+
+        return response()->json(['project' => $project->fresh()]);
+    }
 }

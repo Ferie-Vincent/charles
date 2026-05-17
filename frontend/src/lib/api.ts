@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { enqueueRequest, replayQueue } from './offline-queue';
 
 // Attach _silentOn403: true on a request config to skip the global 403 toast.
 declare module 'axios' {
@@ -18,11 +19,31 @@ api.interceptors.request.use(config => {
   return config;
 });
 
+// Replay queued mutations when connection is restored
+window.addEventListener('online', async () => {
+  const { replayed, failed, failedRequests } = await replayQueue(api);
+  if (replayed > 0 || failed > 0) {
+    window.dispatchEvent(new CustomEvent('offline-replayed', { detail: { replayed, failed, failedRequests } }));
+  }
+});
+
+const MUTATION_METHODS = new Set(['post', 'patch', 'put', 'delete']);
+
 api.interceptors.response.use(
   res => res,
   err => {
     const status = err.response?.status;
     const data = err.response?.data;
+
+    // Queue write mutations when offline for later replay
+    if (!navigator.onLine && !err.response && err.config) {
+      const method = (err.config.method ?? '').toLowerCase();
+      if (MUTATION_METHODS.has(method)) {
+        enqueueRequest(method, err.config.url!, JSON.parse(err.config.data ?? 'null'));
+        window.dispatchEvent(new CustomEvent('offline-queued', { detail: { url: err.config.url } }));
+        return Promise.reject(err);
+      }
+    }
 
     if (status === 419) {
       window.dispatchEvent(new CustomEvent('api-error', {

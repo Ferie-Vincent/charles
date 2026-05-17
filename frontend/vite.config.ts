@@ -10,15 +10,18 @@ export default defineConfig({
       devOptions: { enabled: false },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        navigateFallback: '/index.html',
+        skipWaiting: true,
+        clientsClaim: true,
         runtimeCaching: [
           {
-            // Network-first for API — fresh data when online, cache fallback offline
+            // Network-first for API — 3s timeout on 2G before cache fallback
             urlPattern: /^http:\/\/localhost:8000\/api\//,
             handler: 'NetworkFirst',
             options: {
               cacheName: 'api-cache',
-              networkTimeoutSeconds: 8,
-              expiration: { maxEntries: 100, maxAgeSeconds: 86400 },
+              networkTimeoutSeconds: 3,
+              expiration: { maxEntries: 150, maxAgeSeconds: 86400 },
               cacheableResponse: { statuses: [0, 200] },
             },
           },

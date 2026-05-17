@@ -15,7 +15,7 @@ class BudgetController extends Controller
     {
         $this->authorize('view', $project);
 
-        $project->load(['budgetEntries', 'invoices', 'dqeVersions']);
+        $project->load(['budgetEntries.situationTravaux:id,numero', 'invoices', 'dqeVersions']);
         $entries = $project->budgetEntries->sortBy('entry_date');
 
         $totals = [
@@ -35,10 +35,17 @@ class BudgetController extends Controller
         // 90-day monthly buckets from today
         $buckets = $this->build90jBuckets($entries);
 
+        // Paiements manuels sans lien situation — saisie comptable non traçable
+        $orphanPayments = $project->budgetEntries()
+            ->where('type', 'paiement')
+            ->whereNull('situation_travaux_id')
+            ->get(['id', 'label', 'amount', 'entry_date']);
+
         return response()->json([
-            'entries' => $entries,
-            'totals'  => $totals,
-            'chart'   => $buckets,
+            'entries'         => $entries,
+            'totals'          => $totals,
+            'chart'           => $buckets,
+            'orphan_payments' => $orphanPayments,
         ]);
     }
 

@@ -170,6 +170,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/projects', [ProjectController::class, 'store']);
     Route::get('/projects/{project}', [ProjectController::class, 'show']);
     Route::put('/projects/{project}', [ProjectController::class, 'update']);
+    Route::patch('/projects/{project}/avance-demarrage', [ProjectController::class, 'setAvanceDemarrage']);
     Route::delete('/projects/{project}', [ProjectController::class, 'destroy']);
 
     Route::get('/projects/{project}/daily-logs', [DailyLogController::class, 'index']);
@@ -247,11 +248,20 @@ Route::middleware('auth')->group(function () {
     Route::patch('/projects/{project}/bpu/{version}/validate', [BpuController::class, 'validateVersion']);
 
     // ── Situation Travaux — DB workflow ───────────────────────────────────────
+    Route::get('/projects/{project}/situations/last-status', [SituationTravauxController::class, 'lastStatus']);
+    Route::get('/projects/{project}/situations/preview-calcul', [SituationTravauxController::class, 'previewCalcul']);
     Route::get('/projects/{project}/situations', [SituationTravauxController::class, 'list']);
     Route::post('/projects/{project}/situations', [SituationTravauxController::class, 'storeSituation']);
     Route::patch('/projects/{project}/situations/{situation}/submit', [SituationTravauxController::class, 'submit']);
+    Route::patch('/projects/{project}/situations/{situation}/approve-ct', [SituationTravauxController::class, 'approveCt']);
+    Route::patch('/projects/{project}/situations/{situation}/reject-ct', [SituationTravauxController::class, 'rejectCt']);
+    Route::patch('/projects/{project}/situations/{situation}/approve-dt', [SituationTravauxController::class, 'approveDt']);
+    Route::patch('/projects/{project}/situations/{situation}/reject-dt', [SituationTravauxController::class, 'rejectDt']);
+    Route::patch('/projects/{project}/situations/{situation}/contest', [SituationTravauxController::class, 'contest']);
+    Route::patch('/projects/{project}/situations/{situation}/correct', [SituationTravauxController::class, 'correct']);
     Route::patch('/projects/{project}/situations/{situation}/validate', [SituationTravauxController::class, 'validateSituation']);
     Route::patch('/projects/{project}/situations/{situation}/pay', [SituationTravauxController::class, 'pay']);
+    Route::get('/projects/{project}/situations/{situation}/pdf', [SituationTravauxController::class, 'pdfSituation']);
     // Legacy aliases kept for backward compat
     Route::get('/projects/{project}/situation-travaux/list', [SituationTravauxController::class, 'list']);
     Route::post('/projects/{project}/situation-travaux/store', [SituationTravauxController::class, 'storeSituation']);

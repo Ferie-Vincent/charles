@@ -9,7 +9,7 @@ class BudgetEntry extends Model
 {
     protected $fillable = [
         'project_id', 'created_by', 'type', 'category',
-        'label', 'amount', 'entry_date', 'note',
+        'label', 'amount', 'entry_date', 'note', 'situation_travaux_id',
     ];
 
     protected $casts = [
@@ -30,5 +30,10 @@ class BudgetEntry extends Model
     public function demandeBesoin(): \Illuminate\Database\Eloquent\Relations\HasOne
     {
         return $this->hasOne(DemandeBesoin::class, 'budget_entry_id');
+    }
+
+    public function situationTravaux(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(SituationTravaux::class, 'situation_travaux_id');
     }
 }
