@@ -47,6 +47,8 @@ export type Project = {
   caution_bonne_execution_pct: number | null;
   caution_liberee: boolean;
   caution_liberee_at: string | null;
+  is_arrete: boolean;
+  arret_depuis: string | null;
   penalites_retard_par_jour: number | null;
   members?: ProjectMember[];
   activities?: ProjectActivity[];

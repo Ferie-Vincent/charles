@@ -340,6 +340,11 @@ export default function SituationsPage() {
                   Base = {fmt(preview.base_calcul)}
                   {preview.avenants_signes_sum > 0 && ` (dont ${fmt(preview.avenants_signes_sum)} avenants signés)`}
                   {' × '}{form.avancement_pct}%
+                  {preview.type_marche === 'forfait' && (
+                    <span style={{ display: 'block', marginTop: 4, color: 'var(--color-warning, #f59e0b)', fontWeight: 500 }}>
+                      Marché à forfait — base = montant du marché (les lignes DQE ne sont pas utilisées pour le calcul)
+                    </span>
+                  )}
                   {preview.avance_demarrage_montant > 0 && (
                     <span style={{ display: 'block', marginTop: 2 }}>
                       Avance démarrage : {fmt(preview.avance_demarrage_montant)} ({preview.avance_demarrage_pct}%)

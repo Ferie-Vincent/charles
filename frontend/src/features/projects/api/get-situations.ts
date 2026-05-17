@@ -70,6 +70,7 @@ export async function fetchPreviewCalcul(projectId: number, avancementPct: numbe
   avance_demarrage_pct: number;
   progress_from_journal: number | null;
   last_log_date: string | null;
+  type_marche: string | null;
 }> {
   const params = new URLSearchParams({ avancement_pct: String(avancementPct) });
   if (dqeVersionId) params.append('dqe_version_id', String(dqeVersionId));

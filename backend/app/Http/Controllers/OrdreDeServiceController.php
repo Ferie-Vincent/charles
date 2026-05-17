@@ -49,9 +49,13 @@ class OrdreDeServiceController extends Controller
             'document_path' => $path,
         ]);
 
-        // Auto-update project lifecycle_status when OS type = demarrage
+        // Auto-update project state based on OS type
         if ($data['type'] === 'demarrage') {
-            $project->update(['lifecycle_status' => 'execution']);
+            $project->update(['lifecycle_status' => 'execution', 'is_arrete' => false, 'arret_depuis' => null]);
+        } elseif ($data['type'] === 'arret') {
+            $project->update(['is_arrete' => true, 'arret_depuis' => $data['date_os']]);
+        } elseif ($data['type'] === 'reprise') {
+            $project->update(['is_arrete' => false, 'arret_depuis' => null]);
         }
 
         return response()->json(['ordre_de_service' => $os->load('emetteur:id,name')], 201);
