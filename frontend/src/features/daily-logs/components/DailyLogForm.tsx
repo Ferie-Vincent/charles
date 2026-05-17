@@ -64,7 +64,8 @@ export default function DailyLogForm({ projectId, projectLatitude, projectLongit
   const [geoChecking, setGeoChecking] = useState(false);
   const [prefilled, setPrefilled] = useState(false);
   const [listening, setListening] = useState(false);
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const recognitionRef = useRef<any>(null);
 
   // Pre-fill from last log
   const { data: lastLog } = useQuery({
@@ -125,8 +126,9 @@ export default function DailyLogForm({ projectId, projectLatitude, projectLongit
   }
 
   function toggleVoice() {
-    const SR = (window as typeof window & { SpeechRecognition?: typeof SpeechRecognition; webkitSpeechRecognition?: typeof SpeechRecognition }).SpeechRecognition
-      || (window as typeof window & { SpeechRecognition?: typeof SpeechRecognition; webkitSpeechRecognition?: typeof SpeechRecognition }).webkitSpeechRecognition;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const w = window as any;
+    const SR = w.SpeechRecognition || w.webkitSpeechRecognition;
     if (!SR) return;
 
     if (listening) {
@@ -139,9 +141,9 @@ export default function DailyLogForm({ projectId, projectLatitude, projectLongit
     rec.lang = 'fr-FR';
     rec.continuous = true;
     rec.interimResults = false;
-    rec.onresult = (e) => {
-      const transcript = Array.from(e.results)
-        .map(r => r[0].transcript)
+    rec.onresult = (e: any) => {
+      const transcript = Array.from(e.results as any[])
+        .map((r: any) => r[0].transcript as string)
         .join(' ');
       setNotes(prev => (prev ? prev + ' ' : '') + transcript);
     };
@@ -225,10 +227,8 @@ export default function DailyLogForm({ projectId, projectLatitude, projectLongit
     );
   }
 
-  const hasSpeech = !!(
-    (window as typeof window & { SpeechRecognition?: unknown; webkitSpeechRecognition?: unknown }).SpeechRecognition
-    || (window as typeof window & { SpeechRecognition?: unknown; webkitSpeechRecognition?: unknown }).webkitSpeechRecognition
-  );
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const hasSpeech = !!((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition);
 
   return (
     <form className="daily-log-form" onSubmit={handleSubmit}>

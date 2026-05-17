@@ -18,6 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
         $middleware->alias([
             'permission' => \App\Http\Middleware\CheckPermission::class,
+            'ai.enabled' => \App\Http\Middleware\CheckAiEnabled::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

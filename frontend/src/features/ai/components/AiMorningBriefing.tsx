@@ -1,10 +1,14 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getAiBriefing } from '../api/ai';
+import { useAiEnabled } from '../hooks/useAiEnabled';
 import AiFeedbackButton from './AiFeedbackButton';
 
 export default function AiMorningBriefing() {
+  const { enabled } = useAiEnabled();
   const [expanded, setExpanded] = useState(true);
+
+  if (!enabled) return null;
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['ai-briefing'],

@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
 import { api } from '../../../lib/api';
+import { useAiEnabled } from '../hooks/useAiEnabled';
 import AiFeedbackButton from './AiFeedbackButton';
 
 type QueryResult = {

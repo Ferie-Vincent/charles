@@ -166,7 +166,7 @@ export default function ProjectDocumentsPanel({ projectId }: Props) {
   const qc = useQueryClient();
   const [showUpload, setShowUpload] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
-  const [mdViewer, setMdViewer] = useState<{ url: string; name: string } | null>(null);
+  const [mdViewer, setMdViewer] = useState<{ docId: number; name: string } | null>(null);
 
   const { data: docs = [], isLoading } = useQuery<GedDocument[]>({
     queryKey: ['project-docs', projectId],
@@ -183,10 +183,10 @@ export default function ProjectDocumentsPanel({ projectId }: Props) {
   });
 
   async function handleOpen(doc: GedDocument) {
-    const url = await getDocumentUrl(doc.id);
     if (doc.mime_type === 'text/markdown' || doc.original_name.endsWith('.md')) {
-      setMdViewer({ url, name: doc.name });
+      setMdViewer({ docId: doc.id, name: doc.name });
     } else {
+      const url = await getDocumentUrl(doc.id);
       window.open(url, '_blank', 'noreferrer');
     }
   }
@@ -287,7 +287,7 @@ export default function ProjectDocumentsPanel({ projectId }: Props) {
 
       {mdViewer && (
         <MdViewerModal
-          url={mdViewer.url}
+          docId={mdViewer.docId}
           title={mdViewer.name}
           onClose={() => setMdViewer(null)}
         />

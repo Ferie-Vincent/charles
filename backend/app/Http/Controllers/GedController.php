@@ -98,6 +98,16 @@ class GedController extends Controller
         ]);
     }
 
+    public function content(Request $request, GedDocument $gedDocument): \Illuminate\Http\Response
+    {
+        abort_if($gedDocument->company_id !== $request->user()->company_id, 403);
+        abort_unless(Storage::disk('public')->exists($gedDocument->path), 404);
+
+        $text = Storage::disk('public')->get($gedDocument->path);
+
+        return response($text, 200)->header('Content-Type', 'text/plain; charset=utf-8');
+    }
+
     public function update(Request $request, GedDocument $gedDocument): JsonResponse
     {
         abort_if($gedDocument->company_id !== $request->user()->company_id, 403);

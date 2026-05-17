@@ -43,7 +43,7 @@ export default function GedPage() {
   const [projectFilter, setProjectFilter] = useState('');
   const [search, setSearch]     = useState('');
   const [modal, setModal]       = useState(false);
-  const [mdViewer, setMdViewer] = useState<{ url: string; name: string } | null>(null);
+  const [mdViewer, setMdViewer] = useState<{ docId: number; name: string } | null>(null);
   const [saving, setSaving]     = useState(false);
   const [uploadForm, setUploadForm] = useState<{
     file: File | null; type: GedDocument['type']; project_id: string; name: string; description: string;
@@ -86,10 +86,10 @@ export default function GedPage() {
   };
 
   const handleOpen = async (doc: GedDocument) => {
-    const url = await getDocumentUrl(doc.id);
     if (doc.mime_type === 'text/markdown' || doc.original_name.endsWith('.md')) {
-      setMdViewer({ url, name: doc.name });
+      setMdViewer({ docId: doc.id, name: doc.name });
     } else {
+      const url = await getDocumentUrl(doc.id);
       window.open(url, '_blank', 'noopener,noreferrer');
     }
   };
@@ -405,7 +405,7 @@ export default function GedPage() {
 
       {mdViewer && (
         <MdViewerModal
-          url={mdViewer.url}
+          docId={mdViewer.docId}
           title={mdViewer.name}
           onClose={() => setMdViewer(null)}
         />
