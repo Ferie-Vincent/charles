@@ -76,7 +76,7 @@ export async function dismissAlert(alertKey: string, durationHours: 0 | 24 | 72 
   return res.data;
 }
 
-/** Next business day at 09:00 local time */
+/** Prochain jour ouvrable à 09:00 heure locale */
 export function suggestMeetingDateTime(): string {
   const now = new Date();
   const next = new Date(now);

@@ -49,7 +49,7 @@ class PortfolioCostsController extends Controller
                 'taux_realise'   => $metrics['taux_realise'],
                 'taux_engage'    => $metrics['taux_engage'],
                 'alert'          => $alert,
-                // Legacy fields for existing dashboard
+                // Champs legacy pour le tableau de bord existant
                 'budget_amount'  => (float) $project->budget_amount,
                 'previsionnel'   => (float) $project->budgetEntries->where('type', 'previsionnel')->sum('amount'),
                 'engagement'     => $metrics['engage'],
@@ -67,7 +67,7 @@ class PortfolioCostsController extends Controller
             'rac'        => $projectData->sum('rac'),
             'cat'        => $projectData->sum('cat'),
             'ecart'      => $projectData->sum('ecart'),
-            // Legacy
+            // Héritage
             'previsionnel'    => $projectData->sum('previsionnel'),
             'engagement'      => $projectData->sum('engage'),
             'paiement'        => $projectData->sum('realise'),

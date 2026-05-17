@@ -106,7 +106,7 @@ class ProjectIncidentController extends Controller
             app(WhatsAppAlertService::class)->send($msg);
         }
 
-        // Notify conducteurs de travaux in this company immediately
+        // Notifier immédiatement les conducteurs de travaux de cette entreprise
         User::whereHas('role', fn($q) => $q->whereIn('name', [Roles::CONDUCTEUR_TRAVAUX_SLUG, Roles::DIRECTEUR_TECHNIQUE_SLUG]))
             ->where('company_id', $project->company_id)
             ->where('id', '!=', $incident->reported_by)

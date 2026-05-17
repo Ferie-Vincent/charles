@@ -30,7 +30,7 @@ class MeetingMetricsController extends Controller
         $acceptRate   = $rsvpAnswered > 0 ? round((int) $rsvp->accepted / $rsvpAnswered * 100, 1) : 0;
 
         // ── Couverture canal WhatsApp vs Mail ─────────────────────────────────
-        // Proxy: invitees qui avaient un numéro au moment de l'invitation
+        // Proxy : invités qui avaient un numéro au moment de l'invitation
         $channels = DB::table('meeting_invitation_users as miu')
             ->join('meeting_invitations as mi', 'mi.id', '=', 'miu.meeting_invitation_id')
             ->join('users', 'users.id', '=', 'miu.user_id')
@@ -46,7 +46,7 @@ class MeetingMetricsController extends Controller
         $waRate     = $chanTotal > 0 ? round((int) $channels->whatsapp / $chanTotal * 100, 1) : 0;
 
         // ── Taux de complétion des checklists ─────────────────────────────────
-        // Tasks source=ai avec alert_key → générées depuis une réunion + checklist
+        // Tâches source=ai avec alert_key → générées depuis une réunion + checklist
         $checklists = DB::table('tasks')
             ->where('company_id', $companyId)
             ->where('source', 'ai')

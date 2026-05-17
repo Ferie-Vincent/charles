@@ -7156,6 +7156,21 @@ code {
 .stocks-qty--critique { color: #f59e0b; font-weight: 700; }
 .stocks-qty--ok { color: #10b981; font-weight: 600; }
 
+/* Barre de jauge de niveau de stock */
+.stocks-gauge { display: flex; align-items: center; gap: 8px; }
+.stocks-gauge__track { flex: 1; height: 6px; background: var(--border); border-radius: 99px; overflow: hidden; }
+.stocks-gauge__fill { height: 100%; border-radius: 99px; transition: width 0.3s ease; }
+.stocks-gauge__pct { font-size: 0.75rem; font-weight: 600; min-width: 34px; text-align: right; }
+
+/* Accent de ligne pour les articles critiques ou en rupture */
+.stocks-row--low td:first-child { border-left: 3px solid #f59e0b; }
+.stocks-row--empty td:first-child { border-left: 3px solid #ef4444; }
+
+/* Variantes de badge sémantique (danger/warning/success) */
+.badge--danger  { background: #ef444415; color: #ef4444; border: 1px solid #ef444440; }
+.badge--warning { background: #f59e0b15; color: #d97706; border: 1px solid #f59e0b40; }
+.badge--success { background: #10b98115; color: #059669; border: 1px solid #10b98140; }
+
 /* Stocks movement panel */
 .stocks-mov-panel { display: flex; flex-direction: column; gap: 24px; }
 .stocks-mov-form { background: var(--surface-alt, #f8fafc); border: 1px solid var(--border); border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }

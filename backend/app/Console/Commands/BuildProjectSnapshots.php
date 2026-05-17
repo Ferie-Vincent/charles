@@ -15,8 +15,8 @@ use Carbon\Carbon;
 
 class BuildProjectSnapshots extends Command
 {
-    protected $signature = 'ai:build-snapshots {--date= : Snapshot date (YYYY-MM-DD), defaults to today}';
-    protected $description = 'Build daily project_snapshots for AI context';
+    protected $signature = 'ai:build-snapshots {--date= : Date du snapshot (YYYY-MM-DD), par défaut aujourd\'hui}';
+    protected $description = 'Construit les project_snapshots quotidiens pour le contexte IA';
 
     public function handle(): int
     {
@@ -26,7 +26,7 @@ class BuildProjectSnapshots extends Command
 
         $projects = Project::with(['company'])->get();
 
-        $this->info("Building snapshots for {$date} — {$projects->count()} projects…");
+        $this->info("Construction des snapshots pour {$date} — {$projects->count()} projets…");
 
         foreach ($projects as $project) {
             $this->buildSnapshot($project, $date);
@@ -42,7 +42,7 @@ class BuildProjectSnapshots extends Command
         $cid = $project->company_id;
         $now = Carbon::parse($date);
 
-        // Logs
+        // Journaux
         $allLogs = DailyLog::where('project_id', $pid)->orderByDesc('log_date')->get();
         $totalLogs = $allLogs->count();
         $logsLast7 = $allLogs->filter(fn($l) => Carbon::parse($l->log_date)->gte($now->copy()->subDays(7)))->count();
@@ -53,12 +53,12 @@ class BuildProjectSnapshots extends Command
             $workersToday = $lastLog->workers_count ?? 0;
         }
 
-        // Avg workers last 7d
+        // Effectif moyen sur les 7 derniers jours
         $avgWorkers = $allLogs
             ->filter(fn($l) => Carbon::parse($l->log_date)->gte($now->copy()->subDays(7)))
             ->avg('workers_count') ?? 0;
 
-        // Top materials
+        // Matériaux les plus fréquents
         $materialsFreq = [];
         foreach ($allLogs->whereNotNull('materials_received') as $log) {
             $materials = is_array($log->materials_received) ? $log->materials_received : json_decode($log->materials_received, true) ?? [];
@@ -72,27 +72,27 @@ class BuildProjectSnapshots extends Command
         arsort($materialsFreq);
         $topMaterials = array_keys(array_slice($materialsFreq, 0, 5, true));
 
-        // Budget
+        // Budget prévisionnel / engagé / réalisé
         $budgetPrev = BudgetEntry::where('project_id', $pid)->where('type', 'previsionnel')->sum('amount');
         $budgetEng  = BudgetEntry::where('project_id', $pid)->where('type', 'engagement')->sum('amount');
         $budgetReal = BudgetEntry::where('project_id', $pid)->where('type', 'paiement')->sum('amount');
         $consumptionPct = $budgetPrev > 0 ? round(($budgetReal / $budgetPrev) * 100, 2) : 0;
 
-        // Incidents
+        // Incidents sur le projet
         $incidents = Incident::where('project_id', $pid)->get();
         $incidentsTotal = $incidents->count();
         $incidentsLast30 = $incidents->filter(fn($i) => Carbon::parse($i->occurred_at)->gte($now->copy()->subDays(30)))->count();
         $incidentsCritiques = $incidents->where('severity', 'critique')->count();
 
-        // Stocks
+        // Alertes de stock
         $stockAlerts = StockItem::where('company_id', $cid)
             ->whereColumn('quantity', '<=', 'threshold')
             ->count();
 
-        // BDC pending
+        // BDC en attente
         $bdcPending = PurchaseOrder::where('project_id', $pid)->where('status', 'pending')->count();
 
-        // Progress & health (from latest daily log)
+        // Avancement & health score (depuis le dernier journal)
         $progress = $lastLog?->progress_percent ?? 0;
         $daysTotal = $project->start_date && $project->end_date
             ? max(1, Carbon::parse($project->start_date)->diffInDays(Carbon::parse($project->end_date)))
@@ -104,7 +104,7 @@ class BuildProjectSnapshots extends Command
             ? min(100, (int) round(($daysElapsed / $daysTotal) * 100))
             : 0;
 
-        // Simple health score
+        // Calcul simplifié du health score
         $planningSc = $theoreticalProgress > 0
             ? max(0, 25 - max(0, $theoreticalProgress - $progress) * 1.25)
             : 25;

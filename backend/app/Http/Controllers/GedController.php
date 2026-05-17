@@ -47,7 +47,7 @@ class GedController extends Controller
         );
 
         $request->validate([
-            'file'        => 'required|file|mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png,webp,zip|max:51200', // 50 MB
+            'file'        => 'required|file|mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png,webp,zip|max:51200', // 50 Mo
             'type'        => 'required|in:plan,contrat,pv,rapport,facture,photo,autre,ao,os,marche',
             'project_id'  => ['nullable', Rule::exists('projects', 'id')->where('company_id', $request->user()->company_id)],
             'name'        => 'nullable|string|max:255',
@@ -57,7 +57,7 @@ class GedController extends Controller
         $file         = $request->file('file');
         $originalName = $file->getClientOriginalName();
         $name         = $request->filled('name') ? $request->name : pathinfo($originalName, PATHINFO_FILENAME);
-        $extension    = strtolower($file->extension()); // uses finfo, not client name
+        $extension    = strtolower($file->extension()); // utilise finfo, pas le nom fourni par le client
         $storedName   = Str::uuid() . '.' . $extension;
         $directory    = "ged/{$request->user()->company_id}";
 

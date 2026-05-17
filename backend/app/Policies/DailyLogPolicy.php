@@ -30,7 +30,7 @@ class DailyLogPolicy
             return false;
         }
 
-        // lecture-seule excluded from operational terrain data
+        // lecture-seule exclu des données opérationnelles terrain
         if ($user->role->name === 'lecture-seule') {
             return false;
         }

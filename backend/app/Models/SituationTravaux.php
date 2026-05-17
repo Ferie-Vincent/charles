@@ -54,7 +54,7 @@ class SituationTravaux extends Model
             return 0;
         }
 
-        // avance_demarrage_montant accessor prefers frozen amount over live formula
+        // L'accesseur avance_demarrage_montant préfère le montant figé à la formule dynamique
         $totalAvance = round($project->avance_demarrage_montant, 2);
 
         if ($totalAvance <= 0) {

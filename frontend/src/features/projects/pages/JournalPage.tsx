@@ -37,7 +37,7 @@ export default function JournalPage() {
     return Math.min(100, Math.round((meta.total_logs / daysSinceStart) * 100));
   })();
 
-  // Health score formula from CLAUDE.md
+  // Formule du score santé selon CLAUDE.md
   const healthScore = (() => {
     if (!meta || !project) return null;
     const real = meta.latest_progress ?? 0;

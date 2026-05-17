@@ -15,7 +15,7 @@ class StockController extends Controller
 {
     private const CATEGORIES = ['materiaux', 'equipement', 'fournitures', 'consommables', 'autre'];
 
-    // ── Stock Items ────────────────────────────────────────────────────
+    // ── Articles de stock ────────────────────────────────────────────────────
 
     public function index(Request $request): JsonResponse
     {
@@ -98,7 +98,7 @@ class StockController extends Controller
         return response()->noContent();
     }
 
-    // ── Audit log — ajustement movements across all company stock items ──
+    // ── Journal d'audit — mouvements d'ajustement sur tous les articles de stock de l'entreprise ──
 
     public function adjustmentAudit(Request $request): JsonResponse
     {
@@ -118,7 +118,7 @@ class StockController extends Controller
         return response()->json($movements);
     }
 
-    // ── Movements ─────────────────────────────────────────────────────
+    // ── Mouvements ─────────────────────────────────────────────────────
 
     public function movements(Request $request, StockItem $stockItem): JsonResponse
     {
@@ -170,8 +170,8 @@ class StockController extends Controller
                 return;
             }
 
-            // FIX H3: for ajustement, store the signed delta (not the absolute target) so
-            // movement history remains mathematically consistent (SUM of quantities = net stock change).
+            // FIX H3 : pour ajustement, stocker le delta signé (pas la cible absolue) afin que
+            // l'historique des mouvements reste mathématiquement cohérent (SOMME des quantités = variation nette de stock).
             $movementData = $data;
             if ($data['type'] === 'ajustement') {
                 $movementData['quantity'] = $data['quantity'] - $lockedItem->quantity;

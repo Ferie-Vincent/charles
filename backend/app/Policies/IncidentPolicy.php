@@ -15,8 +15,8 @@ class IncidentPolicy
     }
 
     /**
-     * Called via authorize('create', [Incident::class, $project]).
-     * Takes a Project (the parent) instead of an Incident (not yet created).
+     * Appelé via authorize('create', [Incident::class, $project]).
+     * Reçoit un Project (le parent) au lieu d'un Incident (pas encore créé).
      */
     public function create(User $user, Project $project): bool
     {

@@ -123,7 +123,7 @@ class UserController extends Controller
 
         $this->authorize('delete', $user);
 
-        // Prevent deleting the last direction user — company would be left without an admin
+        // Empêcher la suppression du dernier utilisateur direction — l'entreprise se retrouverait sans administrateur
         if ($user->role->name === 'direction') {
             $directionCount = User::where('company_id', $user->company_id)
                 ->whereHas('role', fn($q) => $q->where('name', 'direction'))

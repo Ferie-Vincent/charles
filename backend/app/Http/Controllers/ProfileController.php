@@ -108,7 +108,7 @@ class ProfileController extends Controller
             $update['ai_provider'] = $data['ai_provider'];
         }
 
-        // Empty string = clear the key; null = keep existing
+        // Chaîne vide = effacer la clé ; null = conserver l'existante
         if (array_key_exists('ai_api_key', $data)) {
             $update['ai_api_key'] = $data['ai_api_key'] ?: null;
         }

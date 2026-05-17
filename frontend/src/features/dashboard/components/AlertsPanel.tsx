@@ -103,7 +103,7 @@ export default function AlertsPanel({ alerts }: Props) {
               return (
                 <li key={alert.id} className={`ap-item ap-item--${alert.severity}${isDecision ? ' ap-item--decision' : ''}`}>
 
-                  {/* Critical: CTA first, snooze secondary */}
+                  {/* Critique : CTA en premier, reporter en secondaire */}
                   {isDecision && (
                     <div className="ap-item__cta-row">
                       <button
@@ -153,7 +153,7 @@ export default function AlertsPanel({ alerts }: Props) {
                     </div>
                     <Link to={alert.action_url} className="ap-item__link">→</Link>
 
-                    {/* Non-critical: snooze dropdown on × */}
+                    {/* Non critique : menu reporter sur × */}
                     {!isDecision && (
                       <div className="ap-snooze-wrap" ref={snoozeRef}>
                         <button

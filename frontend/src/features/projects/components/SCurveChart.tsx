@@ -12,10 +12,10 @@ type Props = {
 };
 
 type DataPoint = {
-  date: string;       // YYYY-MM-DD
-  label: string;      // short display label
-  theorique: number;  // linear theoretical %
-  reel: number | null;// actual progress (carry-forward from logs)
+  date: string;       // AAAA-MM-JJ
+  label: string;      // libellé d'affichage court
+  theorique: number;  // % théorique linéaire
+  reel: number | null;// avancement réel (report cumulé depuis les journaux)
 };
 
 function addDays(date: Date, n: number): Date {
@@ -41,7 +41,7 @@ function buildSeries(logs: DailyLog[], startDate: string, endDate: string, targe
   const totalMs   = end.getTime() - start.getTime();
   const seriesEnd = today < end ? today : end;
 
-  // Map date → latest progress from logs
+  // Correspondance date → avancement le plus récent depuis les journaux
   const logMap = new Map<string, number>();
   for (const log of logs) {
     const existing = logMap.get(log.log_date);
@@ -54,7 +54,7 @@ function buildSeries(logs: DailyLog[], startDate: string, endDate: string, targe
   let lastReal: number | null = null;
   let cursor = new Date(start);
 
-  // Only emit a point every N days to keep chart readable
+  // N'émettre qu'un point tous les N jours pour garder le graphique lisible
   const totalDays = Math.ceil((seriesEnd.getTime() - start.getTime()) / 86_400_000);
   const step = totalDays > 180 ? 14 : totalDays > 90 ? 7 : totalDays > 30 ? 3 : 1;
 
@@ -79,7 +79,7 @@ function buildSeries(logs: DailyLog[], startDate: string, endDate: string, targe
     dayIndex++;
   }
 
-  // Always include start point
+  // Toujours inclure le point de départ
   if (points.length === 0 || points[0].date !== startDate) {
     points.unshift({ date: startDate, label: fmtLabel(startDate), theorique: 0, reel: null });
   }
@@ -138,7 +138,7 @@ export default function SCurveChart({ logs, startDate, endDate, targetProgress }
             wrapperStyle={{ fontSize: 12 }}
           />
 
-          {/* Today reference line */}
+          {/* Ligne de référence aujourd'hui */}
           {todayPoint && (
             <ReferenceLine
               x={todayPoint.label}

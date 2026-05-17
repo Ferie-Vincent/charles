@@ -81,7 +81,7 @@ export default function ProjectsPage() {
 
       <div className="page-content">
 
-        {/* KPI strip */}
+        {/* Bandeau KPI */}
         <div className="proj-kpi-row">
           <div className="proj-kpi">
             <div className="proj-kpi__icon proj-kpi__icon--blue">
@@ -132,7 +132,7 @@ export default function ProjectsPage() {
           </div>
         </div>
 
-        {/* Filter bar */}
+        {/* Barre de filtres */}
         <div className="projects-filter-bar">
           <div className="filter-pills">
             {STATUSES.map(s => (
@@ -198,7 +198,7 @@ export default function ProjectsPage() {
           </div>
         </div>
 
-        {/* Content */}
+        {/* Contenu */}
         {isLoading ? (
           <SkeletonPage rows={2} />
         ) : view === 'cards' ? (

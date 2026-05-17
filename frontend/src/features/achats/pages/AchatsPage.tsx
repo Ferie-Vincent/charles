@@ -49,7 +49,7 @@ export default function AchatsPage() {
     staleTime: 120_000,
   });
 
-  // Load delivery docs when detail panel opens for a received order
+  // Charger les documents de livraison quand le panneau détail s'ouvre pour une commande reçue
   useEffect(() => {
     if (detail?.status === 'recu') {
       setDeliveryDocs(null);
@@ -214,7 +214,7 @@ export default function AchatsPage() {
       </div>
 
       <div style={{ background: 'var(--bg-panel)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
-        {/* Filter tabs */}
+        {/* Onglets de filtres */}
         <div style={{ display: 'flex', gap: 6, padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>
           {(['', 'soumis', 'approuve', 'rejete', 'recu'] as const).map(s => {
             const count = s ? orders.filter(o => o.status === s).length : orders.length;

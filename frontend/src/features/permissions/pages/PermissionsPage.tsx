@@ -26,7 +26,7 @@ export default function PermissionsPage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved]   = useState(false);
 
-  // Local state for editing
+  // État local pour l'édition
   const [local, setLocal] = useState<Record<string, Record<string, boolean>>>({});
 
   useEffect(() => {

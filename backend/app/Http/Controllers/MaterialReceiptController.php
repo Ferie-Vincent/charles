@@ -17,7 +17,7 @@ class MaterialReceiptController extends Controller
             ->orderByDesc('log_date')
             ->get(['log_date', 'materials_received']);
 
-        // Aggregate totals per material name
+        // Agréger les totaux par nom de matériau
         $totals = [];
         $entries = [];
 
@@ -49,12 +49,12 @@ class MaterialReceiptController extends Controller
             }
         }
 
-        // Sort totals by total_qty desc
+        // Trier les totaux par total_qty décroissant
         usort($totals, fn($a, $b) => $b['total_qty'] <=> $a['total_qty']);
 
         return response()->json([
             'totals'  => array_values($totals),
-            'entries' => array_slice($entries, 0, 50), // last 50 delivery lines
+            'entries' => array_slice($entries, 0, 50), // 50 dernières lignes de livraison
         ]);
     }
 }

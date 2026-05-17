@@ -150,7 +150,7 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
     });
   }, [ops]);
 
-  // Auto-prune dismissed keys that no longer exist in the API (item resolved)
+  // Nettoyage automatique des clés masquées qui n'existent plus dans l'API (élément résolu)
   useEffect(() => {
     if (!ops) return;
     const validKeys = new Set<string>([
@@ -329,7 +329,7 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
                               {contextLine} · {when}
                               {d.organizer_name ? ` · ${d.organizer_name}` : ''}
                             </div>
-                            {/* RSVP inline avec undo 5s */}
+                            {/* RSVP en ligne avec annulation 5s */}
                             {d.meeting_id && (
                               <div className="topbar-rsvp">
                                 <button
@@ -901,7 +901,7 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
         )}
       </div>
 
-      {/* Toast undo RSVP */}
+      {/* Toast d'annulation RSVP */}
       {rsvpToast && (
         <div className="rsvp-toast" role="status" aria-live="polite">
           <span>

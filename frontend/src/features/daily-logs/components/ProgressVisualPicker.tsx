@@ -28,7 +28,7 @@ export default function ProgressVisualPicker({ value, onChange }: Props) {
         <span className="pvp__value">{selectedPercent}%</span>
       </div>
 
-      {/* Phase grid */}
+      {/* Grille des phases */}
       <div className="pvp__phases">
         {BTP_PHASES.map(phase => (
           <button
@@ -44,7 +44,7 @@ export default function ProgressVisualPicker({ value, onChange }: Props) {
         ))}
       </div>
 
-      {/* Stage picker — shown when phase selected */}
+      {/* Sélecteur de jalons — affiché quand une phase est sélectionnée */}
       {selectedPhase && (
         <div className="pvp__stages">
           <p className="pvp__stages-title">
@@ -68,7 +68,7 @@ export default function ProgressVisualPicker({ value, onChange }: Props) {
         </div>
       )}
 
-      {/* Mini progress bar */}
+      {/* Mini barre de progression */}
       <div className="pvp__bar-wrap">
         <div className="pvp__bar" style={{ width: `${selectedPercent}%` }} />
       </div>

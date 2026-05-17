@@ -10,7 +10,7 @@ import { useToast } from '../../../components/ui/Toast';
 
 interface Props {
   projectId: number;
-  date: string; // YYYY-MM-DD
+  date: string; // AAAA-MM-JJ
   readonly?: boolean;
 }
 

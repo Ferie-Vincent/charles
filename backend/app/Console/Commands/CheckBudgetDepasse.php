@@ -13,7 +13,7 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
 #[Signature('projects:check-budget-depasse {--dry-run : List without sending}')]
-#[Description('Alert CDT + direction when realised cost exceeds budget_ref by > 5%')]
+#[Description('Alerte CDT + direction quand le coût réalisé dépasse budget_ref de > 5%')]
 class CheckBudgetDepasse extends Command
 {
     public function __construct(private ProjectFinancialMetricsService $metricsService)
@@ -23,7 +23,7 @@ class CheckBudgetDepasse extends Command
 
     public function handle(): int
     {
-        // Cooldown 7 days: skip projects already notified this week
+        // Anti-doublon 7 jours : ignorer les projets déjà notifiés cette semaine
         $recentProjectIds = DB::table('notifications')
             ->where('created_at', '>', now()->subDays(7))
             ->get(['data'])
@@ -71,7 +71,7 @@ class CheckBudgetDepasse extends Command
                 ));
         }
 
-        $this->info("Done. {$alerted} project(s) in budget dépassé.");
+        $this->info("Terminé. {$alerted} projet(s) en dépassement de budget.");
         return Command::SUCCESS;
     }
 }

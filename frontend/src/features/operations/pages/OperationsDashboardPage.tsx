@@ -38,7 +38,7 @@ function AgeBadge({ days }: { days: number }) {
   );
 }
 
-/* ─── sub-section cards ─────────────────────────────────────────── */
+/* ─── Cartes de sous-sections ───────────────────────────────────── */
 function CardShell({
   title,
   linkLabel,
@@ -67,7 +67,7 @@ function CardShell({
   );
 }
 
-/* ─── BDC table ─────────────────────────────────────────────────── */
+/* ─── Tableau BDC ───────────────────────────────────────────────── */
 function BdcTable({
   rows,
   approvingId,
@@ -126,7 +126,7 @@ function BdcTable({
   );
 }
 
-/* ─── Factures table ────────────────────────────────────────────── */
+/* ─── Tableau Factures ──────────────────────────────────────────── */
 function InvoicesTable({
   rows,
   validatingId,
@@ -183,7 +183,7 @@ function InvoicesTable({
   );
 }
 
-/* ─── Stock alerts table ─────────────────────────────────────────── */
+/* ─── Tableau alertes de stock ──────────────────────────────────── */
 function StocksTable({ rows }: { rows: StockAlert[] }) {
   if (rows.length === 0)
     return <p style={{ padding: '20px 18px', color: 'var(--text-muted)', textAlign: 'center', fontSize: '0.85rem' }}>Aucun stock en alerte.</p>;
@@ -216,7 +216,7 @@ function StocksTable({ rows }: { rows: StockAlert[] }) {
   );
 }
 
-/* ─── Critical projects table ───────────────────────────────────── */
+/* ─── Tableau chantiers critiques ───────────────────────────────── */
 function CriticalProjectsTable({ rows }: { rows: CriticalProject[] }) {
   if (rows.length === 0)
     return <p style={{ padding: '20px 18px', color: 'var(--text-muted)', textAlign: 'center', fontSize: '0.85rem' }}>Aucun chantier en situation critique.</p>;
@@ -247,7 +247,7 @@ function CriticalProjectsTable({ rows }: { rows: CriticalProject[] }) {
   );
 }
 
-/* ─── DQE pending table ─────────────────────────────────────────── */
+/* ─── Tableau DQE en attente ────────────────────────────────────── */
 function DqeTable({
   rows,
   validatingId,
@@ -300,7 +300,7 @@ function DqeTable({
   );
 }
 
-/* ─── Situations DT table ────────────────────────────────────────── */
+/* ─── Tableau Situations DT ─────────────────────────────────────── */
 function SituationsDtTable({ rows }: { rows: SituationPending[] }) {
   if (rows.length === 0)
     return <p style={{ padding: '20px 18px', color: 'var(--text-muted)', textAlign: 'center', fontSize: '0.85rem' }}>Aucune situation en attente d'approbation DT.</p>;
@@ -335,7 +335,7 @@ function SituationsDtTable({ rows }: { rows: SituationPending[] }) {
   );
 }
 
-/* ─── Top 3 actions priority algo ───────────────────────────────── */
+/* ─── Algorithme de priorité des 3 meilleures actions ───────────── */
 type ActionType = 'bdc_urgent' | 'project_critical' | 'stock' | 'invoice';
 
 interface PriorityAction {
@@ -392,7 +392,7 @@ const ACTION_TYPE_LABEL: Record<ActionType, string> = {
 };
 
 /* ═══════════════════════════════════════════════════════════
-   PAGE
+   PAGE PRINCIPALE
    ═══════════════════════════════════════════════════════════ */
 export default function OperationsDashboardPage() {
   const qc = useQueryClient();

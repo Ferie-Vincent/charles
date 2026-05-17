@@ -217,7 +217,7 @@ export default function ActivityDetailModal({ type, sourceId, onClose }: Props) 
     <div className="mr-modal-overlay" onClick={onClose}>
       <div className="mr-modal" style={{ maxWidth: 600 }} onClick={e => e.stopPropagation()}>
 
-        {/* Header */}
+        {/* En-tête */}
         <div className="mr-modal__head">
           <div className="mr-modal__head-left">
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
@@ -241,7 +241,7 @@ export default function ActivityDetailModal({ type, sourceId, onClose }: Props) 
           </button>
         </div>
 
-        {/* Body */}
+        {/* Corps */}
         <div className="mr-modal__body">
           {isLoading ? (
             <>

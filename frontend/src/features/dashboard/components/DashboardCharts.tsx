@@ -137,7 +137,7 @@ export function CriticitéCard({ activeProjects, className = '' }: Props) {
   );
 }
 
-/** @deprecated Use BudgetBarsCard + CriticitéCard directly */
+/** @deprecated Utiliser BudgetBarsCard + CriticitéCard directement */
 export default function DashboardCharts({ activeProjects }: { activeProjects: ActiveProject[] }) {
   return (
     <div className="detail-grid" style={{ marginBottom: 16 }}>

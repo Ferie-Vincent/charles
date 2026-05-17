@@ -31,7 +31,7 @@ class AiRagController extends Controller
         $context = '';
         $sources = [];
 
-        // 1. Latest snapshots
+        // 1. Derniers snapshots
         $snapshots = ProjectSnapshot::where('company_id', $companyId)
             ->when($projectId, fn($q) => $q->where('project_id', $projectId))
             ->orderByDesc('snapshot_date')
@@ -48,7 +48,7 @@ class AiRagController extends Controller
             $sources[] = ['label' => 'Snapshots projets', 'data' => "Données du {$snapshots->first()->snapshot_date->toDateString()}"];
         }
 
-        // 2. GED documents metadata (keyword search)
+        // 2. Métadonnées des documents GED (recherche par mots-clés)
         $keywords = $this->extractKeywords($question);
         $gedQuery = GedDocument::where('company_id', $companyId)
             ->when($projectId, fn($q) => $q->where('project_id', $projectId));
@@ -69,7 +69,7 @@ class AiRagController extends Controller
             $sources[] = ['label' => 'GED', 'data' => "{$docs->count()} document(s)"];
         }
 
-        // 3. Recent daily logs — structured fields (no free text required)
+        // 3. Journaux terrain récents — champs structurés (pas de texte libre requis)
         $logs = DailyLog::whereHas('project', fn($q) => $q->where('company_id', $companyId))
             ->when($projectId, fn($q) => $q->where('project_id', $projectId))
             ->where('log_date', '>=', now()->subDays(30)->toDateString())
@@ -92,7 +92,7 @@ class AiRagController extends Controller
             $sources[] = ['label' => 'Journaux terrain', 'data' => "{$logs->count()} journal(aux) sur 30j"];
         }
 
-        // 4. Recent incidents (60 days)
+        // 4. Incidents récents (60 jours)
         $incidents = Incident::whereHas('project', fn($q) => $q->where('company_id', $companyId))
             ->when($projectId, fn($q) => $q->where('project_id', $projectId))
             ->where('occurred_at', '>=', now()->subDays(60)->toDateString())
@@ -107,7 +107,7 @@ class AiRagController extends Controller
             $sources[] = ['label' => 'Incidents', 'data' => "{$incidents->count()} incident(s)"];
         }
 
-        // 5. Budget entries summary
+        // 5. Récapitulatif des entrées budgétaires
         $budgetQuery = BudgetEntry::whereHas('project', fn($q) => $q->where('company_id', $companyId))
             ->when($projectId, fn($q) => $q->where('project_id', $projectId));
         $budgetPrev = (clone $budgetQuery)->where('type', 'previsionnel')->sum('amount');
@@ -120,7 +120,7 @@ class AiRagController extends Controller
             $sources[] = ['label' => 'Budget', 'data' => "{$pct}% du budget consommé"];
         }
 
-        // 6. BDC pending
+        // 6. BDC en attente
         $bdcPending = PurchaseOrder::whereHas('project', fn($q) => $q->where('company_id', $companyId))
             ->when($projectId, fn($q) => $q->where('project_id', $projectId))
             ->where('status', 'pending')
@@ -130,7 +130,7 @@ class AiRagController extends Controller
             $sources[] = ['label' => 'BDC', 'data' => "{$bdcPending} en attente"];
         }
 
-        // 7. Project list (when no project_id filter — gives AI a map of all projects)
+        // 7. Liste des projets (sans filtre project_id — donne à l'IA une carte de tous les projets)
         if (!$projectId) {
             $projects = Project::where('company_id', $companyId)->select('name', 'code', 'status', 'start_date', 'end_date')->get();
             if ($projects->isNotEmpty()) {

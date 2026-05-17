@@ -24,7 +24,7 @@ class PurchaseOrderController extends Controller
             ->with('supplier:id,name', 'project:id,name,code', 'requester:id,name', 'approver:id,name')
             ->orderByDesc('created_at');
 
-        // FIX H10: terrain roles only see BDCs linked to their own projects
+        // FIX H10 : les rôles terrain ne voient que les BDC liés à leurs propres projets
         $role = $user->role->name;
         if (in_array($role, Roles::TERRAIN)) {
             $query->whereHas('project', function ($q) use ($user) {
@@ -76,7 +76,7 @@ class PurchaseOrderController extends Controller
 
         $total = collect($items)->sum('total');
 
-        // FIX C5: create() moved inside the transaction so the lock covers the insert
+        // FIX C5 : create() déplacé dans la transaction pour que le verrou couvre l'insertion
         $order = DB::transaction(function () use ($user, $data, $items, $total) {
             $year  = now()->year;
             $count = PurchaseOrder::where('company_id', $user->company_id)
@@ -115,7 +115,7 @@ class PurchaseOrderController extends Controller
             'Modification de BDC non autorisée pour ce rôle.'
         );
 
-        // FIX M9: approvers cannot modify a submitted BDC they didn't create — reject it instead
+        // FIX M9 : les approbateurs ne peuvent pas modifier un BDC soumis qu'ils n'ont pas créé — le rejeter à la place
         if (in_array($role, Roles::MANAGEMENT) && $purchaseOrder->status === 'soumis') {
             abort_if(
                 $purchaseOrder->requested_by !== $user->id,
@@ -156,14 +156,14 @@ class PurchaseOrderController extends Controller
         abort_if($purchaseOrder->company_id !== $request->user()->company_id, 403);
         $this->authorizeApprover($request);
         abort_if($purchaseOrder->status !== 'soumis', 422, 'Seuls les BDC soumis peuvent être approuvés.');
-        // FIX H9: prevent self-approval
+        // FIX H9 : empêcher l'auto-approbation
         abort_if(
             $purchaseOrder->requested_by === $request->user()->id,
             403,
             'Vous ne pouvez pas approuver votre propre commande.'
         );
 
-        // BTP seuils validation — montant-based role escalation
+        // Seuils validation BTP — escalade de rôle selon le montant
         $user   = $request->user();
         $amount = (float)$purchaseOrder->total_amount;
         $seuils = config('btp.bdc_seuils_validation', []);
@@ -283,7 +283,7 @@ class PurchaseOrderController extends Controller
             $data['reception_notes'] = $request->reception_notes;
         }
 
-        // FIX C3: single outer transaction; createStockMovementsFromBdc() is now plain (no nested transaction)
+        // FIX C3 : transaction externe unique ; createStockMovementsFromBdc() est maintenant simple (pas de transaction imbriquée)
         $movementsCreated = 0;
         DB::transaction(function () use ($purchaseOrder, $data, $request, &$movementsCreated) {
             // Verrou pessimiste : empêche double réception concurrente sur le même BDC
@@ -295,7 +295,7 @@ class PurchaseOrderController extends Controller
         });
 
         if ($movementsCreated === 0) {
-            // Silent: BDC may have no stock-linked items — log but do not fail
+            // Silencieux : le BDC peut n'avoir aucun article lié au stock — journaliser sans bloquer
             \Illuminate\Support\Facades\Log::info("markReceived: BDC #{$purchaseOrder->reference} — 0 stock movements created (items may have no stock_item_id).");
         }
 
@@ -330,7 +330,7 @@ class PurchaseOrderController extends Controller
     {
         $user = $request->user();
         abort_if($purchaseOrder->company_id !== $user->company_id, 403);
-        // FIX M7: also block deletion of rejected BDCs — use resubmit or cancel instead
+        // FIX M7 : bloquer également la suppression des BDC rejetés — utiliser resubmit ou cancel à la place
         abort_if(
             in_array($purchaseOrder->status, ['approuve', 'recu', 'rejete']),
             422,
@@ -382,7 +382,7 @@ class PurchaseOrderController extends Controller
             'rejection_reason' => null,
             'approved_by'      => null,
             'approved_at'      => null,
-            // FIX M4: append correction_note rather than silently replace existing notes
+            // FIX M4 : ajouter correction_note en suffixe plutôt que remplacer silencieusement les notes existantes
             'notes'            => isset($data['correction_note']) && $data['correction_note'] !== null
                 ? ($purchaseOrder->notes
                     ? $purchaseOrder->notes . "\n[Correction] " . $data['correction_note']
@@ -430,9 +430,9 @@ class PurchaseOrderController extends Controller
     }
 
     /**
-     * Create stock movements for all BDC items that have a stock_item_id.
-     * FIX C3: no nested DB::transaction() — caller (markReceived) owns the outer transaction.
-     * FIX L5: returns the number of movements actually created.
+     * Créer les mouvements de stock pour tous les articles du BDC ayant un stock_item_id.
+     * FIX C3 : pas de DB::transaction() imbriqué — l'appelant (markReceived) possède la transaction externe.
+     * FIX L5 : retourne le nombre de mouvements réellement créés.
      */
     private function createStockMovementsFromBdc(PurchaseOrder $order, \App\Models\User $by): int
     {

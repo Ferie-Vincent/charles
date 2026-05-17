@@ -122,7 +122,7 @@ export default function AccountingDashboardPage() {
         }
       />
 
-      {/* Pending approvals banner */}
+      {/* Bandeau approbations en attente */}
       {isApprover && pendingExpenses.length > 0 && (
         <div className="acct-pending-banner" style={{ marginBottom: 16 }}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
@@ -134,7 +134,7 @@ export default function AccountingDashboardPage() {
         </div>
       )}
 
-      {/* KPI strip */}
+      {/* Bandeau KPI */}
       <div className="proj-kpi-row" style={{ gridTemplateColumns: 'repeat(5, 1fr)' }}>
         <div className="proj-kpi">
           <div className="proj-kpi__icon proj-kpi__icon--blue">
@@ -201,10 +201,10 @@ export default function AccountingDashboardPage() {
         </div>
       </div>
 
-      {/* Main body — projects left (1fr), activity right (300px) */}
+      {/* Corps principal — chantiers à gauche (1fr), activité à droite (300px) */}
       <div className="acct-body">
 
-        {/* Project cards */}
+        {/* Cartes chantiers */}
         <div className="acct-projects">
           <div className="acct-panel__head">
             <h2 className="acct-panel__title">Chantiers</h2>
@@ -273,7 +273,7 @@ export default function AccountingDashboardPage() {
           </div>
         </div>
 
-        {/* Activity feed */}
+        {/* Fil d'activité */}
         <div className="acct-panel">
           <div className="acct-panel__head">
             <h2 className="acct-panel__title">Activité récente</h2>
@@ -328,7 +328,7 @@ export default function AccountingDashboardPage() {
 
       </div>
 
-      {/* General expenses table */}
+      {/* Tableau décaissements hors projet */}
       <div className="acct-panel acct-panel--full" id="decaissements">
         <div className="acct-panel__head">
           <div>
@@ -430,7 +430,7 @@ export default function AccountingDashboardPage() {
         </div>
       </div>
 
-      {/* Expense modal */}
+      {/* Modale décaissement */}
       {modal !== null && (
         <div className="mr-modal-overlay" onClick={() => setModal(null)}>
           <div className="mr-modal" style={{ maxWidth: 520 }} onClick={e => e.stopPropagation()}>
@@ -486,7 +486,7 @@ export default function AccountingDashboardPage() {
         </div>
       )}
 
-      {/* Reject reason modal */}
+      {/* Modale motif de rejet */}
       {rejectModal !== null && (
         <div className="mr-modal-overlay" onClick={() => setRejectModal(null)}>
           <div className="mr-modal" style={{ maxWidth: 420 }} onClick={e => e.stopPropagation()}>
@@ -517,7 +517,7 @@ export default function AccountingDashboardPage() {
         </div>
       )}
 
-      {/* Delete confirmation */}
+      {/* Confirmation de suppression */}
       {deleteId !== null && (
         <div className="mr-modal-overlay" onClick={() => setDeleteId(null)}>
           <div className="mr-modal" style={{ maxWidth: 380 }} onClick={e => e.stopPropagation()}>

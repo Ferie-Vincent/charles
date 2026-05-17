@@ -19,7 +19,7 @@ export async function updateCompany(data: { name: string }) {
   return res.data;
 }
 
-/* ── Notification preferences (localStorage) ─── */
+/* ── Préférences de notification (localStorage) ─── */
 
 const NOTIF_KEY = 'chantier:notif_prefs';
 

@@ -12,7 +12,7 @@ class PermissionsController extends Controller
 {
     private const FEATURES = ['projects', 'map', 'timeline', 'dqe', 'execution', 'costs', 'accounting', 'qse', 'reporting', 'achats', 'stocks', 'suppliers', 'besoins', 'ged'];
 
-    // Roles direction/directeur-technique always have full access — not configurable
+    // Les rôles direction/directeur-technique ont toujours accès complet — non configurable
 
     public function index(Request $request): JsonResponse
     {

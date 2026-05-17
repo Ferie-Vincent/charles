@@ -64,7 +64,7 @@ class GroqService
 
     public function analyze(string $prompt, int $maxTokens = 2000): array
     {
-        // If company pinned a specific provider, use it first
+        // Si l'entreprise a épinglé un provider spécifique, l'utiliser en premier
         if ($this->activeProvider === 'groq' && $this->groqKey) {
             return $this->callGroq($prompt, $maxTokens);
         }
