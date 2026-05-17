@@ -6,6 +6,7 @@ use App\Models\DqeVersion;
 use App\Models\Invoice;
 use App\Models\Project;
 use App\Models\PurchaseOrder;
+use App\Models\SituationTravaux;
 use App\Models\StockItem;
 use App\Services\ProjectMetricsService;
 use App\Support\Roles;
@@ -107,18 +108,33 @@ class PortfolioOperationsController extends Controller
                 'project_code' => $inv->project?->code ?? '—',
             ]);
 
+        $situationsEnRevueDt = SituationTravaux::query()
+            ->where('status', 'en_revue_dt')
+            ->whereHas('project', fn ($q) => $q->where('company_id', $companyId))
+            ->with('project:id,name,code')
+            ->orderBy('updated_at')
+            ->get(['id', 'project_id', 'net_a_payer', 'updated_at'])
+            ->map(fn (SituationTravaux $s) => [
+                'id'           => $s->id,
+                'project_id'   => $s->project_id,
+                'project_name' => $s->project?->name ?? '—',
+                'project_code' => $s->project?->code ?? '—',
+                'net_a_payer'  => (float) $s->net_a_payer,
+            ]);
+
         return response()->json([
-            'health_summary'    => [
+            'health_summary'        => [
                 'avg_score'      => (int) round($avgScore),
                 'critical_count' => $criticalProj->count(),
                 'total_active'   => $projects->count(),
             ],
-            'budget_summary'    => $this->budgetSummary($projects),
-            'bdc_pending'       => $bdcPending->values(),
-            'stock_alerts'      => $stockAlerts->values(),
-            'critical_projects' => $criticalProj->values(),
-            'invoices_pending'  => $invoicesPending->values(),
-            'dqe_pending'       => $dqePending->values(),
+            'budget_summary'        => $this->budgetSummary($projects),
+            'bdc_pending'           => $bdcPending->values(),
+            'stock_alerts'          => $stockAlerts->values(),
+            'critical_projects'     => $criticalProj->values(),
+            'invoices_pending'      => $invoicesPending->values(),
+            'dqe_pending'           => $dqePending->values(),
+            'situations_en_revue_dt'=> $situationsEnRevueDt->values(),
         ]);
     }
 

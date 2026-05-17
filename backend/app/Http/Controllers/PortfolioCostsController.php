@@ -15,9 +15,9 @@ class PortfolioCostsController extends Controller
     public function index(Request $request): JsonResponse
     {
         abort_unless(
-            in_array($request->user()->role->name, Roles::MANAGEMENT),
+            in_array($request->user()->role->name, Roles::FINANCE),
             403,
-            'Accès réservé à la direction.'
+            'Accès réservé à la direction et à la comptabilité.'
         );
 
         $companyId = $request->user()->company_id;

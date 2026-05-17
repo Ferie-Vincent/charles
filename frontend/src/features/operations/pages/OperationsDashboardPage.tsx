@@ -8,6 +8,7 @@ import {
   type CriticalProject,
   type InvoicePending,
   type DqePending,
+  type SituationPending,
 } from '../api/get-operations';
 import { approvePurchaseOrder } from '../../achats/api/purchase-orders';
 import { transitionDqeVersion } from '../../dqe/api/dqe-api';
@@ -299,6 +300,41 @@ function DqeTable({
   );
 }
 
+/* ─── Situations DT table ────────────────────────────────────────── */
+function SituationsDtTable({ rows }: { rows: SituationPending[] }) {
+  if (rows.length === 0)
+    return <p style={{ padding: '20px 18px', color: 'var(--text-muted)', textAlign: 'center', fontSize: '0.85rem' }}>Aucune situation en attente d'approbation DT.</p>;
+  return (
+    <table className="data-table" style={{ fontSize: '0.82rem' }}>
+      <thead>
+        <tr>
+          <th>Chantier</th>
+          <th style={{ textAlign: 'right' }}>Montant net</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map(s => (
+          <tr key={s.id}>
+            <td>
+              <Link to={`/projects/${s.project_id}/situations`} style={{ color: 'var(--accent)', fontWeight: 500, textDecoration: 'none' }}>
+                {s.project_code}
+              </Link>
+              <span style={{ color: 'var(--text-muted)', marginLeft: 6, fontSize: '0.78rem' }}>{s.project_name}</span>
+            </td>
+            <td style={{ textAlign: 'right', fontWeight: 700 }}>{fmtAmount(s.net_a_payer)}</td>
+            <td>
+              <Link to={`/projects/${s.project_id}/situations`} className="btn btn--sm" style={{ background: 'var(--accent)', color: '#fff', border: 'none', textDecoration: 'none', padding: '3px 10px' }}>
+                Approuver →
+              </Link>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
 /* ─── Top 3 actions priority algo ───────────────────────────────── */
 type ActionType = 'bdc_urgent' | 'project_critical' | 'stock' | 'invoice';
 
@@ -413,6 +449,7 @@ export default function OperationsDashboardPage() {
     critical_projects,
     invoices_pending,
     dqe_pending,
+    situations_en_revue_dt,
   } = data;
 
   const urgentBdcCount = bdc_pending.filter(b => b.age_days >= 2).length;
@@ -576,6 +613,18 @@ export default function OperationsDashboardPage() {
       <CardShell title="DQE en attente de validation" linkLabel="Portfolio DQE" linkTo="/portfolio/dqe" style={{ marginBottom: 16 }}>
         <DqeTable rows={dqe_pending} validatingId={validatingDqeId} onValidate={handleValidateDqe} />
       </CardShell>
+
+      {/* ── Situations en revue DT — full width ── */}
+      {situations_en_revue_dt.length > 0 && (
+        <CardShell
+          title={`Situations à approuver DT (${situations_en_revue_dt.length})`}
+          linkLabel="Voir situations"
+          linkTo="/projects"
+          style={{ marginBottom: 16 }}
+        >
+          <SituationsDtTable rows={situations_en_revue_dt} />
+        </CardShell>
+      )}
     </div>
   );
 }

@@ -17,7 +17,6 @@ import MaterialReceiptsPanel from '../components/MaterialReceiptsPanel';
 import PhaseGanttWidget from '../components/PhaseGanttWidget';
 import MeetingReportModal from '../components/MeetingReportModal';
 import SituationTravauxModal from '../components/SituationTravauxModal';
-import WhatsAppTestButton from '../components/WhatsAppTestButton';
 import DqePanel from '../../dqe/components/DqePanel';
 import ProjectDocumentsPanel from '../../ged/components/ProjectDocumentsPanel';
 import { useAuth } from '../../auth/stores/auth-store';
@@ -728,9 +727,6 @@ export default function ProjectDetailPage() {
               <ReportsWidget projectId={project.id} />
             </PanelErrorBoundary>
           </CollapsibleSection>
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: -8, marginBottom: 8 }}>
-            <WhatsAppTestButton projectId={project.id} />
-          </div>
 
           {/* 7. Équipe + Historique */}
           <div className="detail-grid">
@@ -849,8 +845,6 @@ export default function ProjectDetailPage() {
             </CollapsibleSection>
           )}
 
-          {/* fix: WhatsAppTestButton est un <button> — ne pas passer en extra
-              (qui se retrouve dans un <button> header = HTML invalide) */}
           <CollapsibleSection
             title="Rapports hebdomadaires"
             subtitle="Archives générées automatiquement"
@@ -860,9 +854,6 @@ export default function ProjectDetailPage() {
               <ReportsWidget projectId={project.id} />
             </PanelErrorBoundary>
           </CollapsibleSection>
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: -8, marginBottom: 8 }}>
-            <WhatsAppTestButton projectId={project.id} />
-          </div>
 
           <div className="detail-grid">
             <CollapsibleSection className="col-half" title="Équipe du chantier" icon={icons.team}>

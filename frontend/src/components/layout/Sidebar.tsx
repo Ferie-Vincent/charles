@@ -43,12 +43,12 @@ const navItems = [
   },
   {
     to: '/costs',
-    label: 'Couts',
+    label: 'Coûts',
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>,
   },
   {
     to: '/accounting',
-    label: 'Comptabilite',
+    label: 'Comptabilité',
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>,
   },
   {
@@ -132,8 +132,8 @@ export default function Sidebar({ open, onClose }: { open?: boolean; onClose?: (
           </svg>
         </div>
         <div>
-          <h2>Chantier</h2>
-          <div className="sidebar-brand__sub">Platform BTP</div>
+          <h2>Helaman</h2>
+          <div className="sidebar-brand__sub">Expertise BTP</div>
         </div>
       </div>
 
