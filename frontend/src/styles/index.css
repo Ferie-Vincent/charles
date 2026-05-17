@@ -136,6 +136,14 @@ body {
   color: white;
 }
 
+.sidebar-brand__mascot {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+  flex-shrink: 0;
+  image-rendering: auto;
+}
+
 .sidebar-brand__logo-img {
   height: 36px;
   width: auto;
