@@ -90,7 +90,7 @@ function LogDayModal({ log, onClose }: { log: DailyLog; onClose: () => void }) {
         </div>
 
         <div className="mr-modal__body">
-          {/* Progress */}
+          {/* Avancement */}
           <div className="mr-section">
             <div className="mr-section__label" style={{ marginBottom: 10 }}>
               <span className="mr-section__label-dot" style={{ background: '#3b82f6' }}/>
@@ -106,7 +106,7 @@ function LogDayModal({ log, onClose }: { log: DailyLog; onClose: () => void }) {
             </div>
           </div>
 
-          {/* Stats row */}
+          {/* Ligne de statistiques */}
           <div className="mr-section">
             <div className="mr-section__label" style={{ marginBottom: 10 }}>
               <span className="mr-section__label-dot" style={{ background: '#10b981' }}/>
@@ -128,7 +128,7 @@ function LogDayModal({ log, onClose }: { log: DailyLog; onClose: () => void }) {
             </div>
           </div>
 
-          {/* Materials */}
+          {/* Matériaux */}
           {log.materials_received && log.materials_received.length > 0 && (
             <div className="mr-section">
               <div className="mr-section__label" style={{ marginBottom: 8 }}>
@@ -169,7 +169,7 @@ function LogDayModal({ log, onClose }: { log: DailyLog; onClose: () => void }) {
             </div>
           )}
 
-          {/* Footer */}
+          {/* Pied de page */}
           <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', paddingTop: 4 }}>
             Saisi le {new Date(log.created_at).toLocaleDateString('fr-FR', {
               day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
@@ -252,7 +252,7 @@ export default function LogCalendar({ logs, meta, projectId }: Props) {
         </Link>
       )}
 
-      {/* Meta KPIs */}
+      {/* KPIs méta */}
       {meta && meta.total_logs > 0 && (
         <div className="log-meta-row">
           <div className="log-meta-stat">
@@ -276,7 +276,7 @@ export default function LogCalendar({ logs, meta, projectId }: Props) {
         </div>
       )}
 
-      {/* Month navigation */}
+      {/* Navigation mensuelle */}
       <div className="lcal-nav">
         <button type="button" className="lcal-nav__btn" onClick={prevMonth} aria-label="Mois précédent">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="16" height="16">
@@ -291,7 +291,7 @@ export default function LogCalendar({ logs, meta, projectId }: Props) {
         </button>
       </div>
 
-      {/* Grid header */}
+      {/* En-tête de grille */}
       <div className="lcal-grid">
         {WEEK_DAYS.map(d => (
           <div key={d} className="lcal-weekday">{d}</div>
@@ -343,7 +343,7 @@ export default function LogCalendar({ logs, meta, projectId }: Props) {
         })}
       </div>
 
-      {/* Legend */}
+      {/* Légende */}
       <div className="lcal-legend">
         <span className="lcal-legend__item">
           <span style={{ display: 'inline-block', width: 12, height: 12, borderRadius: 4, background: '#0f172a', marginRight: 4 }}/>
@@ -359,7 +359,7 @@ export default function LogCalendar({ logs, meta, projectId }: Props) {
         </span>
       </div>
 
-      {/* Empty state */}
+      {/* État vide */}
       {logs.length === 0 && (
         <div className="log-empty" style={{ marginTop: 16 }}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" width="40" height="40" style={{ color: 'var(--border-strong)', marginBottom: 12 }}>
@@ -370,7 +370,7 @@ export default function LogCalendar({ logs, meta, projectId }: Props) {
         </div>
       )}
 
-      {/* Day detail modal */}
+      {/* Modale détail du jour */}
       {selectedLog && (
         <LogDayModal log={selectedLog} onClose={() => setSelectedLog(null)} />
       )}

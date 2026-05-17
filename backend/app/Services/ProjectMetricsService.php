@@ -30,7 +30,7 @@ class ProjectMetricsService
      */
     public function compute(Project $project): array
     {
-        // --- Daily logs — use already-loaded relation to avoid N+1 ---
+        // --- Journaux quotidiens — utilise la relation déjà chargée pour éviter le N+1 ---
         $logs = $project->relationLoaded('dailyLogs')
             ? $project->dailyLogs
             : $project->dailyLogs()->get();
@@ -39,28 +39,28 @@ class ProjectMetricsService
         $latestProgress = (int) ($logs->sortByDesc('log_date')->first()?->progress_percent ?? 0);
         $incidentCount  = $logs->where('has_incident', true)->count();
 
-        // --- Temporal ---
+        // --- Temporel ---
         $daysSinceStart = $project->start_date
             ? max(1, (int) Carbon::parse($project->start_date)->diffInDays(Carbon::today()))
             : 1;
 
         $target = $project->target_progress ?? 100;
 
-        // --- Planning score (max 25) ---
-        // Grace period: projects < 30 days can't be penalized — target_progress defaults to 100
-        // and early-stage progress will always appear behind, producing unfair score of 0.
+        // --- Score planning (max 25) ---
+        // Période de grâce : les projets < 30 jours ne peuvent pas être pénalisés — target_progress vaut 100 par défaut
+        // et l'avancement en phase initiale sera toujours en retard, générant un score injuste de 0.
         $planningScore = $daysSinceStart <= 30
             ? 25.0
             : ($latestProgress >= $target
                 ? 25
                 : max(0, 25 - ($target - $latestProgress) * 1.25));
 
-        // --- Regularity score (max 25) — 7-day grace to avoid perfect J+1 score ---
+        // --- Score régularité (max 25) — grâce 7 jours pour éviter le score parfait au J+1 ---
         $regularityScore = $daysSinceStart <= 7
             ? 25.0
             : min($totalLogs / $daysSinceStart, 1) * 25;
 
-        // --- Safety score (max 25) ---
+        // --- Score sécurité (max 25) ---
         $safetyScore = max(0, 25 - $incidentCount * 5);
 
         // --- Budget score (max 25, corrigé — plus de placeholder fixe) ---
@@ -79,7 +79,7 @@ class ProjectMetricsService
             'regularity_score' => (int) round($regularityScore),
             'budget_score'     => (int) round($budgetScore),
             'safety_score'     => (int) round($safetyScore),
-            'realise'          => round($realise, 2),   // factures payées uniquement
+            'realise'          => round($realise, 2),   // factures au statut payée uniquement
             'engage'           => round($engage, 2),    // factures validées + payées (engagements fermes)
             'previsionnel'     => round($previsionnel, 2),
             'ecart'            => round($ecart, 2),
@@ -102,7 +102,7 @@ class ProjectMetricsService
     }
 
     // -------------------------------------------------------------------------
-    // Internals
+    // Méthodes internes
     // -------------------------------------------------------------------------
 
     /**
@@ -112,7 +112,7 @@ class ProjectMetricsService
      */
     private function computeBudgetScore(Project $project): array
     {
-        // Référence budgétaire : DQE validé > budget_amount du projet.
+        // Référence budgétaire : DQE validé prioritaire sur budget_amount du projet.
         $dqeVersions = $project->relationLoaded('dqeVersions')
             ? $project->dqeVersions
             : $project->dqeVersions()->get();
@@ -134,14 +134,14 @@ class ProjectMetricsService
             ? $project->budgetEntries
             : $project->budgetEntries()->get();
 
-        // Réalisé = factures payées uniquement (décaissé).
+        // Réalisé = factures au statut payée uniquement (décaissé).
         $realise = (float) $invoices->where('status', 'payee')->sum('amount_ht');
 
-        // Engagé = BDC entries + factures validées (engagement ferme total, source canonique).
+        // Engagé = entrées BDC + factures validées (engagement ferme total, source canonique).
         $engagement = (float) $budgetEntries->where('type', 'engagement')->sum('amount');
         $engage     = $engagement + (float) $invoices->where('status', 'validee')->sum('amount_ht');
 
-        // Pas de référence budgétaire → score neutre.
+        // Aucune référence budgétaire → score neutre.
         if ($budgetRef <= 0) {
             return [15.0, $realise, $engage, 0.0];
         }

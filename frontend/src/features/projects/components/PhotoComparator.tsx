@@ -59,10 +59,10 @@ export default function PhotoComparator({ before, after, onClose }: Props) {
           onTouchMove={onTouchMove}
           onTouchEnd={() => { dragging.current = false; }}
         >
-          {/* Before — base layer */}
+          {/* Avant — couche de base */}
           <img src={before.url} alt="avant" className="pc-img pc-img--before" draggable={false} />
 
-          {/* After — clipped to reveal from right of slider */}
+          {/* Après — découpé pour révéler à partir de la droite du curseur */}
           <img
             src={after.url}
             alt="après"
@@ -71,7 +71,7 @@ export default function PhotoComparator({ before, after, onClose }: Props) {
             draggable={false}
           />
 
-          {/* Slider handle */}
+          {/* Poignée du curseur */}
           <div
             className="pc-handle"
             style={{ left: `${pos}%` }}
@@ -89,7 +89,7 @@ export default function PhotoComparator({ before, after, onClose }: Props) {
             </div>
           </div>
 
-          {/* % indicator */}
+          {/* Indicateur % */}
           <div className="pc-pct" style={{ left: `${pos}%` }}>{Math.round(pos)}%</div>
         </div>
 

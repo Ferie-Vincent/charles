@@ -12,14 +12,14 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
 #[Signature('projects:check-avancement-retard {--dry-run : List without sending}')]
-#[Description('Alert CDT + direction when real progress lags theoretical by > 10 points')]
+#[Description('Alerte CDT + direction quand l\'avancement réel est en retard de > 10 points sur le théorique')]
 class CheckAvancementRetard extends Command
 {
     public function handle(): int
     {
         $now = now();
 
-        // Cooldown: skip projects already notified with this type in the last 7 days
+        // Anti-doublon : ignorer les projets déjà notifiés avec ce type dans les 7 derniers jours
         $recentProjectIds = $this->recentlyNotifiedProjectIds('avancement_retard');
 
         $projects = Project::where('status', 'active')
@@ -39,7 +39,7 @@ class CheckAvancementRetard extends Command
 
             $avancementCible = round($elapsedDays / $totalDays * 100, 1);
 
-            // Use latest journal progress — NOT target_progress (which is manually set and may be stale)
+            // Utiliser l'avancement du dernier journal — PAS target_progress (saisi manuellement, potentiellement obsolète)
             $avancementReel = (float) $project->dailyLogs()->latest('log_date')->value('progress_percent');
 
             if ($avancementReel === 0.0 && $avancementCible === 0.0) {
@@ -71,7 +71,7 @@ class CheckAvancementRetard extends Command
                 ));
         }
 
-        $this->info("Done. {$alerted} project(s) in retard.");
+        $this->info("Terminé. {$alerted} projet(s) en retard.");
         return Command::SUCCESS;
     }
 

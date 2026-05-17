@@ -7,13 +7,14 @@ import AiMarkdown from './AiMarkdown';
 
 export default function AiMorningBriefing({ alwaysExpanded = false }: { alwaysExpanded?: boolean }) {
   const { enabled } = useAiEnabled();
-  if (!enabled) return null;
   const [expanded, setExpanded] = useState(true);
+
+  if (!enabled) return null;
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['ai-briefing'],
     queryFn: getAiBriefing,
-    staleTime: 30 * 60 * 1000, // 30 min — briefing is a morning snapshot
+    staleTime: 30 * 60 * 1000,
     retry: false,
   });
 
@@ -45,7 +46,11 @@ export default function AiMorningBriefing({ alwaysExpanded = false }: { alwaysEx
 
   return (
     <div className="ai-briefing">
-      <div className="ai-briefing__header" onClick={() => !alwaysExpanded && setExpanded(e => !e)} style={{ cursor: alwaysExpanded ? 'default' : 'pointer' }}>
+      <div
+        className="ai-briefing__header"
+        onClick={() => !alwaysExpanded && setExpanded(e => !e)}
+        style={{ cursor: alwaysExpanded ? 'default' : 'pointer' }}
+      >
         <span className="ai-briefing__badge">IA</span>
         <span className="ai-briefing__title">Briefing matinal</span>
         {data.data_date && (
@@ -53,26 +58,19 @@ export default function AiMorningBriefing({ alwaysExpanded = false }: { alwaysEx
             Données du {new Date(data.data_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
           </span>
         )}
-        <svg
-          width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
-          style={{ marginLeft: 'auto', transform: expanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}
-        >
-          <polyline points="6 9 12 15 18 9" />
-        </svg>
+        {!alwaysExpanded && (
+          <svg
+            width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
+            style={{ marginLeft: 'auto', transform: expanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}
+          >
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
+        )}
       </div>
 
       {(expanded || alwaysExpanded) && (
         <>
           <AiMarkdown text={data.text ?? ''} />
-
-          {data.sources.length > 0 && (
-            <div className="ai-briefing__sources">
-              <span className="ai-briefing__sources-label">Sources :</span>
-              {data.sources.map((s, i) => (
-                <span key={i} className="ai-briefing__source" title={s.data}>{s.label}</span>
-              ))}
-            </div>
-          )}
 
           <div className="ai-briefing__footer">
             <span className="ai-briefing__model">

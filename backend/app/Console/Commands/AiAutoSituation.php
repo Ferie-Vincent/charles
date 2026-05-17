@@ -12,10 +12,13 @@ use Illuminate\Console\Command;
 
 class AiAutoSituation extends Command
 {
-    protected $signature = 'ai:auto-situation {--project= : Specific project ID}';
-    protected $description = 'Auto-generate situation de travaux via Mistral for active projects (end of month)';
+    protected $signature = 'ai:auto-situation {--project= : ID de projet spécifique}';
+    protected $description = 'Génère automatiquement la situation de travaux via Mistral pour les projets actifs (fin de mois)';
 
-    public function __construct(private readonly GroqService $ai) {}
+    public function __construct(private readonly GroqService $ai)
+    {
+        parent::__construct();
+    }
 
     public function handle(): int
     {
@@ -37,7 +40,7 @@ class AiAutoSituation extends Command
 
     private function generateForProject(Project $project): void
     {
-        // Skip if a situation already exists this month
+        // Passer si une situation existe déjà ce mois
         $alreadyThisMonth = SituationTravaux::where('project_id', $project->id)
             ->where('periode', '>=', now()->startOfMonth()->toDateString())
             ->where('periode', '<=', now()->endOfMonth()->toDateString())
@@ -48,7 +51,7 @@ class AiAutoSituation extends Command
             return;
         }
 
-        // Build context from last 30 days of logs
+        // Construire le contexte à partir des 30 derniers jours de journaux
         $logs = DailyLog::where('project_id', $project->id)
             ->where('log_date', '>=', now()->subDays(30)->toDateString())
             ->orderBy('log_date')
@@ -59,7 +62,7 @@ class AiAutoSituation extends Command
             return;
         }
 
-        // Latest validated DQE for context
+        // Dernière DQE validée pour le contexte
         $dqe = DqeVersion::where('project_id', $project->id)
             ->where('status', 'validated')
             ->orderByDesc('version_number')
@@ -106,7 +109,7 @@ PROMPT;
             return;
         }
 
-        // Get latest avancement from logs for the situation record
+        // Récupérer le dernier avancement depuis les journaux pour l'enregistrement de la situation
         $latestProgress = $logs->last()->progress_percent ?? 0;
 
         SituationTravaux::create([

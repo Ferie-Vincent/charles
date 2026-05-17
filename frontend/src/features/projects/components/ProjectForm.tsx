@@ -25,7 +25,7 @@ export default function ProjectForm({ onSubmit, isLoading }: ProjectFormProps) {
   const [longitude, setLongitude] = useState<number | null>(null);
   const [geoStatus, setGeoStatus] = useState<'idle' | 'loading' | 'ok' | 'error'>('idle');
 
-  // BTP contract fields
+  // Champs contractuels BTP
   const [typeMarche, setTypeMarche]             = useState<TypeMarche | ''>('');
   const [maitreOuvrage, setMaitreOuvrage]       = useState('');
   const [maitreOeuvre, setMaitreOeuvre]         = useState('');

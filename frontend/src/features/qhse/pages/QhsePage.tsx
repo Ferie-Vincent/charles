@@ -258,7 +258,7 @@ export default function QhsePage() {
 
       {/* ── Incidents Table ── */}
       <div style={{ background: 'var(--bg-panel)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
-        {/* Toolbar row */}
+        {/* Ligne de barre d'outils */}
         <div style={{ display: 'flex', gap: 6, alignItems: 'center', padding: '12px 16px', borderBottom: '1px solid var(--border)', flexWrap: 'wrap' }}>
           <span style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-body)', marginRight: 8 }}>Incidents récents</span>
           {(['all', 'open', 'critique'] as Filter[]).map((f) => {

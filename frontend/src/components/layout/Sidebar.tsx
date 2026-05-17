@@ -106,13 +106,13 @@ export default function Sidebar({ open, onClose }: { open?: boolean; onClose?: (
   const openTaskCount = tasks.filter(t => t.status !== 'done').length;
 
   const visibleItems = navItems.filter(item => {
-    // Static ROLE_ACCESS is the hard gate — if role not in allowed list, hide
+    // ROLE_ACCESS statique est le verrou principal — si le rôle n'est pas dans la liste autorisée, masquer
     if (!staticCanAccess(item.to, group)) return false;
-    // LOCKED roles see everything they're statically allowed
+    // Les rôles VERROUILLÉS voient tout ce qui leur est statiquement autorisé
     if (group === 'direction' || group === 'dt') return true;
-    // Others: additionally filter by DB permissions (direction-configured overrides)
+    // Les autres : filtrer aussi selon les permissions DB (remplacements configurés par la direction)
     const feature = item.to.slice(1);
-    if (!feature) return true; // dashboard '/' always visible
+    if (!feature) return true; // dashboard '/' toujours visible
     return canAccess(feature, group);
   });
 

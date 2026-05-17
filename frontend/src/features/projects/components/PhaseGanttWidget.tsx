@@ -34,7 +34,7 @@ export default function PhaseGanttWidget({ project, progressPercent }: Props) {
 
   if (duration <= 0) return null;
 
-  // Build phase timeline
+  // Construire la chronologie des phases
   let cursor = start;
   const phases = PHASES.map(p => {
     const phaseStart = cursor;
@@ -43,11 +43,11 @@ export default function PhaseGanttWidget({ project, progressPercent }: Props) {
     return { ...p, phaseStart, phaseEnd };
   });
 
-  // How far through the total project are we?
+  // Quelle proportion du projet total est écoulée ?
   const elapsedRatio  = Math.min(1, Math.max(0, (today - start) / duration));
   const progressRatio = Math.min(1, (progressPercent ?? 0) / 100);
 
-  // Today marker position (% of bar width)
+  // Position du marqueur "Aujourd'hui" (% de la largeur de la barre)
   const todayPct = elapsedRatio * 100;
 
   return (
@@ -58,7 +58,7 @@ export default function PhaseGanttWidget({ project, progressPercent }: Props) {
       </p>
 
       <div className="pg-chart">
-        {/* Header: dates */}
+        {/* En-tête : dates */}
         <div className="pg-header">
           <span className="pg-label-col" />
           <div className="pg-bar-col pg-bar-col--head">
@@ -70,12 +70,12 @@ export default function PhaseGanttWidget({ project, progressPercent }: Props) {
           </div>
         </div>
 
-        {/* Phase rows */}
+        {/* Lignes de phases */}
         {phases.map(p => {
           const leftPct  = ((p.phaseStart - start) / duration) * 100;
           const widthPct = (p.ratio) * 100;
 
-          // Progress fill within this phase
+          // Remplissage de progression dans cette phase
           const phaseElapsed = Math.min(1, Math.max(0, (today - p.phaseStart) / (p.phaseEnd - p.phaseStart)));
           const isActive  = today >= p.phaseStart && today < p.phaseEnd;
           const isDone    = today >= p.phaseEnd;
@@ -88,9 +88,9 @@ export default function PhaseGanttWidget({ project, progressPercent }: Props) {
                   className="pg-track"
                   style={{ left: `${leftPct}%`, width: `${widthPct}%` }}
                 >
-                  {/* Background track */}
+                  {/* Piste de fond */}
                   <div className="pg-track__bg" style={{ background: p.color + '28' }} />
-                  {/* Progress fill */}
+                  {/* Remplissage de progression */}
                   <div
                     className="pg-track__fill"
                     style={{
@@ -98,7 +98,7 @@ export default function PhaseGanttWidget({ project, progressPercent }: Props) {
                       width: isDone ? '100%' : isActive ? `${phaseElapsed * 100}%` : '0%',
                     }}
                   />
-                  {/* Phase label inside bar */}
+                  {/* Libellé de phase dans la barre */}
                   <span className="pg-track__label" style={{ color: isDone || isActive ? '#fff' : p.color }}>
                     {p.short}
                   </span>
@@ -108,7 +108,7 @@ export default function PhaseGanttWidget({ project, progressPercent }: Props) {
           );
         })}
 
-        {/* Today line + real progress line */}
+        {/* Ligne aujourd'hui + ligne d'avancement réel */}
         <div className="pg-row pg-row--markers">
           <span className="pg-label-col" />
           <div className="pg-bar-col pg-bar-col--markers">
@@ -118,7 +118,7 @@ export default function PhaseGanttWidget({ project, progressPercent }: Props) {
                 <span className="pg-today__label">Auj.</span>
               </div>
             )}
-            {/* Real progress marker */}
+            {/* Marqueur d'avancement réel */}
             <div className="pg-progress-marker" style={{ left: `${progressRatio * 100}%` }}>
               <div className="pg-progress-marker__line" />
               <span className="pg-progress-marker__label">{progressPercent ?? 0}%</span>
@@ -127,7 +127,7 @@ export default function PhaseGanttWidget({ project, progressPercent }: Props) {
         </div>
       </div>
 
-      {/* Legend */}
+      {/* Légende */}
       <div className="pg-legend">
         <span className="pg-legend__item">
           <span className="pg-legend__line pg-legend__line--today" />Aujourd'hui

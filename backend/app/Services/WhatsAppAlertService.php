@@ -15,7 +15,7 @@ class WhatsAppAlertService
         $to    = $to ?? config('services.twilio.to');
 
         if (! $sid || ! $token || ! $to) {
-            Log::info('WhatsApp alert skipped — Twilio not configured.', ['message' => $message]);
+            Log::info('Alerte WhatsApp ignorée — Twilio non configuré.', ['message' => $message]);
             return false;
         }
 
@@ -39,10 +39,10 @@ class WhatsAppAlertService
 
     private function normalizePhone(string $phone): string
     {
-        // Strip whatsapp: prefix — we'll re-add it after normalization
+        // Supprime le préfixe whatsapp: — on le rajoutera après normalisation
         $raw = preg_replace('/^whatsapp:/i', '', trim($phone));
 
-        // Already E.164
+        // Déjà au format E.164
         if (str_starts_with($raw, '+')) {
             return 'whatsapp:' . $raw;
         }
@@ -52,17 +52,17 @@ class WhatsAppAlertService
             return 'whatsapp:+' . substr($raw, 2);
         }
 
-        // 225XXXXXXXXXX (missing +)
+        // 225XXXXXXXXXX (+ manquant)
         if (str_starts_with($raw, '225') && strlen($raw) >= 11) {
             return 'whatsapp:+' . $raw;
         }
 
-        // CI local 0XXXXXXXXX (10 digits, trunk prefix 0)
+        // Local CI 0XXXXXXXXX (10 chiffres, préfixe réseau 0)
         if (str_starts_with($raw, '0') && strlen($raw) === 10) {
             return 'whatsapp:+225' . $raw;
         }
 
-        // Fallback: prefix + and hope for the best
+        // Fallback : ajouter + et espérer le meilleur
         return 'whatsapp:+' . $raw;
     }
 }

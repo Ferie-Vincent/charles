@@ -29,7 +29,7 @@ export default function SafetyScoreWidget({ projectId }: Props) {
   return (
     <div className="ss-panel">
       <div className="ss-layout">
-        {/* Circular score */}
+        {/* Score circulaire */}
         <div className="ss-ring-wrap">
           <svg width="96" height="96" viewBox="0 0 96 96">
             <circle cx="48" cy="48" r="36" fill="none" strokeWidth="8" style={{ stroke: 'var(--color-border)' }} />
@@ -48,7 +48,7 @@ export default function SafetyScoreWidget({ projectId }: Props) {
           </div>
         </div>
 
-        {/* Breakdown */}
+        {/* Ventilation */}
         <div className="ss-breakdown">
           <p className="ss-period">{data.period}</p>
           <table className="ss-table">

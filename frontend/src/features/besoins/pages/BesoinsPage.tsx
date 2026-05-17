@@ -198,9 +198,9 @@ export default function BesoinsPage() {
         </div>
       </div>
 
-      {/* Table panel */}
+      {/* Panneau tableau */}
       <div style={{ background: 'var(--bg-panel)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
-        {/* Filter toolbar */}
+        {/* Barre de filtres */}
         <div style={{ display: 'flex', gap: 6, padding: '14px 18px', borderBottom: '1px solid var(--border)', flexWrap: 'wrap', alignItems: 'center' }}>
           <button className={`bud-tab ${!filter ? 'bud-tab--active' : ''}`} onClick={() => setFilter('')}>
             Tous <span className="dqe-filter-count">{besoins.length}</span>
@@ -291,7 +291,7 @@ export default function BesoinsPage() {
         )}
       </div>
 
-      {/* Create modal */}
+      {/* Modale de création */}
       {modal && (
         <div className="mr-modal-overlay" onClick={() => setModal(false)}>
           <div className="mr-modal" style={{ maxWidth: 540 }} onClick={e => e.stopPropagation()}>
@@ -354,7 +354,7 @@ export default function BesoinsPage() {
         </div>
       )}
 
-      {/* Reject modal */}
+      {/* Modale de rejet */}
       {rejectModal && (
         <div className="mr-modal-overlay" onClick={() => setRejectModal(null)}>
           <div className="mr-modal" style={{ maxWidth: 420 }} onClick={e => e.stopPropagation()}>
@@ -376,7 +376,7 @@ export default function BesoinsPage() {
         </div>
       )}
 
-      {/* Detail modal */}
+      {/* Modale de détail */}
       {detailModal && (() => {
         const b = detailModal;
         const timeline: { label: string; actor?: string; date?: string | null; note?: string | null; color: string }[] = [
@@ -482,7 +482,7 @@ export default function BesoinsPage() {
         );
       })()}
 
-      {/* Record cost modal */}
+      {/* Modale d'enregistrement de coût */}
       {recordModal && (
         <div className="mr-modal-overlay" onClick={() => setRecordModal(null)}>
           <div className="mr-modal" style={{ maxWidth: 380 }} onClick={e => e.stopPropagation()}>

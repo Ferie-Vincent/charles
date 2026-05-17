@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Log;
 class SendMeetingReminders extends Command
 {
     protected $signature   = 'meetings:send-reminders';
-    protected $description = 'Send WhatsApp reminders 30 minutes before meetings';
+    protected $description = 'Envoie des rappels WhatsApp 30 minutes avant les réunions';
 
     public function handle(WhatsAppAlertService $whatsapp): void
     {
@@ -52,10 +52,10 @@ class SendMeetingReminders extends Command
                 }
             }
 
-            // Mark as sent to guarantee idempotence across scheduler runs
+            // Marquer comme envoyé pour garantir l'idempotence entre les exécutions du planificateur
             $meeting->update(['reminder_sent' => true]);
 
-            $this->info("Reminders sent for meeting #{$meeting->id} — {$invitees->count()} invitees");
+            $this->info("Rappels envoyés pour la réunion #{$meeting->id} — {$invitees->count()} invité(s)");
         }
     }
 }

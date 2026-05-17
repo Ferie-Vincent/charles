@@ -19,7 +19,7 @@ class AiBriefingController extends Controller
         $today     = today()->toDateString();
         $yesterday = today()->subDay()->toDateString();
 
-        // Use today's snapshot if built, else yesterday's
+        // Utiliser le snapshot d'aujourd'hui s'il existe, sinon celui d'hier
         $snapshots = ProjectSnapshot::where('company_id', $companyId)
             ->where('snapshot_date', $today)
             ->get();
@@ -114,7 +114,7 @@ PROMPT;
         $topMaterials = $snapshot?->top_materials ?? [];
 
         if (empty($topMaterials)) {
-            // Fallback: query daily logs directly
+            // Repli : interroger directement les journaux de chantier
             $logs = \App\Models\DailyLog::where('project_id', $projectId)
                 ->whereNotNull('materials_received')
                 ->orderByDesc('log_date')

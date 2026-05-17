@@ -14,12 +14,12 @@ class ProjectWorkerPolicy
             return false;
         }
 
-        // direction + DT can see all project workers
+        // direction + DT peuvent voir tous les ouvriers du projet
         if (in_array($user->role->name, ['direction', 'directeur-technique'])) {
             return true;
         }
 
-        // chef-chantier + conducteur-travaux must be project members
+        // chef-chantier + conducteur-travaux doivent être membres du projet
         if (in_array($user->role->name, ['chef-chantier', 'conducteur-travaux'])) {
             return $project->members()->where('user_id', $user->id)->exists();
         }

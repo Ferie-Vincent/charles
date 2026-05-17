@@ -1,9 +1,10 @@
 import { useState, useEffect, useMemo } from 'react';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
+import { api } from '../../lib/api';
 
 type Props = {
-  url: string;
+  docId: number;
   title?: string;
   onClose: () => void;
 };
@@ -21,17 +22,16 @@ const IFRAME_STYLES = `
   hr { border: none; border-top: 1px solid #e5e7eb; margin: 12px 0; }
 `;
 
-export default function MdViewerModal({ url, title = 'Rapport', onClose }: Props) {
+export default function MdViewerModal({ docId, title = 'Rapport', onClose }: Props) {
   const [rawMd, setRawMd]      = useState<string | null>(null);
   const [loading, setLoading]  = useState(true);
   const [fetchErr, setFetchErr] = useState(false);
 
   useEffect(() => {
-    fetch(url)
-      .then(r => { if (!r.ok) throw new Error(); return r.text(); })
-      .then(text => { setRawMd(text); setLoading(false); })
+    api.get(`/ged/${docId}/content`)
+      .then(res => { setRawMd(String(res.data)); setLoading(false); })
       .catch(() => { setFetchErr(true); setLoading(false); });
-  }, [url]);
+  }, [docId]);
 
   const srcDoc = useMemo(() => {
     if (!rawMd) return '';

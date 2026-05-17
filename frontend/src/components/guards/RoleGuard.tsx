@@ -16,12 +16,12 @@ export default function RoleGuard({ path, children }: Props) {
   const { canAccess, loaded } = usePermissions();
   const group = getRoleGroup(user?.role?.name ?? '');
 
-  // Static ROLE_ACCESS check runs first — catches /users (direction-only), /permissions, etc.
+  // Vérification statique ROLE_ACCESS en premier — bloque /users (direction uniquement), /permissions, etc.
   if (!OPEN_PATHS.includes(path) && !roleAccess(path, group)) {
     return <Navigate to="/" replace />;
   }
 
-  // LOCKED roles skip DB-permission loading wait (myFeatures = all-true from backend)
+  // Les rôles VERROUILLÉS ignorent l'attente de chargement des permissions DB (myFeatures = all-true depuis le backend)
   if (OPEN_PATHS.includes(path) || group === 'direction' || group === 'dt') return <>{children}</>;
   if (!loaded) return null;
 

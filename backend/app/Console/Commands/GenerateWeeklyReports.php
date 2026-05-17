@@ -12,8 +12,8 @@ use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Storage;
 
-#[Signature('reports:weekly {--project= : Generate for a specific project ID only}')]
-#[Description('Generate weekly PDF reports for all active projects')]
+#[Signature('reports:weekly {--project= : Générer uniquement pour un ID de projet spécifique}')]
+#[Description('Génère les rapports PDF hebdomadaires pour tous les projets actifs')]
 class GenerateWeeklyReports extends Command
 {
     public function handle(): int
@@ -29,9 +29,9 @@ class GenerateWeeklyReports extends Command
         $generated = 0;
 
         foreach ($projects as $project) {
-            // Skip if already generated this week
+            // Passer si déjà généré cette semaine
             if (ProjectReport::where('project_id', $project->id)->where('week_of', $weekOf)->exists()) {
-                $this->line("  Skipping {$project->code} — already generated for {$weekOf}");
+                $this->line("  Ignoré {$project->code} — déjà généré pour {$weekOf}");
                 continue;
             }
 
@@ -55,7 +55,7 @@ class GenerateWeeklyReports extends Command
                 $this->info("  ✓ {$project->code} → {$filename} ({$size} bytes)");
                 $generated++;
 
-                // WhatsApp alert to direction
+                // Alerte WhatsApp à la direction
                 $msg = "📋 *Rapport hebdomadaire généré*\n"
                     . "Chantier : {$project->name} ({$project->code})\n"
                     . "Semaine du : " . now()->startOfWeek()->format('d/m/Y') . "\n"
@@ -66,7 +66,7 @@ class GenerateWeeklyReports extends Command
             }
         }
 
-        $this->info("Generated {$generated} report(s).");
+        $this->info("{$generated} rapport(s) généré(s).");
         return self::SUCCESS;
     }
 

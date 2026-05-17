@@ -155,7 +155,7 @@ PROMPT;
         }
 
         $text = trim($result['text']);
-        // strip markdown code fences if model wraps JSON
+        // supprimer les balises de code Markdown si le modèle enveloppe le JSON
         $text = preg_replace('/^```(?:json)?\s*/i', '', $text);
         $text = preg_replace('/\s*```$/', '', $text);
 

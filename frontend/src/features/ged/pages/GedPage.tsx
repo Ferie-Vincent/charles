@@ -43,7 +43,7 @@ export default function GedPage() {
   const [projectFilter, setProjectFilter] = useState('');
   const [search, setSearch]     = useState('');
   const [modal, setModal]       = useState(false);
-  const [mdViewer, setMdViewer] = useState<{ url: string; name: string } | null>(null);
+  const [mdViewer, setMdViewer] = useState<{ docId: number; name: string } | null>(null);
   const [saving, setSaving]     = useState(false);
   const [uploadForm, setUploadForm] = useState<{
     file: File | null; type: GedDocument['type']; project_id: string; name: string; description: string;
@@ -86,10 +86,10 @@ export default function GedPage() {
   };
 
   const handleOpen = async (doc: GedDocument) => {
-    const url = await getDocumentUrl(doc.id);
     if (doc.mime_type === 'text/markdown' || doc.original_name.endsWith('.md')) {
-      setMdViewer({ url, name: doc.name });
+      setMdViewer({ docId: doc.id, name: doc.name });
     } else {
+      const url = await getDocumentUrl(doc.id);
       window.open(url, '_blank', 'noopener,noreferrer');
     }
   };
@@ -111,7 +111,7 @@ export default function GedPage() {
     return c.getMonth() === thisMonth.getMonth() && c.getFullYear() === thisMonth.getFullYear();
   }).length;
 
-  // Type counts for filter tabs
+  // Comptage par type pour les onglets de filtre
   const typeCounts = DOC_TYPES.reduce<Record<string, number>>((acc, t) => {
     acc[t] = docs.filter(d => d.type === t).length;
     return acc;
@@ -129,7 +129,7 @@ export default function GedPage() {
         }
       />
 
-      {/* KPI strip */}
+      {/* Bandeau KPI */}
       <div className="proj-kpi-row">
         <div className="proj-kpi">
           <div className="proj-kpi__icon proj-kpi__icon--blue">
@@ -185,13 +185,13 @@ export default function GedPage() {
         </div>
       </div>
 
-      {/* Table panel */}
+      {/* Panneau tableau */}
       <div style={{ background: 'var(--bg-panel)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
 
-        {/* Toolbar row */}
+        {/* Ligne de barre d'outils */}
         <div style={{ display: 'flex', gap: 12, alignItems: 'center', padding: '14px 18px', borderBottom: '1px solid var(--border)', flexWrap: 'wrap' }}>
 
-          {/* Search */}
+          {/* Recherche */}
           <div className="acct-search-wrap" style={{ flex: 1, minWidth: 200, maxWidth: 320 }}>
             <svg className="acct-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
@@ -212,7 +212,7 @@ export default function GedPage() {
             )}
           </div>
 
-          {/* Project filter */}
+          {/* Filtre projet */}
           <select
             className="form-select"
             style={{ fontSize: '0.84rem', maxWidth: 220 }}
@@ -223,7 +223,7 @@ export default function GedPage() {
             {projects.map(p => <option key={p.id} value={p.id}>{p.code} — {p.name}</option>)}
           </select>
 
-          {/* Type filter tabs */}
+          {/* Onglets de filtre par type */}
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             <button
               className={`bud-tab${!typeFilter ? ' bud-tab--active' : ''}`}
@@ -243,7 +243,7 @@ export default function GedPage() {
           </div>
         </div>
 
-        {/* Table */}
+        {/* Tableau */}
         {loading ? (
           <SkeletonPage rows={2} />
         ) : (
@@ -322,7 +322,7 @@ export default function GedPage() {
         )}
       </div>
 
-      {/* Upload modal */}
+      {/* Modale d'upload */}
       {modal && (
         <div className="mr-modal-overlay" onClick={() => setModal(false)}>
           <div className="mr-modal" style={{ maxWidth: 500 }} onClick={e => e.stopPropagation()}>
@@ -332,7 +332,7 @@ export default function GedPage() {
             </div>
             <div className="mr-modal__body" style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
 
-              {/* File drop zone */}
+              {/* Zone de dépôt de fichier */}
               <div className="form-field">
                 <label className="form-label">Fichier *</label>
                 <div className="bdc-file-drop" onClick={() => fileInputRef.current?.click()}>
@@ -405,7 +405,7 @@ export default function GedPage() {
 
       {mdViewer && (
         <MdViewerModal
-          url={mdViewer.url}
+          docId={mdViewer.docId}
           title={mdViewer.name}
           onClose={() => setMdViewer(null)}
         />

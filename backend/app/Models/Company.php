@@ -13,6 +13,14 @@ class Company extends Model
     protected $fillable = [
         'name',
         'slug',
+        'ai_enabled',
+        'ai_provider',
+        'ai_api_key',
+    ];
+
+    protected $casts = [
+        'ai_enabled' => 'boolean',
+        'ai_api_key' => 'encrypted',
     ];
 
     public function users(): HasMany

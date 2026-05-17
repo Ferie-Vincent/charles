@@ -80,6 +80,11 @@ export async function getDocumentUrl(id: number): Promise<string> {
   return res.data.url;
 }
 
+export async function getDocumentContent(id: number): Promise<string> {
+  const res = await api.get(`/ged/${id}/content`);
+  return res.data;
+}
+
 export async function updateDocument(id: number, data: Partial<GedDocument>): Promise<GedDocument> {
   const res = await api.put(`/ged/${id}`, data);
   return res.data;

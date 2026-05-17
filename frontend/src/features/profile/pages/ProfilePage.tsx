@@ -172,7 +172,7 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            {/* Read-only fields */}
+            {/* Champs en lecture seule */}
             <div className="profile-form__grid">
               <div className="form-field">
                 <label className="form-label">Rôle</label>
@@ -301,7 +301,7 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            {/* Strength indicator */}
+            {/* Indicateur de force */}
             {pwForm.password && (
               <PasswordStrength password={pwForm.password} />
             )}

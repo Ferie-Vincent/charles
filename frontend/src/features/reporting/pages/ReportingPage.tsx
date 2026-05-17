@@ -140,10 +140,10 @@ export default function ReportingPage() {
       {/* ── Table panel ── */}
       <div style={{ background: 'var(--bg-panel)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
 
-        {/* Toolbar row */}
+        {/* Ligne de barre d'outils */}
         <div style={{ display: 'flex', gap: 12, alignItems: 'center', padding: '14px 18px', borderBottom: '1px solid var(--border)', flexWrap: 'wrap' }}>
 
-          {/* Search */}
+          {/* Recherche */}
           <div className="acct-search-wrap" style={{ flex: 1, minWidth: 200, maxWidth: 340 }}>
             <svg className="acct-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
@@ -168,7 +168,7 @@ export default function ReportingPage() {
             )}
           </div>
 
-          {/* Filter tabs */}
+          {/* Onglets de filtre */}
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             {(['tous', 'hebdo', 'manuel'] as FilterType[]).map(t => {
               const count =
@@ -191,7 +191,7 @@ export default function ReportingPage() {
           </div>
         </div>
 
-        {/* Table */}
+        {/* Tableau */}
         {isError && (
           <p style={{ padding: 24, color: 'var(--text-muted)' }}>
             <span className="form-error">Erreur de chargement des rapports.</span>

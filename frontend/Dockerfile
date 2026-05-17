@@ -1,4 +1,5 @@
 FROM node:20-alpine as build
+ARG VITE_API_URL=https://charles-backend.onrender.com
 
 WORKDIR /app
 
@@ -6,11 +7,12 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies
-RUN npm ci
+RUN npm install --legacy-peer-deps
 
 # Copy source files
 COPY . .
 
+ENV VITE_API_URL=$VITE_API_URL
 # Build application
 RUN npm run build
 

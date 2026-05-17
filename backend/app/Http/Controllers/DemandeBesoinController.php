@@ -25,19 +25,19 @@ class DemandeBesoinController extends Controller
                     'preparer:id,name', 'recorder:id,name'])
             ->latest();
 
-        // Terrain: only their own requests on their projects
+        // Terrain : uniquement leurs propres demandes sur leurs projets
         if (in_array($role, Roles::TERRAIN)) {
             $query->where('requested_by', $user->id);
         }
-        // Logistique: soumis (read-only preview) + their own workflow statuses
+        // Logistique : soumis (aperçu lecture seule) + leurs propres statuts de workflow
         elseif (in_array($role, Roles::LOGISTICS)) {
             $query->whereIn('status', ['soumis', 'approuve', 'en_preparation', 'livre', 'comptabilise']);
         }
-        // Comptable: only livré (ready to record)
+        // Comptable : uniquement livré (prêt à comptabiliser)
         elseif ($role === 'comptable') {
             $query->whereIn('status', ['livre', 'comptabilise']);
         }
-        // Direction + metreur: all
+        // Direction + métreur : tout
 
         return response()->json(['data' => $query->get()]);
     }
@@ -217,7 +217,7 @@ class DemandeBesoinController extends Controller
 
         $request->validate(['actual_cost' => 'required|numeric|min:0']);
 
-        // Map demande category to BudgetEntry category
+        // Correspondance catégorie demande → catégorie BudgetEntry
         $categoryMap = [
             'materiaux'      => 'Matériaux',
             'equipement'     => 'Équipements',

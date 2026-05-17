@@ -12,7 +12,7 @@ use App\Notifications\AiAlertNotification;
 class AiProactiveAlerts extends Command
 {
     protected $signature = 'ai:proactive-alerts';
-    protected $description = 'Send AI-driven proactive alerts: missing journals, budget overrun, planning delays';
+    protected $description = 'Envoie des alertes proactives pilotées par IA : journaux manquants, dépassement budget, retards planning';
 
     public function handle(): int
     {
@@ -28,7 +28,7 @@ class AiProactiveAlerts extends Command
         $alerts = [];
 
         foreach ($snapshots as $snap) {
-            // Missing journal > 2 days
+            // Journal manquant depuis > 2 jours
             if ($snap->last_log_date) {
                 $daysSince = Carbon::parse($snap->last_log_date)->diffInDays(today());
                 if ($daysSince > 2) {
@@ -66,7 +66,7 @@ class AiProactiveAlerts extends Command
                 ];
             }
 
-            // Planning delay > 10%
+            // Retard planning > 10%
             $delay = $snap->theoretical_progress - $snap->progress_percent;
             if ($delay > 10) {
                 $alerts[] = [
@@ -97,7 +97,7 @@ class AiProactiveAlerts extends Command
             return self::SUCCESS;
         }
 
-        // Store alerts as DB notifications for Direction/DT users
+        // Enregistrer les alertes en tant que notifications DB pour les utilisateurs Direction/DT
         foreach ($alerts as $alert) {
             $recipients = User::where('company_id', $alert['company_id'])
                 ->whereHas('role', fn($q) => $q->whereIn('name', ['direction', 'directeur-technique']))

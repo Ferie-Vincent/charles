@@ -36,8 +36,8 @@ class OrdreDeServiceController extends Controller
             'document'            => 'nullable|file|mimes:pdf|max:10240',
         ]);
 
-        // Lifecycle-changing OS types (demarrage/arret/reprise) mutate project contractual state
-        // — restricted to Direction and Directeur Technique only
+        // Les types d'OS modifiant le cycle de vie (demarrage/arret/reprise) mutent l'état contractuel du projet
+        // — réservés à la Direction et au Directeur Technique uniquement
         $lifecycleTypes = ['demarrage', 'arret', 'reprise'];
         if (in_array($data['type'], $lifecycleTypes)) {
             abort_unless(
@@ -60,7 +60,7 @@ class OrdreDeServiceController extends Controller
             'document_path' => $path,
         ]);
 
-        // Auto-update project state based on OS type
+        // Mise à jour automatique de l'état du projet selon le type d'OS
         if ($data['type'] === 'demarrage') {
             $project->update(['lifecycle_status' => 'execution', 'is_arrete' => false, 'arret_depuis' => null]);
         } elseif ($data['type'] === 'arret') {
@@ -80,7 +80,7 @@ class OrdreDeServiceController extends Controller
             'date_accuse'      => now()->toDateString(),
         ]);
 
-        // Item 13: notify chefs de chantier assigned to this project
+        // Item 13 : notifier les chefs de chantier affectés à ce projet
         $os->load('project:id,name,code,company_id');
         $memberIds = ProjectMember::where('project_id', $project->id)->pluck('user_id');
         User::whereHas('role', fn($q) => $q->where('name', Roles::CHEF_CHANTIER_SLUG))

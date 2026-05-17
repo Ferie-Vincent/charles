@@ -39,7 +39,7 @@ export interface Invoice {
   purchase_order_id?: number | null;
   attachment_path?: string;
   attachment_name?: string;
-  // workflow
+  // champs de workflow
   validated_by?: number;
   validated_at?: string;
   validator?: { id: number; name: string };

@@ -19,7 +19,7 @@ export async function updateCompany(data: { name: string }) {
   return res.data;
 }
 
-/* ── Notification preferences (localStorage) ─── */
+/* ── Préférences de notification (localStorage) ─── */
 
 const NOTIF_KEY = 'chantier:notif_prefs';
 
@@ -52,4 +52,35 @@ export function getNotifPrefs(): NotifPrefs {
 
 export function saveNotifPrefs(prefs: NotifPrefs): void {
   localStorage.setItem(NOTIF_KEY, JSON.stringify(prefs));
+}
+
+/* ── Paramètres IA ──────────────────────────────── */
+
+export interface AiSettings {
+  ai_enabled: boolean;
+  ai_provider: 'mistral' | 'groq' | 'anthropic' | null;
+  has_api_key: boolean;
+}
+
+export async function getAiSettings(): Promise<AiSettings> {
+  const res = await api.get('/settings/ai');
+  return res.data;
+}
+
+export async function updateAiSettings(data: {
+  ai_enabled: boolean;
+  ai_provider?: string | null;
+  ai_api_key?: string;
+}): Promise<AiSettings> {
+  const res = await api.put('/settings/ai', data);
+  return res.data;
+}
+
+export async function testAiConnection(provider: string, api_key: string): Promise<boolean> {
+  try {
+    const res = await api.post('/settings/ai/test', { provider, api_key });
+    return res.data.ok === true;
+  } catch {
+    return false;
+  }
 }

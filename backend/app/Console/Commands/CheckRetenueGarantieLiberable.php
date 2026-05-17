@@ -12,13 +12,13 @@ use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
-#[Signature('projects:check-retenue-liberable {--dry-run : List without sending}')]
-#[Description('Alert direction + comptable when retenue de garantie is releasable (1 year after provisional reception)')]
+#[Signature('projects:check-retenue-liberable {--dry-run : Lister sans envoyer}')]
+#[Description('Alerte direction + comptable quand la retenue de garantie est libérable (1 an après la réception provisoire)')]
 class CheckRetenueGarantieLiberable extends Command
 {
     public function handle(): int
     {
-        // Cooldown 30 days: retenue libération is a one-time event per project
+        // Anti-doublon 30 jours : la libération de retenue est un événement unique par projet
         $recentProjectIds = DB::table('notifications')
             ->where('created_at', '>', now()->subDays(30))
             ->get(['data'])
@@ -30,7 +30,7 @@ class CheckRetenueGarantieLiberable extends Command
             ->values()
             ->toArray();
 
-        // Projects whose provisional reception was exactly 1 year ago (±7 day window)
+        // Projets dont la réception provisoire remonte à exactement 1 an (fenêtre ±7 jours)
         $projects = Project::whereNotNull('date_reception_provisoire')
             ->whereBetween('date_reception_provisoire', [
                 now()->subYear()->subDays(7),

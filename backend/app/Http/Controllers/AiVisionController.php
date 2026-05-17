@@ -18,7 +18,7 @@ class AiVisionController extends Controller
         $this->authorize('view', $project);
         abort_if($photo->project_id !== $project->id, 404);
 
-        // Load image from storage
+        // Charger l'image depuis le stockage
         $path = $photo->path;
         if (! Storage::disk('public')->exists($path)) {
             return response()->json(['error' => 'Photo introuvable.'], 404);

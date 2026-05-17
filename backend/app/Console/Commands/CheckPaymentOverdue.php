@@ -10,8 +10,8 @@ use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 
-#[Signature('situations:check-payment-overdue {--dry-run : List overdue without sending notifications}')]
-#[Description('Notify DT + comptable for situations validée MOE since > 30 days without payment')]
+#[Signature('situations:check-payment-overdue {--dry-run : Lister les situations en retard sans envoyer de notifications}')]
+#[Description('Notifie DT + comptable pour les situations validées MOE depuis > 30 jours sans paiement')]
 class CheckPaymentOverdue extends Command
 {
     public function handle(): int
@@ -24,11 +24,11 @@ class CheckPaymentOverdue extends Command
             ->get();
 
         if ($situations->isEmpty()) {
-            $this->info('No overdue situations found.');
+            $this->info('Aucune situation en retard de paiement trouvée.');
             return Command::SUCCESS;
         }
 
-        $this->info("Found {$situations->count()} overdue situation(s).");
+        $this->info("Trouvé {$situations->count()} situation(s) en retard de paiement.");
 
         foreach ($situations as $situation) {
             $project = $situation->project;
@@ -48,7 +48,7 @@ class CheckPaymentOverdue extends Command
         }
 
         if (!$this->option('dry-run')) {
-            $this->info('Notifications sent.');
+            $this->info('Notifications envoyées.');
         }
 
         return Command::SUCCESS;

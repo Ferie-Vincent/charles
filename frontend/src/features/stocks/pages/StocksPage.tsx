@@ -151,7 +151,7 @@ export default function StocksPage() {
         </div>
       </div>
 
-      {/* Critical alert */}
+      {/* Alerte critique */}
       {criticalItems.length > 0 && (
         <div className="acct-pending-banner">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
@@ -160,9 +160,9 @@ export default function StocksPage() {
         </div>
       )}
 
-      {/* Table panel */}
+      {/* Panneau tableau */}
       <div className="bg-panel" style={{ borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
-        {/* Toolbar */}
+        {/* Barre d'outils */}
         <div style={{ display: 'flex', gap: 12, alignItems: 'center', padding: '14px 18px', borderBottom: '1px solid var(--border)', flexWrap: 'wrap' }}>
           <div className="acct-search-wrap" style={{ flex: 1, minWidth: 200, maxWidth: 340 }}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="14" height="14" className="acct-search-icon"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -179,17 +179,17 @@ export default function StocksPage() {
           </div>
         </div>
 
-        {/* Table */}
+        {/* Tableau */}
         {loading ? <SkeletonPage rows={2} /> : (
-          <table className="data-table">
+          <table className="data-table stocks-table">
             <thead>
               <tr>
                 <th>Article</th>
                 <th>Catégorie</th>
-                <th>Emplacement</th>
+                <th>Niveau de stock</th>
                 <th style={{ textAlign: 'right' }}>Quantité</th>
-                <th style={{ textAlign: 'right' }}>Seuil alerte</th>
                 <th>Statut</th>
+                <th style={{ textAlign: 'right' }}>Mouvements</th>
                 <th></th>
               </tr>
             </thead>
@@ -199,47 +199,71 @@ export default function StocksPage() {
                 const cc = CAT_COLOR[item.category] ?? '#94a3b8';
                 const isLow = item.is_low;
                 const isEmpty = item.quantity === 0;
+                const pct = item.threshold > 0
+                  ? Math.min(100, Math.round((item.quantity / item.threshold) * 100))
+                  : null;
+                const barColor = isEmpty ? '#ef4444' : isLow ? '#f59e0b' : '#10b981';
                 return (
-                  <tr key={item.id}>
+                  <tr key={item.id} className={isEmpty ? 'stocks-row--empty' : isLow ? 'stocks-row--low' : ''}>
                     <td>
                       <span style={{ fontWeight: 600, color: 'var(--text-body)' }}>{item.name}</span>
-                      {item.reference && <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--text-muted)' }}>Réf: {item.reference}</p>}
-                    </td>
-                    <td><span className="badge" style={{ background: `${cc}12`, color: cc, borderColor: `${cc}35` }}>{STOCK_CATEGORIES[item.category]}</span></td>
-                    <td style={{ color: 'var(--text-muted)', fontSize: '0.84rem' }}>{item.location || '—'}</td>
-                    <td style={{ textAlign: 'right', fontWeight: 700, color: isEmpty ? '#ef4444' : isLow ? '#f59e0b' : 'var(--text-body)' }}>
-                      {fmt(item.quantity, item.unit)}
-                    </td>
-                    <td style={{ textAlign: 'right', color: 'var(--text-muted)', fontSize: '0.84rem' }}>
-                      {item.threshold > 0 ? fmt(item.threshold, item.unit) : '—'}
-                    </td>
-                    <td>
-                      {isEmpty ? (
-                        <span className="badge" style={{ background: '#ef444415', color: '#ef4444', borderColor: '#ef444440' }}>
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="10" height="10"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                          Rupture
-                        </span>
-                      ) : isLow ? (
-                        <span className="badge" style={{ background: '#f59e0b15', color: '#f59e0b', borderColor: '#f59e0b40' }}>
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="10" height="10"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                          Critique
-                        </span>
-                      ) : (
-                        <span className="badge" style={{ background: '#10b98115', color: '#10b981', borderColor: '#10b98140' }}>
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="10" height="10"><polyline points="20 6 9 17 4 12"/></svg>
-                          OK
-                        </span>
+                      {(item.reference || item.location) && (
+                        <p style={{ margin: '2px 0 0', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                          {item.reference && <span>Réf : {item.reference}</span>}
+                          {item.reference && item.location && ' · '}
+                          {item.location && <span>{item.location}</span>}
+                        </p>
                       )}
                     </td>
                     <td>
-                      <div style={{ display: 'flex', gap: 6 }}>
-                        <button className="btn btn--sm btn--secondary" onClick={() => openMovements(item)} title="Mouvement">
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="12" height="12"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+                      <span className="badge" style={{ background: `${cc}12`, color: cc, borderColor: `${cc}35` }}>
+                        {STOCK_CATEGORIES[item.category]}
+                      </span>
+                    </td>
+                    <td style={{ minWidth: 140 }}>
+                      {pct !== null ? (
+                        <div className="stocks-gauge">
+                          <div className="stocks-gauge__track">
+                            <div className="stocks-gauge__fill" style={{ width: `${Math.min(pct, 100)}%`, background: barColor }} />
+                          </div>
+                          <span className="stocks-gauge__pct" style={{ color: barColor }}>{pct}%</span>
+                        </div>
+                      ) : (
+                        <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>Pas de seuil</span>
+                      )}
+                    </td>
+                    <td style={{ textAlign: 'right' }}>
+                      <span style={{ fontWeight: 700, fontSize: '0.95rem', color: isEmpty ? '#ef4444' : isLow ? '#f59e0b' : 'var(--text-body)' }}>
+                        {fmt(item.quantity, item.unit)}
+                      </span>
+                      {item.threshold > 0 && (
+                        <p style={{ margin: '1px 0 0', fontSize: '0.75rem', color: 'var(--text-muted)', textAlign: 'right' }}>
+                          seuil : {fmt(item.threshold, item.unit)}
+                        </p>
+                      )}
+                    </td>
+                    <td>
+                      {isEmpty ? (
+                        <span className="badge badge--danger">Rupture</span>
+                      ) : isLow ? (
+                        <span className="badge badge--warning">Critique</span>
+                      ) : (
+                        <span className="badge badge--success">OK</span>
+                      )}
+                    </td>
+                    <td style={{ textAlign: 'right', color: 'var(--text-muted)', fontSize: '0.82rem' }}>
+                      {item.movements_count ?? 0}
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
+                        <button className="btn btn--sm btn--secondary" onClick={() => openMovements(item)} title="Enregistrer un mouvement">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="12" height="12"><path d="M8 7h12M8 12h12M8 17h12M3 7h.01M3 12h.01M3 17h.01"/></svg>
+                          Mouvement
                         </button>
-                        <button className="btn-icon btn-icon--edit" onClick={() => setItemModal({ ...item })}>
+                        <button className="btn-icon btn-icon--edit" onClick={() => setItemModal({ ...item })} title="Modifier">
                           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="13" height="13"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                         </button>
-                        <button className="btn-icon btn-icon--delete" onClick={() => setDeleteId(item.id)}>
+                        <button className="btn-icon btn-icon--delete" onClick={() => setDeleteId(item.id)} title="Supprimer">
                           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="13" height="13"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
                         </button>
                       </div>
@@ -252,7 +276,7 @@ export default function StocksPage() {
         )}
       </div>
 
-      {/* Item modal */}
+      {/* Modale élément */}
       {itemModal !== null && (
         <div className="mr-modal-overlay" onClick={() => setItemModal(null)}>
           <div className="mr-modal" style={{ maxWidth: 520 }} onClick={e => e.stopPropagation()}>
@@ -306,7 +330,7 @@ export default function StocksPage() {
         </div>
       )}
 
-      {/* Movements panel */}
+      {/* Panneau mouvements */}
       {movModal !== null && (
         <div className="mr-modal-overlay" onClick={() => setMovModal(null)}>
           <div className="mr-modal" style={{ maxWidth: 560 }} onClick={e => e.stopPropagation()}>
@@ -320,7 +344,7 @@ export default function StocksPage() {
               <button className="mr-modal__close" aria-label="Fermer" onClick={() => setMovModal(null)}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
             </div>
             <div className="mr-modal__body" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {/* New movement form */}
+              {/* Formulaire nouveau mouvement */}
               <div className="stocks-mov-form">
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.75rem' }}>
                   <div className="form-field">
@@ -348,7 +372,7 @@ export default function StocksPage() {
                   {saving ? '…' : 'Enregistrer mouvement'}
                 </button>
               </div>
-              {/* History */}
+              {/* Historique */}
               <div>
                 <p className="form-label" style={{ marginBottom: 8 }}>Historique</p>
                 {movements.length === 0 ? (
@@ -381,7 +405,7 @@ export default function StocksPage() {
         </div>
       )}
 
-      {/* Delete */}
+      {/* Supprimer */}
       {deleteId !== null && (
         <div className="mr-modal-overlay" onClick={() => setDeleteId(null)}>
           <div className="mr-modal" style={{ maxWidth: 380 }} onClick={e => e.stopPropagation()}>

@@ -31,7 +31,7 @@ export default function MaterialReceiptsPanel({ projectId }: Props) {
 
   return (
     <div className="mr-panel">
-      {/* Totals grid */}
+      {/* Grille des totaux */}
       <div className="mr-grid">
         {data.totals.map(t => {
           const icon = MATERIAL_ICONS[t.name] ?? '📦';
@@ -49,7 +49,7 @@ export default function MaterialReceiptsPanel({ projectId }: Props) {
         })}
       </div>
 
-      {/* Recent entries */}
+      {/* Entrées récentes */}
       <div className="mr-entries">
         <p className="mr-entries__title">Historique des livraisons</p>
         <table className="mr-table">

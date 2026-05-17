@@ -137,8 +137,8 @@ body {
 }
 
 .sidebar-brand__mascot {
-  width: 56px;
-  height: 56px;
+  width: 90px;
+  height: 90px;
   object-fit: contain;
   flex-shrink: 0;
   image-rendering: auto;
@@ -7156,6 +7156,21 @@ code {
 .stocks-qty--critique { color: #f59e0b; font-weight: 700; }
 .stocks-qty--ok { color: #10b981; font-weight: 600; }
 
+/* Barre de jauge de niveau de stock */
+.stocks-gauge { display: flex; align-items: center; gap: 8px; }
+.stocks-gauge__track { flex: 1; height: 6px; background: var(--border); border-radius: 99px; overflow: hidden; }
+.stocks-gauge__fill { height: 100%; border-radius: 99px; transition: width 0.3s ease; }
+.stocks-gauge__pct { font-size: 0.75rem; font-weight: 600; min-width: 34px; text-align: right; }
+
+/* Accent de ligne pour les articles critiques ou en rupture */
+.stocks-row--low td:first-child { border-left: 3px solid #f59e0b; }
+.stocks-row--empty td:first-child { border-left: 3px solid #ef4444; }
+
+/* Variantes de badge sémantique (danger/warning/success) */
+.badge--danger  { background: #ef444415; color: #ef4444; border: 1px solid #ef444440; }
+.badge--warning { background: #f59e0b15; color: #d97706; border: 1px solid #f59e0b40; }
+.badge--success { background: #10b98115; color: #059669; border: 1px solid #10b98140; }
+
 /* Stocks movement panel */
 .stocks-mov-panel { display: flex; flex-direction: column; gap: 24px; }
 .stocks-mov-form { background: var(--surface-alt, #f8fafc); border: 1px solid var(--border); border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
@@ -10482,8 +10497,8 @@ h4.ai-md-heading { font-size: 13px; }
 /* ── Main button ── */
 .ai-fab-btn {
   position: relative;
-  width: 56px;
-  height: 56px;
+  width: 68px;
+  height: 68px;
   border-radius: 50%;
   background: linear-gradient(135deg, #6366f1 0%, #2F60B0 60%, #0ea5e9 100%);
   background-size: 200% 200%;
@@ -10491,15 +10506,13 @@ h4.ai-md-heading { font-size: 13px; }
   border: none;
   cursor: pointer;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 1px;
   box-shadow: 0 4px 20px rgba(99,102,241,0.45), 0 1px 4px rgba(0,0,0,0.2);
   transition: transform 0.25s cubic-bezier(.34,1.56,.64,1), box-shadow 0.25s;
   flex-shrink: 0;
   animation: fabPulse 2.8s ease-out infinite;
-  overflow: hidden;
+  overflow: visible;
 }
 .ai-fab-btn:hover {
   transform: scale(1.1);
@@ -10516,7 +10529,7 @@ h4.ai-md-heading { font-size: 13px; }
 /* Rotating ring around button */
 .ai-fab-btn__ring {
   position: absolute;
-  inset: -3px;
+  inset: -4px;
   border-radius: 50%;
   border: 2px solid transparent;
   border-top-color: rgba(255,255,255,0.6);
@@ -10534,13 +10547,28 @@ h4.ai-md-heading { font-size: 13px; }
   transition: transform 0.35s cubic-bezier(.34,1.56,.64,1);
   line-height: 1;
 }
-.ai-fab-btn__text {
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 1px;
-  opacity: 0.85;
-  line-height: 1;
-  margin-top: 1px;
+/* Mascot — stands on button, head/torso overflow above the circle */
+.ai-fab-btn__mascot {
+  position: absolute;
+  width: 118px;
+  height: 118px;
+  left: 50%;
+  bottom: -6px;
+  transform: translateX(-50%);
+  object-fit: contain;
+  pointer-events: none;
+  transition: opacity 0.22s ease, transform 0.22s cubic-bezier(.34,1.56,.64,1);
+  filter: drop-shadow(0 3px 8px rgba(0,0,0,0.3));
+}
+
+/* Close X icon — centered, layered above */
+.ai-fab-btn__close {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.22s ease, transform 0.22s cubic-bezier(.34,1.56,.64,1);
 }
 
 /* ── Speed dial items ── */
@@ -10746,6 +10774,12 @@ h4.ai-md-heading { font-size: 13px; }
 }
 /* Hide inner header — modal already shows title */
 .ai-fab-modal-body .ai-query-panel__header { display: none; }
+
+/* AiMarkdown elements — dark text on white modal bg */
+.ai-fab-modal-body .ai-md-p,
+.ai-fab-modal-body .ai-md-list li,
+.ai-fab-modal-body .ai-md-heading { color: #1e293b; }
+.ai-fab-modal-body strong         { color: #0f172a; }
 /* ─────────────────────────────────────────────────────────────────── */
 
 /* ═══════════════════════════════════════════════

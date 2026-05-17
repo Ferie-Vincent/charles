@@ -64,9 +64,10 @@ export default function DailyLogForm({ projectId, projectLatitude, projectLongit
   const [geoChecking, setGeoChecking] = useState(false);
   const [prefilled, setPrefilled] = useState(false);
   const [listening, setListening] = useState(false);
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const recognitionRef = useRef<any>(null);
 
-  // Pre-fill from last log
+  // Pré-remplissage depuis le dernier journal
   const { data: lastLog } = useQuery({
     queryKey: ['daily-log-last', projectId],
     queryFn: () => getLastDailyLog(projectId),
@@ -74,7 +75,7 @@ export default function DailyLogForm({ projectId, projectLatitude, projectLongit
     retry: false,
   });
 
-  // AI material suggestions
+  // Suggestions de matériaux par IA
   const { data: aiSuggestions = [] } = useQuery({
     queryKey: ['ai-material-suggestions', projectId],
     queryFn: () => getMaterialSuggestions(projectId),
@@ -82,7 +83,7 @@ export default function DailyLogForm({ projectId, projectLatitude, projectLongit
     retry: false,
   });
 
-  // Apply pre-fill once last log is loaded (only if user hasn't touched form yet)
+  // Appliquer le pré-remplissage une fois le dernier journal chargé (seulement si l'utilisateur n'a pas encore touché au formulaire)
   useEffect(() => {
     if (!lastLog || prefilled) return;
     setWeather(lastLog.weather ?? '');
@@ -125,8 +126,9 @@ export default function DailyLogForm({ projectId, projectLatitude, projectLongit
   }
 
   function toggleVoice() {
-    const SR = (window as typeof window & { SpeechRecognition?: typeof SpeechRecognition; webkitSpeechRecognition?: typeof SpeechRecognition }).SpeechRecognition
-      || (window as typeof window & { SpeechRecognition?: typeof SpeechRecognition; webkitSpeechRecognition?: typeof SpeechRecognition }).webkitSpeechRecognition;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const w = window as any;
+    const SR = w.SpeechRecognition || w.webkitSpeechRecognition;
     if (!SR) return;
 
     if (listening) {
@@ -139,9 +141,9 @@ export default function DailyLogForm({ projectId, projectLatitude, projectLongit
     rec.lang = 'fr-FR';
     rec.continuous = true;
     rec.interimResults = false;
-    rec.onresult = (e) => {
-      const transcript = Array.from(e.results)
-        .map(r => r[0].transcript)
+    rec.onresult = (e: any) => {
+      const transcript = Array.from(e.results as any[])
+        .map((r: any) => r[0].transcript as string)
         .join(' ');
       setNotes(prev => (prev ? prev + ' ' : '') + transcript);
     };
@@ -225,10 +227,8 @@ export default function DailyLogForm({ projectId, projectLatitude, projectLongit
     );
   }
 
-  const hasSpeech = !!(
-    (window as typeof window & { SpeechRecognition?: unknown; webkitSpeechRecognition?: unknown }).SpeechRecognition
-    || (window as typeof window & { SpeechRecognition?: unknown; webkitSpeechRecognition?: unknown }).webkitSpeechRecognition
-  );
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const hasSpeech = !!((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition);
 
   return (
     <form className="daily-log-form" onSubmit={handleSubmit}>

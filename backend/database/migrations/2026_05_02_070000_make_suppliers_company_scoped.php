@@ -16,10 +16,14 @@ return new class extends Migration
         });
 
         // Step 2: backfill company_id from project->company_id
+        // PostgreSQL does not support MySQL's "UPDATE ... JOIN" syntax.
+        // Render uses PostgreSQL, so we use "UPDATE ... FROM" instead.
         DB::statement('
-            UPDATE suppliers s
-            JOIN projects p ON s.project_id = p.id
-            SET s.company_id = p.company_id
+            UPDATE suppliers
+            SET company_id = projects.company_id
+            FROM projects
+            WHERE suppliers.project_id = projects.id
+              AND suppliers.company_id IS NULL
         ');
 
         // Step 3: make company_id NOT NULL and project_id nullable

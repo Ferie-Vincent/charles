@@ -118,7 +118,7 @@ export default function BudgetPanel({ projectId }: Props) {
   return (
     <div className="bud-panel">
 
-      {/* KPI row */}
+      {/* Ligne KPI */}
       <div className="bud-kpi-row">
         <div className="bud-kpi">
           <span className="bud-kpi__label">Budget prévisionnel</span>
@@ -171,7 +171,7 @@ export default function BudgetPanel({ projectId }: Props) {
         </div>
       )}
 
-      {/* Header + form toggle */}
+      {/* En-tête + bascule formulaire */}
       <div className="bud-list-header">
         <div className="bud-tabs">
           {(['all', 'previsionnel', 'engagement', 'paiement'] as const).map(tab => (
@@ -189,7 +189,7 @@ export default function BudgetPanel({ projectId }: Props) {
         </button>
       </div>
 
-      {/* Form */}
+      {/* Formulaire */}
       {showForm && (
         <form className="bud-form" onSubmit={handleSubmit}>
           <div className="bud-form__row">
@@ -236,7 +236,7 @@ export default function BudgetPanel({ projectId }: Props) {
         </form>
       )}
 
-      {/* Entries list */}
+      {/* Liste des entrées */}
       {filtered.length === 0 ? (
         <p className="bud-empty">Aucune entrée{activeTab !== 'all' ? ' pour ce type' : ''}.</p>
       ) : (

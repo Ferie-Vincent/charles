@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../auth/stores/auth-store';
 import { getRoleGroup } from '../../../lib/roles';
-import { updateProfile, changePassword, updateCompany, getNotifPrefs, saveNotifPrefs, type NotifPrefs } from '../api/settings';
+import { updateProfile, changePassword, updateCompany, getNotifPrefs, saveNotifPrefs, type NotifPrefs, getAiSettings, updateAiSettings, testAiConnection } from '../api/settings';
 import PageHeader from '../../../components/ui/PageHeader';
 
-type Tab = 'profil' | 'entreprise' | 'notifications' | 'acces' | 'apropos';
+type Tab = 'profil' | 'entreprise' | 'notifications' | 'acces' | 'ia' | 'apropos';
 
 /* ── Small reusable toggle ─────────────────────── */
 function Toggle({ checked, onChange, id }: { checked: boolean; onChange: (v: boolean) => void; id: string }) {
@@ -102,7 +103,7 @@ function TabProfil() {
 
   return (
     <div className="settings-content">
-      {/* Profil info */}
+      {/* Informations du profil */}
       <Section title="Informations personnelles" desc="Votre nom et adresse email dans la plateforme.">
         <div className="settings-profile-card">
           <div className="settings-avatar">{(user?.name ?? '?').split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()}</div>
@@ -445,6 +446,189 @@ function TabApropos() {
 }
 
 /* ════════════════════════════════════════════════
+   TAB: Module IA
+   ════════════════════════════════════════════════ */
+const AI_PROVIDERS = [
+  { value: 'mistral',   label: 'Mistral AI',   desc: 'mistral-small-latest · pixtral-12b (vision)' },
+  { value: 'groq',      label: 'Groq',          desc: 'llama-3.1-8b-instant · ultra-rapide' },
+  { value: 'anthropic', label: 'Anthropic',      desc: 'claude-haiku-4-5 · plus créatif' },
+] as const;
+
+function TabIA() {
+  const queryClient = useQueryClient();
+  const { data: settings, isLoading } = useQuery({
+    queryKey: ['ai-settings'],
+    queryFn: getAiSettings,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const [provider, setProvider] = useState<string>(settings?.ai_provider ?? 'mistral');
+  const [apiKey, setApiKey]     = useState('');
+  const [showKey, setShowKey]   = useState(false);
+  const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'ok' | 'fail'>('idle');
+  const [status, setStatus] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
+
+  const mutation = useMutation({
+    mutationFn: updateAiSettings,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ai-settings'] });
+      setStatus({ type: 'success', msg: 'Paramètres IA sauvegardés.' });
+      setApiKey('');
+    },
+    onError: () => setStatus({ type: 'error', msg: 'Erreur lors de la sauvegarde.' }),
+  });
+
+  async function handleToggle(enabled: boolean) {
+    mutation.mutate({ ai_enabled: enabled });
+  }
+
+  async function handleSave(e: React.FormEvent) {
+    e.preventDefault();
+    setStatus(null);
+    mutation.mutate({
+      ai_enabled: settings?.ai_enabled ?? true,
+      ai_provider: provider,
+      ai_api_key: apiKey || undefined,
+    });
+  }
+
+  async function handleTest() {
+    if (!apiKey) return;
+    setTestStatus('testing');
+    const ok = await testAiConnection(provider, apiKey);
+    setTestStatus(ok ? 'ok' : 'fail');
+    setTimeout(() => setTestStatus('idle'), 4000);
+  }
+
+  if (isLoading) return <div className="settings-content"><p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Chargement…</p></div>;
+
+  const enabled = settings?.ai_enabled ?? true;
+
+  return (
+    <div className="settings-content">
+      <Section
+        title="Module IA"
+        desc="Activez ou désactivez l'ensemble des fonctionnalités IA (briefing matinal, pré-remplissage journal, analyse photo, requêtes RAG)."
+      >
+        <div className="settings-row">
+          <div className="settings-row__label">
+            <span className="settings-row__title">Activer le module IA</span>
+            <span className="settings-row__hint">
+              {enabled
+                ? 'Toutes les fonctionnalités IA sont actives.'
+                : 'L\'IA est désactivée — CHARLES fonctionne sans IA.'}
+            </span>
+          </div>
+          <Toggle id="ai-toggle" checked={enabled} onChange={handleToggle} />
+        </div>
+      </Section>
+
+      {enabled && (
+        <>
+          <div className="settings-divider" />
+          <Section
+            title="Fournisseur IA"
+            desc="Choisissez le fournisseur et saisissez votre clef API. Si vide, la clef de la plateforme est utilisée."
+          >
+            <form onSubmit={handleSave}>
+              <div className="ai-provider-list">
+                {AI_PROVIDERS.map(p => (
+                  <label key={p.value} className={`ai-provider-card ${provider === p.value ? 'ai-provider-card--active' : ''}`}>
+                    <input
+                      type="radio"
+                      name="provider"
+                      value={p.value}
+                      checked={provider === p.value}
+                      onChange={() => { setProvider(p.value); setTestStatus('idle'); }}
+                      className="ai-provider-card__radio"
+                    />
+                    <div className="ai-provider-card__body">
+                      <span className="ai-provider-card__name">{p.label}</span>
+                      <span className="ai-provider-card__desc">{p.desc}</span>
+                    </div>
+                    {settings?.ai_provider === p.value && settings?.has_api_key && (
+                      <span className="ai-provider-card__badge">Votre clef</span>
+                    )}
+                  </label>
+                ))}
+              </div>
+
+              <div className="settings-field" style={{ marginTop: '1.25rem' }}>
+                <label className="settings-label">
+                  Votre clef API{settings?.has_api_key ? ' (laissez vide pour conserver l\'existante)' : ''}
+                </label>
+                <div className="ai-key-input-wrap">
+                  <input
+                    type={showKey ? 'text' : 'password'}
+                    className="form-input"
+                    placeholder={settings?.has_api_key ? '••••••••••••••••' : 'sk-…'}
+                    value={apiKey}
+                    onChange={e => { setApiKey(e.target.value); setTestStatus('idle'); }}
+                    autoComplete="off"
+                  />
+                  <button type="button" className="ai-key-toggle" onClick={() => setShowKey(v => !v)} aria-label="Afficher/masquer">
+                    {showKey
+                      ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                      : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    }
+                  </button>
+                </div>
+              </div>
+
+              <div className="ai-actions">
+                {apiKey && (
+                  <button type="button" className="ai-test-btn" onClick={handleTest} disabled={testStatus === 'testing'}>
+                    {testStatus === 'testing' && <span className="spinner-xs" />}
+                    {testStatus === 'ok'      && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
+                    {testStatus === 'fail'    && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>}
+                    {testStatus === 'idle'    && 'Tester la connexion'}
+                    {testStatus === 'testing' && 'Test en cours…'}
+                    {testStatus === 'ok'      && 'Connexion réussie'}
+                    {testStatus === 'fail'    && 'Connexion échouée'}
+                  </button>
+                )}
+                <button type="submit" className="btn btn--primary btn--sm" disabled={mutation.isPending}>
+                  {mutation.isPending ? 'Sauvegarde…' : 'Sauvegarder'}
+                </button>
+              </div>
+
+              {status && <Alert type={status.type} msg={status.msg} />}
+            </form>
+          </Section>
+
+          <div className="settings-divider" />
+          <Section title="Fonctionnalités couvertes">
+            <div className="ai-features-grid">
+              {[
+                { icon: '☀️', label: 'Briefing matinal', desc: 'Résumé IA de votre portefeuille chaque matin' },
+                { icon: '📝', label: 'Journal pré-rempli', desc: 'Météo, ouvriers et matériaux suggérés automatiquement' },
+                { icon: '🔍', label: 'Requêtes RAG', desc: 'Questions en langage naturel sur vos chantiers' },
+                { icon: '📷', label: 'Analyse photo', desc: 'Analyse visuelle des photos de chantier (Mistral Vision)' },
+              ].map(f => (
+                <div key={f.label} className="ai-feature-card">
+                  <span className="ai-feature-card__icon">{f.icon}</span>
+                  <div>
+                    <div className="ai-feature-card__label">{f.label}</div>
+                    <div className="ai-feature-card__desc">{f.desc}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Section>
+        </>
+      )}
+
+      {!enabled && (
+        <div className="ai-disabled-banner">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <span>CHARLES fonctionne en mode standard — aucune fonctionnalité IA n'est active pour votre entreprise.</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ════════════════════════════════════════════════
    PAGE PRINCIPALE
    ════════════════════════════════════════════════ */
 export default function SettingsPage() {
@@ -477,6 +661,12 @@ export default function SettingsPage() {
       icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>,
     },
     {
+      id: 'ia',
+      label: 'Module IA',
+      directionOnly: true,
+      icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2z"/><circle cx="7.5" cy="14.5" r="1.5"/><circle cx="16.5" cy="14.5" r="1.5"/></svg>,
+    },
+    {
       id: 'apropos',
       label: 'À propos',
       icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>,
@@ -494,7 +684,7 @@ export default function SettingsPage() {
       />
       <div className="page-content">
         <div className="settings-layout">
-          {/* Sidebar nav */}
+          {/* Navigation latérale */}
           <nav className="settings-nav">
             {visibleTabs.map(t => (
               <button
@@ -509,12 +699,13 @@ export default function SettingsPage() {
             ))}
           </nav>
 
-          {/* Content area */}
+          {/* Zone de contenu */}
           <div className="settings-main">
             {tab === 'profil'        && <TabProfil />}
             {tab === 'entreprise'    && <TabEntreprise />}
             {tab === 'notifications' && <TabNotifications />}
             {tab === 'acces'         && <TabAcces />}
+            {tab === 'ia'            && <TabIA />}
             {tab === 'apropos'       && <TabApropos />}
           </div>
         </div>

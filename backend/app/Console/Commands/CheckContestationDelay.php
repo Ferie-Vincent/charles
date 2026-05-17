@@ -10,8 +10,8 @@ use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 
-#[Signature('situations:check-contestation-delay {--dry-run : List delayed situations without sending notifications}')]
-#[Description('Alert DT when a situation has been soumise (awaiting MOE response) for more than 30 days')]
+#[Signature('situations:check-contestation-delay {--dry-run : Lister les situations en retard sans envoyer de notifications}')]
+#[Description('Alerte DT quand une situation est soumise (en attente de réponse MOE) depuis plus de 30 jours')]
 class CheckContestationDelay extends Command
 {
     public function handle(): int
@@ -24,11 +24,11 @@ class CheckContestationDelay extends Command
             ->get();
 
         if ($situations->isEmpty()) {
-            $this->info('No delayed situations found.');
+            $this->info('Aucune situation en retard trouvée.');
             return Command::SUCCESS;
         }
 
-        $this->info("Found {$situations->count()} situation(s) awaiting MOE response > 30 days.");
+        $this->info("Trouvé {$situations->count()} situation(s) en attente de réponse MOE > 30 jours.");
 
         foreach ($situations as $situation) {
             $project = $situation->project;
@@ -45,7 +45,7 @@ class CheckContestationDelay extends Command
         }
 
         if (!$this->option('dry-run')) {
-            $this->info('Notifications sent.');
+            $this->info('Notifications envoyées.');
         }
 
         return Command::SUCCESS;

@@ -51,7 +51,7 @@ class PortfolioAccountingController extends Controller
             ];
         });
 
-        // Totals
+        // Totaux
         $totals = [
             'budget_ref'  => $projectData->sum('budget_ref'),
             'engage'      => $projectData->sum('engage'),
@@ -75,7 +75,7 @@ class PortfolioAccountingController extends Controller
         $totals['depenses_generales'] = (float) $expenses->sum('amount');
         $totals['decaissements_total'] = $totals['realise'] + $totals['depenses_generales'];
 
-        // Unified activity feed (last 40 entries across invoices + budget entries + expenses)
+        // Flux d'activité unifié (40 dernières entrées : factures + entrées budgétaires + dépenses)
         $invoiceItems = $projectData->flatMap(function ($proj) {
             return collect($proj['invoices'])->map(fn($inv) => [
                 'id'           => 'inv-' . $inv->id,
@@ -130,7 +130,7 @@ class PortfolioAccountingController extends Controller
             ->take(40)
             ->values();
 
-        // Strip raw invoices from project data before returning
+        // Retirer les factures brutes des données projet avant de retourner la réponse
         $projectsOut = $projectData->map(fn($p) => collect($p)->except('invoices')->all())->values();
 
         return response()->json([
