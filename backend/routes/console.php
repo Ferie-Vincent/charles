@@ -40,3 +40,6 @@ Schedule::command('ai:build-snapshots')->dailyAt('01:00')->timezone('Africa/Abid
 
 // Proactive AI alerts — daily 07:15 Abidjan (morning briefing prep)
 Schedule::command('ai:proactive-alerts')->dailyAt('07:15')->timezone('Africa/Abidjan');
+
+// Auto situation de travaux mensuelle — last day of month 22:00 Abidjan
+Schedule::command('ai:auto-situation')->monthlyOn(28, '22:00')->timezone('Africa/Abidjan');

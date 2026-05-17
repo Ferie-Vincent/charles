@@ -13,6 +13,7 @@ import AlertsPanel from '../components/AlertsPanel';
 import PortfolioPanel from '../components/PortfolioPanel';
 import AiAnalysisWidget from '../components/AiAnalysisWidget';
 import AiMorningBriefing from '../../ai/components/AiMorningBriefing';
+import AiQueryPanel from '../../ai/components/AiQueryPanel';
 import ActivityFeed from '../components/ActivityFeed';
 import ProjectList from '../components/ProjectList';
 import QuickActions from '../components/QuickActions';
@@ -118,6 +119,7 @@ export default function DashboardPage() {
       {roleGroup === 'direction' && (
         <>
           <AiMorningBriefing />
+          <AiQueryPanel />
           <div className="db-sidebar-grid">
             <div className="db-sidebar-grid__main">
               <CriticitéCard activeProjects={active_projects} />
