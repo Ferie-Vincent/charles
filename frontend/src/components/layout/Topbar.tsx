@@ -131,6 +131,10 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
     (n: UserNotification) => n.type === 'contract_threshold_80pct' && !n.read
   );
 
+  const contestationDelayNotifs: UserNotification[] = (userNotifs?.notifications ?? []).filter(
+    (n: UserNotification) => n.type === 'contestation_delay' && !n.read
+  );
+
   const isManagement = roleGroup === 'direction' || roleGroup === 'dt';
 
   const dismissAll = useCallback(() => {
@@ -678,6 +682,31 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
                             <div className="topbar-notif-item__sub">
                               {d.project_name} · {d.ratio_pct}% du marché certifié
                               {d.montant_marche ? ` · ${fmtAmount(d.montant_marche)}` : ''}
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })}
+
+                    {contestationDelayNotifs.map((notif: UserNotification) => {
+                      const d = notif.data as any;
+                      return (
+                        <button
+                          key={notif.id}
+                          type="button"
+                          className="topbar-notif-item topbar-notif-item--critical"
+                          onClick={async () => {
+                            await markNotificationRead(notif.id);
+                            queryClient.invalidateQueries({ queryKey: ['user-notifications'] });
+                            if (d.project_id) navigate(`/projects/${d.project_id}/situations`);
+                            setNotifOpen(false);
+                          }}
+                        >
+                          <span className="topbar-notif-item__dot topbar-notif-item__dot--critical" />
+                          <div className="topbar-notif-item__body">
+                            <div className="topbar-notif-item__title">⏳ Situation sans réponse MOE — {d.situation_num}</div>
+                            <div className="topbar-notif-item__sub">
+                              {d.project_name} · {d.periode} · {d.days_waiting}j sans validation MOE
                             </div>
                           </div>
                         </button>

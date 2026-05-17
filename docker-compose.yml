@@ -1,4 +1,50 @@
 services:
+  mysql:
+    image: mysql:8.0
+    container_name: chantier_mysql
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: chantier_platform
+    volumes:
+      - mysql_data:/var/lib/mysql
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: chantier_backend
+    ports:
+      - "8000:80"
+    volumes:
+      - ./backend:/var/www/html
+      - ./backend/storage:/var/www/html/storage
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_DATABASE: chantier_platform
+      DB_USERNAME: root
+      DB_PASSWORD: root
+      APP_ENV: production
+      APP_DEBUG: false
+      APP_URL: http://localhost
+    depends_on:
+      - mysql
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: chantier_frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
   minio:
     image: minio/minio:latest
     container_name: chantier_minio
@@ -14,4 +60,5 @@ services:
     restart: unless-stopped
 
 volumes:
+  mysql_data:
   minio_data:
