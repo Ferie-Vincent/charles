@@ -48,8 +48,8 @@ class DailyLogController extends Controller
     {
         $this->authorize('create', [DailyLog::class, $project]);
 
-        // Guard: journal uniquement si chantier en cours d'exécution
-        if ($project->lifecycle_status !== 'execution') {
+        // Guard: journal autorisé en exécution et en réception (levée de réserves)
+        if (!in_array($project->lifecycle_status, ['execution', 'reception'])) {
             return response()->json([
                 'message' => "Journal non autorisé — le chantier est en phase « {$project->lifecycle_status} ». Un OS de démarrage doit être émis avant toute saisie.",
             ], 422);
