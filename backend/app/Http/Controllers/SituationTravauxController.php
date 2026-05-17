@@ -12,6 +12,7 @@ use App\Models\User;
 use App\Notifications\ContractThresholdNotification;
 use App\Notifications\SituationContestedNotification;
 use App\Notifications\SituationPendingCtReviewNotification;
+use App\Notifications\SituationRejectedByCtNotification;
 use App\Notifications\SituationPaidNotification;
 use App\Notifications\SituationPendingDtReviewNotification;
 use App\Notifications\SituationRejectedByDtNotification;
@@ -473,7 +474,7 @@ PROMPT;
 
         if ($situation->created_by && $situation->created_by !== $request->user()->id) {
             $creator = User::find($situation->created_by);
-            $creator?->notify(new SituationRejectedByDtNotification($situation, $request->user()));
+            $creator?->notify(new SituationRejectedByCtNotification($situation, $request->user()));
         }
 
         return response()->json(['situation' => $situation]);

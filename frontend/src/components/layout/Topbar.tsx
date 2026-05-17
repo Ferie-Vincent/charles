@@ -111,6 +111,10 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
     (n: UserNotification) => n.type === 'incident_mineur_digest' && !n.read
   );
 
+  const situationRejectedCtNotifs: UserNotification[] = (userNotifs?.notifications ?? []).filter(
+    (n: UserNotification) => n.type === 'situation_rejected_by_ct' && !n.read
+  );
+
   const situationRejectedDtNotifs: UserNotification[] = (userNotifs?.notifications ?? []).filter(
     (n: UserNotification) => n.type === 'situation_rejected_by_dt' && !n.read
   );
@@ -164,7 +168,7 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
   const criticalProj    = (ops?.critical_projects ?? []).filter((p: any) => !dismissed.has(`proj-${p.id}`));
   const invoicesPending = isManagement ? (ops?.invoices_pending ?? []).filter((i: any) => !dismissed.has(`inv-${i.id}`)) : [];
   const dqePending      = isManagement ? (ops?.dqe_pending      ?? []).filter((d: any) => !dismissed.has(`dqe-${d.id}`)) : [];
-  const notifCount      = bdcPending.length + stockAlerts.length + criticalProj.length + invoicesPending.length + dqePending.length + meetingNotifs.length + bdcDbNotifs.length + incidentNotifs.length + situationValidatedNotifs.length + avenantNotifs.length + situationPaidNotifs.length + situationPendingCtNotifs.length + situationPendingDtNotifs.length + situationRejectedDtNotifs.length + situationContestedNotifs.length + paymentOverdueNotifs.length + contractThresholdNotifs.length + incidentMineurDigestNotifs.length;
+  const notifCount      = bdcPending.length + stockAlerts.length + criticalProj.length + invoicesPending.length + dqePending.length + meetingNotifs.length + bdcDbNotifs.length + incidentNotifs.length + situationValidatedNotifs.length + avenantNotifs.length + situationPaidNotifs.length + situationPendingCtNotifs.length + situationPendingDtNotifs.length + situationRejectedCtNotifs.length + situationRejectedDtNotifs.length + situationContestedNotifs.length + paymentOverdueNotifs.length + contractThresholdNotifs.length + incidentMineurDigestNotifs.length;
 
   useEffect(() => {
     function handleOutside(e: MouseEvent) {
@@ -544,6 +548,32 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
                             <div className="topbar-notif-item__title">🔍 Situation à réviser — {d.situation_num}</div>
                             <div className="topbar-notif-item__sub">
                               {d.project_name} · {d.periode}{d.submitted_by ? ` · par ${d.submitted_by}` : ''}
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })}
+
+                    {situationRejectedCtNotifs.map((notif: UserNotification) => {
+                      const d = notif.data as any;
+                      return (
+                        <button
+                          key={notif.id}
+                          type="button"
+                          className="topbar-notif-item topbar-notif-item--danger"
+                          onClick={async () => {
+                            await markNotificationRead(notif.id);
+                            queryClient.invalidateQueries({ queryKey: ['user-notifications'] });
+                            if (d.project_id) navigate(`/projects/${d.project_id}/situations`);
+                            setNotifOpen(false);
+                          }}
+                        >
+                          <span className="topbar-notif-item__dot topbar-notif-item__dot--danger" />
+                          <div className="topbar-notif-item__body">
+                            <div className="topbar-notif-item__title">✗ Situation rejetée CT — {d.situation_num}</div>
+                            <div className="topbar-notif-item__sub">
+                              {d.project_name} · {d.periode}{d.rejected_by ? ` · par ${d.rejected_by}` : ''}
+                              {d.comment ? ` · ${String(d.comment).slice(0, 50)}` : ''}
                             </div>
                           </div>
                         </button>
