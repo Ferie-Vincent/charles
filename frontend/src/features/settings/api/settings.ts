@@ -15,7 +15,7 @@ export async function changePassword(data: {
 }
 
 export async function updateCompany(data: { name: string }) {
-  const res = await api.put('/company', data);
+  const res = await api.put('/profile/company', data);
   return res.data;
 }
 
