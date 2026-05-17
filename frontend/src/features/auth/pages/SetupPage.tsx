@@ -8,7 +8,8 @@ const SUPER_ADMIN_EMAIL = 'direction@charles.ci';
 export default function SetupPage() {
   const navigate = useNavigate();
   const { user, setUser } = useAuth();
-  const [available, setAvailable] = useState<boolean | null>(null);
+  // null = chargement, true = dispo, false = déjà fait, 'error' = réseau KO
+  const [available, setAvailable] = useState<boolean | null | 'error'>(null);
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
   const [passwordConfirmation, setPasswordConfirmation] = useState('');
@@ -20,9 +21,21 @@ export default function SetupPage() {
 
   // Vérifie si le setup est disponible
   useEffect(() => {
-    api.get('/setup', { _silentOn403: true, _silentOn401: true } as never)
-      .then(res => setAvailable(res.data.available))
-      .catch(() => setAvailable(false));
+    api.get('/setup')
+      .then(res => {
+        // available: false = super-admin existe déjà → login
+        setAvailable(res.data.available === true ? true : false);
+      })
+      .catch(err => {
+        const status = err?.response?.status;
+        if (status === 409) {
+          // Conflit : déjà configuré
+          setAvailable(false);
+        } else {
+          // Erreur réseau ou serveur → afficher un message, ne pas rediriger
+          setAvailable('error');
+        }
+      });
   }, []);
 
   // Setup déjà fait → page de login
@@ -34,6 +47,25 @@ export default function SetupPage() {
       <div className="login-page">
         <div className="login-form-side" style={{ justifyContent: 'center' }}>
           <p style={{ color: 'var(--text-muted)' }}>Vérification…</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Erreur réseau — afficher sans rediriger
+  if (available === 'error') {
+    return (
+      <div className="login-page">
+        <div className="login-form-side" style={{ justifyContent: 'center', flexDirection: 'column', gap: '12px' }}>
+          <p style={{ color: '#ef4444', fontWeight: 600 }}>Impossible de joindre le serveur.</p>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>
+            Vérifiez que le backend est démarré et que{' '}
+            <code style={{ background: '#f1f5f9', padding: '2px 6px', borderRadius: 4 }}>VITE_API_URL</code>{' '}
+            est configuré dans les variables d'environnement Render.
+          </p>
+          <button className="btn btn-secondary" onClick={() => { setAvailable(null); }}>
+            Réessayer
+          </button>
         </div>
       </div>
     );
