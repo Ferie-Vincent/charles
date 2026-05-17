@@ -25,6 +25,9 @@ class DgdController extends Controller
     public function initialize(Request $request, Project $project): JsonResponse
     {
         $this->authorize('update', $project);
+        abort_unless(in_array($request->user()->role->name, Roles::MANAGEMENT), 403,
+            "DGD réservé à la direction et au directeur technique."
+        );
 
         // Gap #11: DGD uniquement si réception ou clôture
         abort_unless(in_array($project->lifecycle_status, ['reception', 'cloture']), 422,
@@ -84,6 +87,9 @@ class DgdController extends Controller
     public function sign(Request $request, Project $project): JsonResponse
     {
         $this->authorize('update', $project);
+        abort_unless(in_array($request->user()->role->name, Roles::MANAGEMENT), 403,
+            "DGD réservé à la direction et au directeur technique."
+        );
         $dgd  = DecompteGeneralDefinitif::where('project_id', $project->id)->firstOrFail();
 
         $unsettled = SituationTravaux::where('project_id', $project->id)
