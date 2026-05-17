@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { getPhotos, uploadPhoto, deletePhoto, type ProjectPhoto } from '../api/get-photos';
 import PhotoComparator from './PhotoComparator';
+import AiFeedbackButton from '../../ai/components/AiFeedbackButton';
+import { api } from '../../../lib/api';
 
 const TAGS = [
   { value: '',           label: 'Toutes' },
@@ -13,14 +15,30 @@ const TAGS = [
   { value: 'autre',      label: 'Autre' },
 ];
 
-type LightboxProps = { photo: ProjectPhoto; onClose: () => void; onDelete: () => void };
+type LightboxProps = { photo: ProjectPhoto; projectId: number; onClose: () => void; onDelete: () => void };
 
-function Lightbox({ photo, onClose, onDelete }: LightboxProps) {
+function Lightbox({ photo, projectId, onClose, onDelete }: LightboxProps) {
+  const [analysis, setAnalysis] = useState<string | null>(null);
+  const [analyzing, setAnalyzing] = useState(false);
+
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, [onClose]);
+
+  async function analyzeWithAi() {
+    if (analyzing) return;
+    setAnalyzing(true);
+    try {
+      const res = await api.post(`/projects/${projectId}/photos/${photo.id}/ai-analyze`);
+      setAnalysis(res.data.analysis);
+    } catch {
+      setAnalysis('Erreur lors de l\'analyse IA.');
+    } finally {
+      setAnalyzing(false);
+    }
+  }
 
   return (
     <div className="pg-lightbox" onClick={onClose}>
@@ -34,6 +52,45 @@ function Lightbox({ photo, onClose, onDelete }: LightboxProps) {
             {photo.taken_at && <span>📅 {new Date(photo.taken_at).toLocaleDateString('fr-FR')}</span>}
             {photo.uploaded_by && <span>👤 {photo.uploaded_by}</span>}
           </div>
+
+          {/* Vision IA */}
+          {!analysis && (
+            <button
+              className="pg-ai-btn"
+              onClick={analyzeWithAi}
+              disabled={analyzing}
+            >
+              {analyzing ? (
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="spin">
+                  <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+                </svg>
+              ) : (
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                </svg>
+              )}
+              {analyzing ? 'Analyse en cours…' : 'Analyser avec l\'IA'}
+            </button>
+          )}
+
+          {analysis && (
+            <div className="pg-ai-analysis">
+              <div className="pg-ai-analysis__header">
+                <span className="ai-briefing__badge">IA</span>
+                <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Pixtral 12B</span>
+              </div>
+              <p className="pg-ai-analysis__text">{analysis}</p>
+              <div style={{ marginTop: 8 }}>
+                <AiFeedbackButton
+                  feature="vision_photo"
+                  projectId={projectId}
+                  aiOutputExcerpt={{ photo_id: photo.id, analysis: analysis.substring(0, 200) }}
+                  modelUsed="pixtral-12b-2409"
+                />
+              </div>
+            </div>
+          )}
+
           <button className="pg-lightbox__delete" onClick={onDelete}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="13" height="13"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
             Supprimer
@@ -229,6 +286,7 @@ export default function PhotoGallery({ projectId }: Props) {
       {lightbox && !compareMode && (
         <Lightbox
           photo={lightbox}
+          projectId={projectId}
           onClose={() => setLightbox(null)}
           onDelete={() => handleDelete(lightbox)}
         />
