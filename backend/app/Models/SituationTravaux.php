@@ -48,11 +48,22 @@ class SituationTravaux extends Model
     public function creator(): BelongsTo    { return $this->belongsTo(User::class, 'created_by'); }
     public function validator(): BelongsTo  { return $this->belongsTo(User::class, 'validated_by'); }
 
-    public static function computeAvanceRemboursement(Project $project, float $montantBrut): float
+    public static function computeAvanceRemboursement(Project $project, float $montantBrut, ?int $excludeId = null): float
     {
         if (!$project->montant_marche || !$project->avance_demarrage_pct) {
             return 0;
         }
-        return round($montantBrut * ($project->avance_demarrage_pct / 100), 2);
+
+        $totalAvance = round((float) $project->montant_marche * ($project->avance_demarrage_pct / 100), 2);
+
+        $alreadyReimbursed = (float) self::where('project_id', $project->id)
+            ->whereNotIn('status', ['brouillon'])
+            ->when($excludeId, fn($q) => $q->where('id', '!=', $excludeId))
+            ->sum('avance_remboursement');
+
+        $remaining = max(0.0, $totalAvance - $alreadyReimbursed);
+        $proposed  = round($montantBrut * ($project->avance_demarrage_pct / 100), 2);
+
+        return min($proposed, $remaining);
     }
 }

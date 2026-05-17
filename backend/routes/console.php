@@ -22,3 +22,12 @@ Schedule::command('situations:check-contestation-delay')->dailyAt('09:00')->time
 
 // Mineur incident daily digest — CT + DT at 18:00 Abidjan
 Schedule::command('incidents:send-mineur-digest')->dailyAt('18:00')->timezone('Africa/Abidjan');
+
+// Avancement retard > 10 pts — daily 07:30 Abidjan
+Schedule::command('projects:check-avancement-retard')->dailyAt('07:30')->timezone('Africa/Abidjan');
+
+// Fournisseur invoices soumise > 30j sans validation — daily 08:30 Abidjan
+Schedule::command('invoices:check-fournisseur-overdue')->dailyAt('08:30')->timezone('Africa/Abidjan');
+
+// Budget dépassé > 5% — daily 09:30 Abidjan
+Schedule::command('projects:check-budget-depasse')->dailyAt('09:30')->timezone('Africa/Abidjan');

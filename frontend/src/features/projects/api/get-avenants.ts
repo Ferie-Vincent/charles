@@ -39,6 +39,11 @@ export async function createAvenant(projectId: number, data: {
   return res.data.avenant;
 }
 
+export interface UpdateAvenantResult {
+  avenant: Avenant;
+  situations_actives_warning: string | null;
+}
+
 export async function updateAvenant(projectId: number, avenantId: number, data: Partial<{
   objet: string;
   type: AvenantType;
@@ -47,9 +52,9 @@ export async function updateAvenant(projectId: number, avenantId: number, data: 
   status: AvenantStatut;
   date_signature: string;
   notes: string;
-}>): Promise<Avenant> {
+}>): Promise<UpdateAvenantResult> {
   const res = await api.patch(`/projects/${projectId}/avenants/${avenantId}`, data);
-  return res.data.avenant;
+  return { avenant: res.data.avenant, situations_actives_warning: res.data.situations_actives_warning ?? null };
 }
 
 export async function deleteAvenant(projectId: number, avenantId: number): Promise<void> {
