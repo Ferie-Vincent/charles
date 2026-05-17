@@ -19,7 +19,7 @@ const STATUS_LABELS: Record<Incident['status'], string> = {
   ferme: 'Fermé',
 };
 
-type Props = { projectId: number };
+type Props = { projectId: number; autoOpen?: boolean };
 
 const EMPTY_FORM: IncidentInput = {
   type: '',
@@ -31,16 +31,20 @@ const EMPTY_FORM: IncidentInput = {
   occurred_at: new Date().toISOString().slice(0, 16),
 };
 
-export default function IncidentPanel({ projectId }: Props) {
+export default function IncidentPanel({ projectId, autoOpen = false }: Props) {
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [loading, setLoading]     = useState(true);
-  const [showForm, setShowForm]   = useState(false);
+  const [showForm, setShowForm]   = useState(autoOpen);
   const [saving, setSaving]       = useState(false);
   const [form, setForm]           = useState<IncidentInput>(EMPTY_FORM);
 
   useEffect(() => {
     getIncidents(projectId).then(setIncidents).finally(() => setLoading(false));
   }, [projectId]);
+
+  useEffect(() => {
+    if (autoOpen) setShowForm(true);
+  }, [autoOpen]);
 
   function set(field: keyof IncidentInput, value: string) {
     setForm(prev => ({ ...prev, [field]: value }));

@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Avenant;
 use App\Models\DqeVersion;
 use App\Models\GedDocument;
 use App\Models\Project;
+use App\Models\SituationTravaux;
 use App\Support\Roles;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -242,5 +244,112 @@ Rédige une situation de travaux officielle avec :
 
 Style : formel, chiffré, professionnel. Utilise des tableaux Markdown. Ne pas inventer de données non fournies.
 PROMPT;
+    }
+
+    // ── DB-backed workflow methods ────────────────────────────────────────────
+
+    public function list(Project $project): JsonResponse
+    {
+        $this->authorize('view', $project);
+        $situations = SituationTravaux::where('project_id', $project->id)
+            ->with('creator:id,name', 'dqeVersion:id,name,version_number')
+            ->orderByDesc('created_at')
+            ->get();
+        return response()->json(['situations' => $situations]);
+    }
+
+    public function storeSituation(Request $request, Project $project): JsonResponse
+    {
+        $this->authorize('update', $project);
+
+        $data = $request->validate([
+            'periode'         => ['required', 'string', 'regex:/^\d{4}-\d{2}$/'],
+            'dqe_version_id'  => ['nullable', 'integer', Rule::exists('dqe_versions', 'id')->where('project_id', $project->id)],
+            'avancement_pct'  => 'required|numeric|min:0|max:100',
+            'montant_brut_ht' => 'required|numeric|min:0',
+            'detail_lots'     => 'nullable|array',
+            'notes'           => 'nullable|string',
+        ]);
+
+        $montantMax = (float)($project->montant_marche ?? 0)
+            + Avenant::where('project_id', $project->id)->where('status', 'signe')->sum('montant_ht');
+
+        if ($montantMax > 0 && $data['montant_brut_ht'] > $montantMax) {
+            return response()->json([
+                'message'     => 'Le montant brut HT dépasse le montant du marché (incluant avenants signés).',
+                'montant_max' => $montantMax,
+            ], 422);
+        }
+
+        $cumulPrecedent = SituationTravaux::where('project_id', $project->id)
+            ->whereIn('status', ['validee_moe', 'payee'])
+            ->sum('montant_brut_ht');
+
+        $retenueAmount  = round($data['montant_brut_ht'] * (config('btp.retenue_garantie_pct') / 100), 2);
+        $avanceRembours = SituationTravaux::computeAvanceRemboursement($project, $data['montant_brut_ht']);
+        $vatRate        = config('btp.tva_taux_standard');
+        $baseHT         = $data['montant_brut_ht'] - $retenueAmount - $avanceRembours;
+        $vatAmount      = round($baseHT * ($vatRate / 100), 2);
+        $netAPayer      = round($baseHT + $vatAmount, 2);
+
+        $lastNum = SituationTravaux::where('project_id', $project->id)->count() + 1;
+        $numero  = sprintf('ST-%03d', $lastNum);
+
+        $situation = SituationTravaux::create([
+            'project_id'              => $project->id,
+            'company_id'              => $request->user()->company_id,
+            'dqe_version_id'          => $data['dqe_version_id'] ?? null,
+            'created_by'              => $request->user()->id,
+            'numero'                  => $numero,
+            'periode'                 => $data['periode'],
+            'avancement_pct'          => $data['avancement_pct'],
+            'montant_brut_ht'         => $data['montant_brut_ht'],
+            'cumul_precedent_ht'      => $cumulPrecedent,
+            'retenue_garantie_pct'    => config('btp.retenue_garantie_pct'),
+            'retenue_garantie_amount' => $retenueAmount,
+            'avance_remboursement'    => $avanceRembours,
+            'vat_rate'                => $vatRate,
+            'vat_amount'              => $vatAmount,
+            'net_a_payer'             => $netAPayer,
+            'detail_lots'             => $data['detail_lots'] ?? null,
+            'notes'                   => $data['notes'] ?? null,
+            'status'                  => 'brouillon',
+        ]);
+
+        return response()->json(['situation' => $situation->load('creator:id,name')], 201);
+    }
+
+    public function submit(Project $project, SituationTravaux $situation): JsonResponse
+    {
+        $this->authorize('update', $project);
+        abort_if($situation->status !== 'brouillon', 422, 'Seul un brouillon peut être soumis.');
+        $situation->update(['status' => 'soumise', 'submitted_at' => now()]);
+        return response()->json(['situation' => $situation]);
+    }
+
+    public function validateSituation(Request $request, Project $project, SituationTravaux $situation): JsonResponse
+    {
+        $this->authorize('update', $project);
+        abort_if($situation->status !== 'soumise', 422, 'Seule une situation soumise peut être validée MOE.');
+        $situation->update([
+            'status'       => 'validee_moe',
+            'validated_by' => $request->user()->id,
+            'validated_at' => now(),
+        ]);
+        return response()->json(['situation' => $situation]);
+    }
+
+    public function pay(Request $request, Project $project, SituationTravaux $situation): JsonResponse
+    {
+        $this->authorize('update', $project);
+        abort_if($situation->status !== 'validee_moe', 422, 'Seule une situation validée MOE peut être payée.');
+        $data = $request->validate(['date_paiement' => 'required|date']);
+        $situation->update([
+            'status'        => 'payee',
+            'paid_by'       => $request->user()->id,
+            'paid_at'       => now(),
+            'date_paiement' => $data['date_paiement'],
+        ]);
+        return response()->json(['situation' => $situation]);
     }
 }

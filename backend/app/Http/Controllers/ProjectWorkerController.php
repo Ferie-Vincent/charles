@@ -5,10 +5,13 @@ namespace App\Http\Controllers;
 use App\Models\DailyAttendance;
 use App\Models\Project;
 use App\Models\ProjectWorker;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class ProjectWorkerController extends Controller
 {
@@ -38,9 +41,12 @@ class ProjectWorkerController extends Controller
                 'phone'         => $w->phone,
                 'is_active'     => $w->is_active,
                 'attendance'    => $att ? [
-                    'id'           => $att->id,
-                    'present'      => $att->present,
-                    'task_assigned'=> $att->task_assigned,
+                    'id'              => $att->id,
+                    'present'         => $att->present,
+                    'statut'          => $att->statut,
+                    'heures_normales' => $att->heures_normales,
+                    'heures_sup'      => $att->heures_sup,
+                    'task_assigned'   => $att->task_assigned,
                 ] : null,
             ];
         });
@@ -54,9 +60,12 @@ class ProjectWorkerController extends Controller
         $this->authorize('create', [ProjectWorker::class, $project]);
 
         $data = $request->validate([
-            'name'  => 'required|string|max:120',
-            'trade' => 'required|string|max:80',
-            'phone' => 'nullable|string|max:30',
+            'name'       => 'required|string|max:120',
+            'trade'      => 'required|string|max:80',
+            'phone'      => 'nullable|string|max:30',
+            'statut'     => ['sometimes', Rule::in(['permanent','temporaire','interimaire','sous_traitant','etam','cadre'])],
+            'date_debut' => 'nullable|date',
+            'date_fin'   => 'nullable|date|after_or_equal:date_debut',
         ]);
 
         $worker = ProjectWorker::create([
@@ -95,40 +104,99 @@ class ProjectWorkerController extends Controller
         return response()->json(null, 204);
     }
 
+    /** GET /api/projects/{project}/workers/export?date_from=&date_to= */
+    public function export(Request $request, Project $project): Response
+    {
+        $this->authorize('viewAny', [ProjectWorker::class, $project]);
+
+        $data = $request->validate([
+            'date_from' => 'required|date_format:Y-m-d',
+            'date_to'   => 'required|date_format:Y-m-d|after_or_equal:date_from',
+        ]);
+
+        $workers = ProjectWorker::where('project_id', $project->id)
+            ->where('company_id', $request->user()->company_id)
+            ->orderBy('trade')
+            ->orderBy('name')
+            ->get();
+
+        $dates = collect();
+        $current = \Carbon\Carbon::parse($data['date_from']);
+        $end     = \Carbon\Carbon::parse($data['date_to']);
+        while ($current->lte($end)) {
+            $dates->push($current->toDateString());
+            $current->addDay();
+        }
+
+        $attendances = DailyAttendance::where('project_id', $project->id)
+            ->whereBetween('log_date', [$data['date_from'], $data['date_to']])
+            ->get()
+            ->groupBy('worker_id');
+
+        $rows = $workers->map(function (ProjectWorker $w) use ($dates, $attendances) {
+            $workerAtts = $attendances->get($w->id, collect())->keyBy(fn($a) => $a->log_date->toDateString());
+            $dayMap = $dates->mapWithKeys(fn($d) => [$d => $workerAtts->get($d)?->present ?? null]);
+            return [
+                'worker' => $w,
+                'days'   => $dayMap,
+                'total'  => $dayMap->filter(fn($v) => $v === true)->count(),
+            ];
+        });
+
+        $pdf = Pdf::loadView('pdf.attendance', [
+            'project'      => $project,
+            'dates'        => $dates,
+            'rows'         => $rows,
+            'date_from'    => $data['date_from'],
+            'date_to'      => $data['date_to'],
+            'generated_at' => now()->format('d/m/Y H:i'),
+        ])->setPaper('a4', 'landscape');
+
+        $filename = 'pointage-' . $project->code . '-' . $data['date_from'] . '_' . $data['date_to'] . '.pdf';
+        return $pdf->download($filename);
+    }
+
     /** POST /api/projects/{project}/workers/attendance */
     public function attendance(Request $request, Project $project): JsonResponse
     {
         $this->authorize('create', [ProjectWorker::class, $project]);
 
+        $validStatuts = ['present', 'absent', 'conge', 'maladie', 'demi_journee'];
+
         $data = $request->validate([
-            'worker_id'     => 'required|integer|exists:project_workers,id',
-            'log_date'      => 'required|date_format:Y-m-d',
-            'present'       => 'required|boolean',
-            'task_assigned' => 'nullable|string|max:120',
+            'worker_id'       => 'required|integer|exists:project_workers,id',
+            'log_date'        => 'required|date_format:Y-m-d',
+            'statut'          => ['sometimes', 'string', \Illuminate\Validation\Rule::in($validStatuts)],
+            'present'         => 'sometimes|boolean',
+            'heures_normales' => 'sometimes|numeric|min:0|max:24',
+            'heures_sup'      => 'sometimes|numeric|min:0|max:12',
+            'task_assigned'   => 'nullable|string|max:120',
         ]);
 
-        try {
-            $att = DB::transaction(function () use ($data, $project, $request) {
-                return DailyAttendance::updateOrCreate(
-                    ['worker_id' => $data['worker_id'], 'log_date' => $data['log_date']],
-                    [
-                        'project_id'    => $project->id,
-                        'company_id'    => $request->user()->company_id,
-                        'present'       => $data['present'],
-                        'task_assigned' => $data['task_assigned'] ?? null,
-                    ]
-                );
-            });
-        } catch (QueryException $e) {
-            if ($e->getCode() === '23000') {
-                // Race condition : duplicate — re-fetch l'enregistrement existant
-                $att = DailyAttendance::where('worker_id', $data['worker_id'])
-                    ->where('log_date', $data['log_date'])
-                    ->firstOrFail();
-            } else {
-                throw $e;
-            }
+        // Derive statut from present (backward compat)
+        if (!isset($data['statut']) && isset($data['present'])) {
+            $data['statut'] = $data['present'] ? 'present' : 'absent';
         }
+        $data['statut'] ??= 'present';
+        $data['present'] = in_array($data['statut'], ['present', 'demi_journee']);
+
+        // Adjust heures_normales for demi-journée
+        if ($data['statut'] === 'demi_journee' && !isset($data['heures_normales'])) {
+            $data['heures_normales'] = 4.00;
+        }
+
+        $att = DailyAttendance::updateOrCreate(
+            ['worker_id' => $data['worker_id'], 'log_date' => $data['log_date']],
+            [
+                'project_id'      => $project->id,
+                'company_id'      => $request->user()->company_id,
+                'present'         => $data['present'],
+                'statut'          => $data['statut'],
+                'heures_normales' => $data['heures_normales'] ?? 8.00,
+                'heures_sup'      => $data['heures_sup'] ?? 0,
+                'task_assigned'   => $data['task_assigned'] ?? null,
+            ]
+        );
 
         return response()->json(['attendance' => $att]);
     }

@@ -2,10 +2,11 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   fetchWorkers, createWorker, updateWorker, upsertAttendance,
-  type Worker,
+  type Worker, type AttendanceStatut,
 } from '../api/workers';
 import AddWorkerForm from './workers/AddWorkerForm';
 import WorkerRow from './workers/WorkerRow';
+import { useToast } from '../../../components/ui/Toast';
 
 interface Props {
   projectId: number;
@@ -16,6 +17,7 @@ interface Props {
 export default function WorkersPanel({ projectId, date, readonly = false }: Props) {
   const qc = useQueryClient();
   const qKey = ['workers', projectId, date];
+  const { showToast } = useToast();
 
   const { data: workers = [], isLoading } = useQuery({
     queryKey: qKey,
@@ -28,23 +30,30 @@ export default function WorkersPanel({ projectId, date, readonly = false }: Prop
   const addMutation = useMutation({
     mutationFn: (d: { name: string; trade: string; phone?: string }) =>
       createWorker(projectId, d),
-    onSuccess: invalidate,
+    onSuccess: () => { invalidate(); showToast('Ouvrier ajouté'); },
+    onError: () => showToast("Erreur lors de l'ajout", 'error'),
   });
 
   const attendanceMutation = useMutation({
-    mutationFn: (d: { worker_id: number; present: boolean; task_assigned?: string | null }) =>
-      upsertAttendance(projectId, { ...d, log_date: date }),
-    onSuccess: invalidate,
+    mutationFn: (d: {
+      worker_id: number;
+      statut: AttendanceStatut;
+      heures_normales: number;
+      heures_sup: number;
+      task_assigned?: string | null;
+    }) => upsertAttendance(projectId, { ...d, log_date: date }),
+    onSuccess: () => { invalidate(); showToast('Pointage enregistré'); },
+    onError: () => showToast('Erreur pointage', 'error'),
   });
 
   const deactivateMutation = useMutation({
     mutationFn: (id: number) => updateWorker(projectId, id, { is_active: false }),
-    onSuccess: invalidate,
+    onSuccess: () => { invalidate(); showToast('Ouvrier retiré du chantier'); },
   });
 
   const reactivateMutation = useMutation({
     mutationFn: (id: number) => updateWorker(projectId, id, { is_active: true }),
-    onSuccess: invalidate,
+    onSuccess: () => { invalidate(); showToast('Ouvrier réactivé'); },
   });
 
   const [showAdd, setShowAdd]           = useState(false);
@@ -52,21 +61,28 @@ export default function WorkersPanel({ projectId, date, readonly = false }: Prop
 
   const active   = workers.filter(w => w.is_active);
   const inactive = workers.filter(w => !w.is_active);
-  const present  = active.filter(w => w.attendance?.present).length;
+  const present  = active.filter(w => {
+    const s = w.attendance?.statut;
+    return s === 'present' || s === 'demi_journee';
+  }).length;
 
-  function handleToggle(w: Worker) {
+  function handleAttendance(w: Worker, statut: AttendanceStatut, heures_normales: number, heures_sup: number) {
     attendanceMutation.mutate({
-      worker_id:     w.id,
-      present:       !(w.attendance?.present ?? false),
-      task_assigned: w.attendance?.task_assigned ?? null,
+      worker_id:      w.id,
+      statut,
+      heures_normales,
+      heures_sup,
+      task_assigned:  w.attendance?.task_assigned ?? null,
     });
   }
 
   function handleTaskSave(w: Worker, task: string | null) {
     attendanceMutation.mutate({
-      worker_id:     w.id,
-      present:       w.attendance?.present ?? true,
-      task_assigned: task,
+      worker_id:      w.id,
+      statut:         w.attendance?.statut ?? 'present',
+      heures_normales: w.attendance?.heures_normales ?? 8,
+      heures_sup:     w.attendance?.heures_sup ?? 0,
+      task_assigned:  task,
     });
   }
 
@@ -108,7 +124,7 @@ export default function WorkersPanel({ projectId, date, readonly = false }: Prop
               key={w.id}
               worker={w}
               readonly={readonly}
-              onToggle={() => handleToggle(w)}
+              onAttendance={(statut, h, hs) => handleAttendance(w, statut, h, hs)}
               onTaskSave={(task) => handleTaskSave(w, task)}
               onDeactivate={() => deactivateMutation.mutate(w.id)}
             />

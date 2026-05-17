@@ -18,13 +18,15 @@ export type ProjectMember = {
   };
 };
 
-export type TypeMarche = 'forfait' | 'bordereau_prix' | 'depenses_controlees' | 'cle_en_main';
+export type TypeMarche     = 'forfait' | 'bordereau_prix' | 'depenses_controlees' | 'cle_en_main';
+export type LifecycleStatus = 'ao' | 'attribution' | 'preparation' | 'execution' | 'reception' | 'cloture';
 
 export type Project = {
   id: number;
   code: string;
   name: string;
   status: string;
+  lifecycle_status?: LifecycleStatus | null;
   location: string | null;
   latitude: number | null;
   longitude: number | null;

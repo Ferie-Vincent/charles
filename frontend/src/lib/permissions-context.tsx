@@ -22,13 +22,14 @@ const Ctx = createContext<PermissionsCtx>({
 });
 
 const GROUP_ROLES: Record<RoleGroup, string[]> = {
-  direction:  [],
-  dt:         ['directeur-technique'],
-  terrain:    ['conducteur-travaux', 'chef-chantier'],
-  metreur:    ['metreur-economiste'],
-  comptable:  ['comptable'],
-  logistique: ['moyens-generaux'],
-  lecture:    ['lecture-seule'],
+  direction:   [],
+  dt:          ['directeur-technique'],
+  conducteur:  ['conducteur-travaux'],
+  terrain:     ['chef-chantier'],
+  metreur:     ['metreur-economiste'],
+  comptable:   ['comptable'],
+  logistique:  ['moyens-generaux'],
+  lecture:     ['lecture-seule'],
 };
 
 export function PermissionsProvider({ children }: { children: ReactNode }) {

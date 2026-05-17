@@ -32,6 +32,9 @@ import BesoinsPage from './features/besoins/pages/BesoinsPage';
 import ProfilePage from './features/profile/pages/ProfilePage';
 import SettingsPage from './features/settings/pages/SettingsPage';
 import TasksPage from './features/tasks/pages/TasksPage';
+import SituationsPage from './features/projects/pages/SituationsPage';
+import AvenantsPage from './features/projects/pages/AvenantsPage';
+import OsPage from './features/projects/pages/OsPage';
 
 function Shell({ children }: { children: ReactNode }) {
   return <AppShell>{children}</AppShell>;
@@ -61,6 +64,9 @@ export const router = createBrowserRouter([
   { path: '/projects/:id/journal',     element: <Shell><JournalPage /></Shell> },
   { path: '/projects/:id/personnel',   element: <Shell><PersonnelPage /></Shell> },
   { path: '/projects/:id/accounting',  element: <Guarded path="/costs"><ProjectAccountingPage /></Guarded> },
+  { path: '/projects/:id/situations',  element: <Shell><SituationsPage /></Shell> },
+  { path: '/projects/:id/avenants',    element: <Shell><AvenantsPage /></Shell> },
+  { path: '/projects/:id/os',          element: <Shell><OsPage /></Shell> },
   { path: '/map',                      element: <Guarded path="/map"><MapPage /></Guarded> },
   { path: '/timeline',                 element: <Guarded path="/timeline"><TimelinePage /></Guarded> },
   { path: '/dqe',                      element: <Guarded path="/dqe"><DqePage /></Guarded> },
