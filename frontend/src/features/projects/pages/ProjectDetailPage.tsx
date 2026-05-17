@@ -124,10 +124,13 @@ function formatDate(d: string | null) {
 }
 
 const SITUATION_STATUS_CONFIG: Record<string, { label: string; dot: string; border: string }> = {
-  brouillon:  { label: 'Brouillon',          dot: '#94a3b8', border: '#e2e8f0' },
-  soumise:    { label: 'Soumise',            dot: '#f59e0b', border: '#fef3c7' },
-  validee:    { label: 'Validée ✓',          dot: '#3b82f6', border: '#dbeafe' },
-  payee:      { label: 'Payée ✓',            dot: '#22c55e', border: '#dcfce7' },
+  brouillon:   { label: 'Brouillon',        dot: '#94a3b8', border: '#e2e8f0' },
+  en_revue_dt: { label: 'En revue DT',      dot: '#8b5cf6', border: '#ede9fe' },
+  soumise:     { label: 'Soumise',          dot: '#f59e0b', border: '#fef3c7' },
+  contestee:   { label: 'Contestée ⚠',      dot: '#ef4444', border: '#fee2e2' },
+  validee:     { label: 'Validée ✓',        dot: '#3b82f6', border: '#dbeafe' },
+  validee_moe: { label: 'Validée MOE ✓',   dot: '#3b82f6', border: '#dbeafe' },
+  payee:       { label: 'Payée ✓',          dot: '#22c55e', border: '#dcfce7' },
 };
 
 function SituationStatusBanner({ situation }: { situation: { status: string; numero: number; periode: string } | null }) {

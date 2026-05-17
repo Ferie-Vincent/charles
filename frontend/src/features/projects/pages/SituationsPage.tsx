@@ -1,22 +1,28 @@
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useAuth } from '../../auth/stores/auth-store';
 import {
   fetchSituations, createSituation, submitSituation,
   validateSituation, paySituation, fetchPreviewCalcul,
+  approveDtSituation, rejectDtSituation, contestSituation, correctSituation,
   type Situation, type SituationStatut,
 } from '../api/get-situations';
 import PageHeader from '../../../components/ui/PageHeader';
 
 const STATUT_LABELS: Record<SituationStatut, string> = {
   brouillon:    'Brouillon',
+  en_revue_dt:  'En revue DT',
   soumise:      'Soumise',
+  contestee:    'Contestée',
   validee_moe:  'Validée MOE',
   payee:        'Payée',
 };
 const STATUT_COLORS: Record<SituationStatut, string> = {
   brouillon:    '#6b7280',
+  en_revue_dt:  '#8b5cf6',
   soumise:      '#f59e0b',
+  contestee:    '#ef4444',
   validee_moe:  '#3b82f6',
   payee:        '#22c55e',
 };
@@ -33,6 +39,11 @@ export default function SituationsPage() {
   const { id } = useParams<{ id: string }>();
   const projectId = Number(id);
   const qc = useQueryClient();
+  const { user } = useAuth();
+  const roleName = user?.role?.name ?? '';
+  const isManagement = ['direction', 'directeur-technique'].includes(roleName);
+  const isMoe        = ['conducteur-travaux', 'direction', 'directeur-technique'].includes(roleName);
+  const isMetreur    = roleName === 'metreur-economiste';
 
   const { data: situations = [], isLoading } = useQuery({
     queryKey: ['situations', projectId],
@@ -42,14 +53,22 @@ export default function SituationsPage() {
 
   const invalidate = () => qc.invalidateQueries({ queryKey: ['situations', projectId] });
 
-  const createMut   = useMutation({ mutationFn: (d: Parameters<typeof createSituation>[1]) => createSituation(projectId, d), onSuccess: invalidate });
-  const submitMut   = useMutation({ mutationFn: (sid: number) => submitSituation(projectId, sid), onSuccess: invalidate });
-  const validateMut = useMutation({ mutationFn: (sid: number) => validateSituation(projectId, sid), onSuccess: invalidate });
-  const payMut      = useMutation({ mutationFn: ({ sid, date }: { sid: number; date: string }) => paySituation(projectId, sid, date), onSuccess: invalidate });
+  const createMut    = useMutation({ mutationFn: (d: Parameters<typeof createSituation>[1]) => createSituation(projectId, d), onSuccess: invalidate });
+  const submitMut    = useMutation({ mutationFn: (sid: number) => submitSituation(projectId, sid), onSuccess: invalidate });
+  const approveDtMut = useMutation({ mutationFn: (sid: number) => approveDtSituation(projectId, sid), onSuccess: invalidate });
+  const rejectDtMut  = useMutation({ mutationFn: ({ sid, comment }: { sid: number; comment: string }) => rejectDtSituation(projectId, sid, comment), onSuccess: invalidate });
+  const contestMut   = useMutation({ mutationFn: ({ sid, reason }: { sid: number; reason: string }) => contestSituation(projectId, sid, reason), onSuccess: invalidate });
+  const correctMut   = useMutation({ mutationFn: (sid: number) => correctSituation(projectId, sid), onSuccess: invalidate });
+  const validateMut  = useMutation({ mutationFn: (sid: number) => validateSituation(projectId, sid), onSuccess: invalidate });
+  const payMut       = useMutation({ mutationFn: ({ sid, date }: { sid: number; date: string }) => paySituation(projectId, sid, date), onSuccess: invalidate });
 
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ periode: currentMonth(), avancement_pct: 0, notes: '' });
   const [payDate, setPayDate] = useState<Record<number, string>>({});
+
+  // Comment modals for reject-dt and contest
+  const [rejectModal, setRejectModal] = useState<{ situationId: number; comment: string } | null>(null);
+  const [contestModal, setContestModal] = useState<{ situationId: number; reason: string } | null>(null);
 
   const { data: preview } = useQuery({
     queryKey: ['situation-preview', projectId, form.avancement_pct],
@@ -75,6 +94,74 @@ export default function SituationsPage() {
           </button>
         }
       />
+
+      {/* Reject DT modal */}
+      {rejectModal && (
+        <div className="modal-overlay" onClick={() => setRejectModal(null)}>
+          <div className="modal-box" onClick={e => e.stopPropagation()}>
+            <h3 className="modal-title">Rejeter la situation (DT)</h3>
+            <div className="form-group">
+              <label className="form-label">Motif de rejet *</label>
+              <textarea
+                className="form-control"
+                rows={4}
+                value={rejectModal.comment}
+                onChange={e => setRejectModal(m => m ? { ...m, comment: e.target.value } : null)}
+                placeholder="Décrivez le problème à corriger…"
+              />
+            </div>
+            <div className="form-actions">
+              <button
+                className="btn btn--danger btn--sm"
+                disabled={!rejectModal.comment.trim() || rejectDtMut.isPending}
+                onClick={() => {
+                  rejectDtMut.mutate(
+                    { sid: rejectModal.situationId, comment: rejectModal.comment },
+                    { onSuccess: () => setRejectModal(null) },
+                  );
+                }}
+              >
+                {rejectDtMut.isPending ? 'Enregistrement…' : 'Rejeter'}
+              </button>
+              <button className="btn btn--ghost btn--sm" onClick={() => setRejectModal(null)}>Annuler</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Contest modal */}
+      {contestModal && (
+        <div className="modal-overlay" onClick={() => setContestModal(null)}>
+          <div className="modal-box" onClick={e => e.stopPropagation()}>
+            <h3 className="modal-title">Contester la situation</h3>
+            <div className="form-group">
+              <label className="form-label">Motif de contestation *</label>
+              <textarea
+                className="form-control"
+                rows={4}
+                value={contestModal.reason}
+                onChange={e => setContestModal(m => m ? { ...m, reason: e.target.value } : null)}
+                placeholder="Décrivez le problème à corriger…"
+              />
+            </div>
+            <div className="form-actions">
+              <button
+                className="btn btn--danger btn--sm"
+                disabled={!contestModal.reason.trim() || contestMut.isPending}
+                onClick={() => {
+                  contestMut.mutate(
+                    { sid: contestModal.situationId, reason: contestModal.reason },
+                    { onSuccess: () => setContestModal(null) },
+                  );
+                }}
+              >
+                {contestMut.isPending ? 'Enregistrement…' : 'Contester'}
+              </button>
+              <button className="btn btn--ghost btn--sm" onClick={() => setContestModal(null)}>Annuler</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showForm && (
         <form className="card card--form" onSubmit={handleCreate}>
@@ -198,27 +285,80 @@ export default function SituationsPage() {
                     >
                       {STATUT_LABELS[s.status]}
                     </span>
+                    {s.status === 'contestee' && s.contest_reason && (
+                      <span style={{ display: 'block', fontSize: '11px', color: '#ef4444', marginTop: 2 }}>
+                        {s.contest_reason.slice(0, 60)}{s.contest_reason.length > 60 ? '…' : ''}
+                      </span>
+                    )}
+                    {s.status === 'brouillon' && s.dt_rejection_comment && (
+                      <span style={{ display: 'block', fontSize: '11px', color: '#8b5cf6', marginTop: 2 }}>
+                        DT : {s.dt_rejection_comment.slice(0, 60)}{s.dt_rejection_comment.length > 60 ? '…' : ''}
+                      </span>
+                    )}
                   </td>
                   <td>
                     <div className="btp-actions">
+                      {/* Métreur: submit brouillon → en_revue_dt */}
                       {s.status === 'brouillon' && (
                         <button
                           className="btn btn--sm btn--secondary"
                           onClick={() => submitMut.mutate(s.id)}
                           disabled={submitMut.isPending}
                         >
-                          Soumettre
+                          Soumettre au DT
                         </button>
                       )}
-                      {s.status === 'soumise' && (
+
+                      {/* DT/direction: approve en_revue_dt → soumise */}
+                      {s.status === 'en_revue_dt' && isManagement && (
+                        <>
+                          <button
+                            className="btn btn--sm btn--primary"
+                            onClick={() => approveDtMut.mutate(s.id)}
+                            disabled={approveDtMut.isPending}
+                          >
+                            Approuver DT
+                          </button>
+                          <button
+                            className="btn btn--sm btn--danger"
+                            onClick={() => setRejectModal({ situationId: s.id, comment: '' })}
+                          >
+                            Rejeter
+                          </button>
+                        </>
+                      )}
+
+                      {/* MOE: validate soumise → validee_moe */}
+                      {s.status === 'soumise' && isMoe && (
+                        <>
+                          <button
+                            className="btn btn--sm btn--primary"
+                            onClick={() => validateMut.mutate(s.id)}
+                            disabled={validateMut.isPending}
+                          >
+                            Valider MOE
+                          </button>
+                          <button
+                            className="btn btn--sm btn--danger"
+                            onClick={() => setContestModal({ situationId: s.id, reason: '' })}
+                          >
+                            Contester
+                          </button>
+                        </>
+                      )}
+
+                      {/* Métreur: correct contestee → brouillon */}
+                      {s.status === 'contestee' && (isMetreur || isManagement) && (
                         <button
-                          className="btn btn--sm btn--primary"
-                          onClick={() => validateMut.mutate(s.id)}
-                          disabled={validateMut.isPending}
+                          className="btn btn--sm btn--secondary"
+                          onClick={() => correctMut.mutate(s.id)}
+                          disabled={correctMut.isPending}
                         >
-                          Valider MOE
+                          Corriger
                         </button>
                       )}
+
+                      {/* Comptable/direction: pay validee_moe → payee */}
                       {s.status === 'validee_moe' && (
                         <div className="btp-pay-row">
                           <input

@@ -9,7 +9,10 @@ use App\Models\Project;
 use App\Models\SituationTravaux;
 use App\Models\BudgetEntry;
 use App\Models\User;
+use App\Notifications\SituationContestedNotification;
 use App\Notifications\SituationPaidNotification;
+use App\Notifications\SituationPendingDtReviewNotification;
+use App\Notifications\SituationRejectedByDtNotification;
 use App\Notifications\SituationValidatedNotification;
 use App\Support\Roles;
 use Illuminate\Http\JsonResponse;
@@ -276,7 +279,7 @@ PROMPT;
         $montantBrut = round($base * ($avancementPct / 100), 2);
 
         $prevAvancement = SituationTravaux::where('project_id', $project->id)
-            ->whereNotIn('status', ['brouillon'])
+            ->whereNotIn('status', ['brouillon', 'contestee'])
             ->orderByDesc('created_at')
             ->value('avancement_pct');
 
@@ -333,7 +336,7 @@ PROMPT;
 
         // P0: block avancement regression vs any non-brouillon situation
         $prevAvancement = SituationTravaux::where('project_id', $project->id)
-            ->whereNotIn('status', ['brouillon'])
+            ->whereNotIn('status', ['brouillon', 'contestee'])
             ->orderByDesc('created_at')
             ->value('avancement_pct');
 
@@ -390,11 +393,107 @@ PROMPT;
         ], 201);
     }
 
-    public function submit(Project $project, SituationTravaux $situation): JsonResponse
+    public function submit(Request $request, Project $project, SituationTravaux $situation): JsonResponse
     {
         $this->authorize('update', $project);
         abort_if($situation->status !== 'brouillon', 422, 'Seul un brouillon peut être soumis.');
-        $situation->update(['status' => 'soumise', 'submitted_at' => now()]);
+
+        $situation->update(['status' => 'en_revue_dt', 'submitted_at' => now()]);
+        $situation->load('project:id,name,code');
+
+        // Notify all DT users so Kouassi sees it immediately
+        User::whereHas('role', fn($q) => $q->where('name', Roles::DIRECTEUR_TECHNIQUE_SLUG))
+            ->where('company_id', $project->company_id)
+            ->get()
+            ->each(fn($u) => $u->notify(new SituationPendingDtReviewNotification($situation, $request->user())));
+
+        return response()->json(['situation' => $situation]);
+    }
+
+    public function approveDt(Request $request, Project $project, SituationTravaux $situation): JsonResponse
+    {
+        $this->authorize('update', $project);
+        abort_unless(in_array($request->user()->role->name, Roles::MANAGEMENT), 403, 'Seul le DT ou la direction peut approuver.');
+        abort_if($situation->status !== 'en_revue_dt', 422, 'Seule une situation en revue DT peut être approuvée.');
+
+        $situation->update([
+            'status'          => 'soumise',
+            'dt_reviewed_by'  => $request->user()->id,
+            'dt_reviewed_at'  => now(),
+        ]);
+
+        return response()->json(['situation' => $situation]);
+    }
+
+    public function rejectDt(Request $request, Project $project, SituationTravaux $situation): JsonResponse
+    {
+        $this->authorize('update', $project);
+        abort_unless(in_array($request->user()->role->name, Roles::MANAGEMENT), 403, 'Seul le DT ou la direction peut rejeter.');
+        abort_if($situation->status !== 'en_revue_dt', 422, 'Seule une situation en revue DT peut être rejetée.');
+
+        $data = $request->validate(['dt_rejection_comment' => 'required|string|max:2000']);
+
+        $situation->update([
+            'status'                => 'brouillon',
+            'dt_reviewed_by'        => $request->user()->id,
+            'dt_reviewed_at'        => now(),
+            'dt_rejection_comment'  => $data['dt_rejection_comment'],
+        ]);
+
+        $situation->load('project:id,name,code');
+
+        // Notify the métreur who created it
+        if ($situation->created_by && $situation->created_by !== $request->user()->id) {
+            $creator = User::find($situation->created_by);
+            $creator?->notify(new SituationRejectedByDtNotification($situation, $request->user()));
+        }
+
+        return response()->json(['situation' => $situation]);
+    }
+
+    public function contest(Request $request, Project $project, SituationTravaux $situation): JsonResponse
+    {
+        $this->authorize('update', $project);
+        abort_if($situation->status !== 'soumise', 422, 'Seule une situation soumise peut être contestée.');
+
+        $data = $request->validate(['contest_reason' => 'required|string|max:2000']);
+
+        $situation->update([
+            'status'        => 'contestee',
+            'contested_by'  => $request->user()->id,
+            'contested_at'  => now(),
+            'contest_reason'=> $data['contest_reason'],
+        ]);
+
+        $situation->load('project:id,name,code');
+
+        // Notify creator (métreur) + DT
+        $toNotify = collect();
+
+        if ($situation->created_by && $situation->created_by !== $request->user()->id) {
+            $creator = User::find($situation->created_by);
+            if ($creator) $toNotify->push($creator);
+        }
+
+        User::whereHas('role', fn($q) => $q->where('name', Roles::DIRECTEUR_TECHNIQUE_SLUG))
+            ->where('company_id', $project->company_id)
+            ->where('id', '!=', $request->user()->id)
+            ->get()
+            ->each(fn($u) => $toNotify->push($u));
+
+        $toNotify->unique('id')
+            ->each(fn($u) => $u->notify(new SituationContestedNotification($situation, $request->user())));
+
+        return response()->json(['situation' => $situation]);
+    }
+
+    public function correct(Request $request, Project $project, SituationTravaux $situation): JsonResponse
+    {
+        $this->authorize('update', $project);
+        abort_if($situation->status !== 'contestee', 422, 'Seule une situation contestée peut être renvoyée en brouillon.');
+
+        $situation->update(['status' => 'brouillon']);
+
         return response()->json(['situation' => $situation]);
     }
 

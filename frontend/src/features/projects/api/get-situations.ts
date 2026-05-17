@@ -1,6 +1,6 @@
 import { api } from '../../../lib/api';
 
-export type SituationStatut = 'brouillon' | 'soumise' | 'validee_moe' | 'payee';
+export type SituationStatut = 'brouillon' | 'en_revue_dt' | 'soumise' | 'contestee' | 'validee_moe' | 'payee';
 
 export interface Situation {
   id: number;
@@ -14,7 +14,6 @@ export interface Situation {
   retenue_garantie_pct: number;
   retenue_garantie_amount: number;
   avance_remboursement: number;
-  avance_remboursement: number;
   vat_rate: number;
   vat_amount: number;
   net_a_payer: number;
@@ -24,6 +23,10 @@ export interface Situation {
   validated_at: string | null;
   paid_at: string | null;
   date_paiement: string | null;
+  dt_reviewed_at: string | null;
+  dt_rejection_comment: string | null;
+  contest_reason: string | null;
+  contested_at: string | null;
   created_at: string;
   creator: { id: number; name: string } | null;
   dqe_version: { id: number; name: string; version_number: number } | null;
@@ -70,5 +73,25 @@ export async function validateSituation(projectId: number, situationId: number):
 
 export async function paySituation(projectId: number, situationId: number, date_paiement: string): Promise<Situation> {
   const res = await api.patch(`/projects/${projectId}/situations/${situationId}/pay`, { date_paiement });
+  return res.data.situation;
+}
+
+export async function approveDtSituation(projectId: number, situationId: number): Promise<Situation> {
+  const res = await api.patch(`/projects/${projectId}/situations/${situationId}/approve-dt`);
+  return res.data.situation;
+}
+
+export async function rejectDtSituation(projectId: number, situationId: number, dt_rejection_comment: string): Promise<Situation> {
+  const res = await api.patch(`/projects/${projectId}/situations/${situationId}/reject-dt`, { dt_rejection_comment });
+  return res.data.situation;
+}
+
+export async function contestSituation(projectId: number, situationId: number, contest_reason: string): Promise<Situation> {
+  const res = await api.patch(`/projects/${projectId}/situations/${situationId}/contest`, { contest_reason });
+  return res.data.situation;
+}
+
+export async function correctSituation(projectId: number, situationId: number): Promise<Situation> {
+  const res = await api.patch(`/projects/${projectId}/situations/${situationId}/correct`);
   return res.data.situation;
 }

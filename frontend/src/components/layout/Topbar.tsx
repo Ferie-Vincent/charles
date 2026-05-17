@@ -99,6 +99,18 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
     (n: UserNotification) => n.type === 'situation_paid' && !n.read
   );
 
+  const situationPendingDtNotifs: UserNotification[] = (userNotifs?.notifications ?? []).filter(
+    (n: UserNotification) => n.type === 'situation_pending_dt_review' && !n.read
+  );
+
+  const situationRejectedDtNotifs: UserNotification[] = (userNotifs?.notifications ?? []).filter(
+    (n: UserNotification) => n.type === 'situation_rejected_by_dt' && !n.read
+  );
+
+  const situationContestedNotifs: UserNotification[] = (userNotifs?.notifications ?? []).filter(
+    (n: UserNotification) => n.type === 'situation_contested' && !n.read
+  );
+
   const isManagement = roleGroup === 'direction' || roleGroup === 'dt';
 
   const dismissAll = useCallback(() => {
@@ -136,7 +148,7 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
   const criticalProj    = (ops?.critical_projects ?? []).filter((p: any) => !dismissed.has(`proj-${p.id}`));
   const invoicesPending = isManagement ? (ops?.invoices_pending ?? []).filter((i: any) => !dismissed.has(`inv-${i.id}`)) : [];
   const dqePending      = isManagement ? (ops?.dqe_pending      ?? []).filter((d: any) => !dismissed.has(`dqe-${d.id}`)) : [];
-  const notifCount      = bdcPending.length + stockAlerts.length + criticalProj.length + invoicesPending.length + dqePending.length + meetingNotifs.length + bdcDbNotifs.length + incidentNotifs.length + situationValidatedNotifs.length + avenantNotifs.length + situationPaidNotifs.length;
+  const notifCount      = bdcPending.length + stockAlerts.length + criticalProj.length + invoicesPending.length + dqePending.length + meetingNotifs.length + bdcDbNotifs.length + incidentNotifs.length + situationValidatedNotifs.length + avenantNotifs.length + situationPaidNotifs.length + situationPendingDtNotifs.length + situationRejectedDtNotifs.length + situationContestedNotifs.length;
 
   useEffect(() => {
     function handleOutside(e: MouseEvent) {
@@ -442,6 +454,83 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
                               {d.project_code} · {d.periode}
                               {d.net_a_payer ? ` · ${fmtAmount(d.net_a_payer)}` : ''}
                               {d.paid_by ? ` · ${d.paid_by}` : ''}
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })}
+
+                    {situationPendingDtNotifs.map((notif: UserNotification) => {
+                      const d = notif.data as any;
+                      return (
+                        <button
+                          key={notif.id}
+                          type="button"
+                          className="topbar-notif-item topbar-notif-item--warning"
+                          onClick={async () => {
+                            await markNotificationRead(notif.id);
+                            queryClient.invalidateQueries({ queryKey: ['user-notifications'] });
+                            if (d.project_id) navigate(`/projects/${d.project_id}/situations`);
+                            setNotifOpen(false);
+                          }}
+                        >
+                          <span className="topbar-notif-item__dot topbar-notif-item__dot--warning" />
+                          <div className="topbar-notif-item__body">
+                            <div className="topbar-notif-item__title">🔍 Situation à réviser — {d.situation_num}</div>
+                            <div className="topbar-notif-item__sub">
+                              {d.project_name} · {d.periode}{d.submitted_by ? ` · par ${d.submitted_by}` : ''}
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })}
+
+                    {situationRejectedDtNotifs.map((notif: UserNotification) => {
+                      const d = notif.data as any;
+                      return (
+                        <button
+                          key={notif.id}
+                          type="button"
+                          className="topbar-notif-item topbar-notif-item--danger"
+                          onClick={async () => {
+                            await markNotificationRead(notif.id);
+                            queryClient.invalidateQueries({ queryKey: ['user-notifications'] });
+                            if (d.project_id) navigate(`/projects/${d.project_id}/situations`);
+                            setNotifOpen(false);
+                          }}
+                        >
+                          <span className="topbar-notif-item__dot topbar-notif-item__dot--danger" />
+                          <div className="topbar-notif-item__body">
+                            <div className="topbar-notif-item__title">✗ Situation rejetée DT — {d.situation_num}</div>
+                            <div className="topbar-notif-item__sub">
+                              {d.project_name} · {d.periode}{d.rejected_by ? ` · par ${d.rejected_by}` : ''}
+                              {d.comment ? ` · ${String(d.comment).slice(0, 50)}` : ''}
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })}
+
+                    {situationContestedNotifs.map((notif: UserNotification) => {
+                      const d = notif.data as any;
+                      return (
+                        <button
+                          key={notif.id}
+                          type="button"
+                          className="topbar-notif-item topbar-notif-item--critical"
+                          onClick={async () => {
+                            await markNotificationRead(notif.id);
+                            queryClient.invalidateQueries({ queryKey: ['user-notifications'] });
+                            if (d.project_id) navigate(`/projects/${d.project_id}/situations`);
+                            setNotifOpen(false);
+                          }}
+                        >
+                          <span className="topbar-notif-item__dot topbar-notif-item__dot--critical" />
+                          <div className="topbar-notif-item__body">
+                            <div className="topbar-notif-item__title">⚠️ Situation contestée — {d.situation_num}</div>
+                            <div className="topbar-notif-item__sub">
+                              {d.project_name} · {d.periode}{d.contested_by ? ` · par ${d.contested_by}` : ''}
+                              {d.reason ? ` · ${String(d.reason).slice(0, 50)}` : ''}
                             </div>
                           </div>
                         </button>

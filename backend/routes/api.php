@@ -252,6 +252,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/projects/{project}/situations', [SituationTravauxController::class, 'list']);
     Route::post('/projects/{project}/situations', [SituationTravauxController::class, 'storeSituation']);
     Route::patch('/projects/{project}/situations/{situation}/submit', [SituationTravauxController::class, 'submit']);
+    Route::patch('/projects/{project}/situations/{situation}/approve-dt', [SituationTravauxController::class, 'approveDt']);
+    Route::patch('/projects/{project}/situations/{situation}/reject-dt', [SituationTravauxController::class, 'rejectDt']);
+    Route::patch('/projects/{project}/situations/{situation}/contest', [SituationTravauxController::class, 'contest']);
+    Route::patch('/projects/{project}/situations/{situation}/correct', [SituationTravauxController::class, 'correct']);
     Route::patch('/projects/{project}/situations/{situation}/validate', [SituationTravauxController::class, 'validateSituation']);
     Route::patch('/projects/{project}/situations/{situation}/pay', [SituationTravauxController::class, 'pay']);
     // Legacy aliases kept for backward compat
