@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 return new class extends Migration {
     public function up(): void
@@ -17,7 +18,7 @@ return new class extends Migration {
         });
 
         // Migrate existing boolean data
-        \DB::statement("UPDATE daily_attendance SET statut = CASE WHEN `present` = 1 THEN 'present' ELSE 'absent' END");
+        DB::statement("UPDATE daily_attendance SET statut = CASE WHEN present THEN 'present' ELSE 'absent' END");
     }
 
     public function down(): void
