@@ -99,10 +99,10 @@
 <div class="header">
   <div class="header__logo-wrap">
     <img class="header__logo"
-         src="data:image/png;base64,{{ base64_encode(file_get_contents(public_path('images/heleman.png'))) }}"
-         alt="Helaman Expertise" />
+         src="data:image/png;base64,{{ base64_encode(file_get_contents(public_path('images/charles.png'))) }}"
+         alt="Charles" />
     <div>
-      <div class="header__brand-name">Helaman Expertise</div>
+      <div class="header__brand-name">Charles</div>
       <div class="header__brand-sub">Devis Quantitatif Estimatif</div>
     </div>
   </div>
@@ -175,7 +175,7 @@
 </div>
 
 <div class="footer">
-  <span><span class="footer__brand">Helaman Expertise</span> — {{ $project->name }}</span>
+  <span><span class="footer__brand">Charles</span> — {{ $project->name }}</span>
   <span>DQE {{ $dqeVersion->name }} · {{ now()->format('d/m/Y') }}</span>
 </div>
 

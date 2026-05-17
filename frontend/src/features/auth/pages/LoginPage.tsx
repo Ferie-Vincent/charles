@@ -31,7 +31,7 @@ export default function LoginPage() {
       {/* Left panel — brand */}
       <div className="login-panel">
         <div className="login-panel__brand">
-          <img src="/heleman.png" alt="Helaman Expertise" className="login-panel__logo-img" />
+          <img src="/charles.png" alt="Charles" className="login-panel__logo-img" />
           <span className="login-panel__mobile-tag">Gestion chantiers</span>
         </div>
 

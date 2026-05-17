@@ -108,7 +108,7 @@
 
 <div class="header">
   <div class="header__brand">
-    <div class="header__brand-name">Helaman Expertise</div>
+    <div class="header__brand-name">Charles</div>
     <div class="header__brand-sub">Gestion de chantier</div>
   </div>
   <div class="header__doc">
@@ -217,7 +217,7 @@
   </div>
 
   <div class="footer">
-    <span>Helaman Expertise — Chantier Platform</span>
+    <span>Charles — Chantier Platform</span>
     <span>{{ $project->location ?? '' }}</span>
     <span>{{ $generated_at }}</span>
   </div>

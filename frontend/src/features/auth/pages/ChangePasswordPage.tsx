@@ -39,7 +39,7 @@ export default function ChangePasswordPage() {
     <div className="login-page">
       <div className="login-panel">
         <div className="login-panel__brand">
-          <img src="/heleman.png" alt="Helaman Expertise" className="login-panel__logo-img" />
+          <img src="/charles.png" alt="Charles" className="login-panel__logo-img" />
         </div>
         <div className="login-panel__content">
           <h1 className="login-panel__headline">

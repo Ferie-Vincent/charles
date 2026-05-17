@@ -101,10 +101,10 @@
 <div class="header">
   <div class="header__logo-wrap">
     <img class="header__logo"
-         src="data:image/png;base64,{{ base64_encode(file_get_contents(public_path('images/heleman.png'))) }}"
-         alt="Helaman Expertise" />
+         src="data:image/png;base64,{{ base64_encode(file_get_contents(public_path('images/charles.png'))) }}"
+         alt="Charles" />
     <div class="header__brand">
-      <div class="header__brand-name">Helaman Expertise</div>
+      <div class="header__brand-name">Charles</div>
       <div class="header__brand-sub">Bureau d'études BTP</div>
     </div>
   </div>
@@ -204,7 +204,7 @@
 </div>
 
 <div class="footer">
-  <span><span class="footer__brand">Helaman Expertise</span> — Document confidentiel</span>
+  <span><span class="footer__brand">Charles</span> — Document confidentiel</span>
   <span>Fiche #INC-{{ str_pad($incident->id, 4, '0', STR_PAD_LEFT) }} · {{ $project->code }}</span>
 </div>
 

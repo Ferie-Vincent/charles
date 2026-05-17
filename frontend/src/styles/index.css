@@ -1,10 +1,10 @@
-/* ─── Design Tokens — Helaman Expertise Platform ─── */
-/* Palette: Helaman Navy Blue + Teal (Brand Colors) */
+/* ─── Design Tokens — Charles Platform ─── */
+/* Palette: Charles Navy Blue + Teal (Brand Colors) */
 
 :root {
   --font: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 
-  /* Brand — Helaman Expertise */
+  /* Brand — Charles */
   --accent:        #2F60B0;
   --accent-hover:  #254FA0;
   --accent-light:  #EEF4FB;
