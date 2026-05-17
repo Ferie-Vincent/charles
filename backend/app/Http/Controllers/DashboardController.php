@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\DailyLog;
+use App\Models\Invoice;
 use App\Models\Project;
 use App\Models\ProjectActivity;
+use App\Models\SituationTravaux;
 use App\Services\ProjectMetricsService;
 use App\Support\Roles;
 use Illuminate\Http\JsonResponse;
@@ -90,12 +92,36 @@ class DashboardController extends Controller
             fn ($a) => ! in_array($a['id'], $dismissedKeys, true)
         ));
 
+        // Situations in en_revue_ct — shown on CT dashboard
+        $situationsEnRevueCt = SituationTravaux::query()
+            ->where('status', 'en_revue_ct')
+            ->whereHas('project', fn ($q) => $q->where('company_id', $companyId))
+            ->with('project:id,name,code')
+            ->orderBy('updated_at')
+            ->get(['id', 'project_id', 'net_a_payer', 'updated_at'])
+            ->map(fn (SituationTravaux $s) => [
+                'id'           => $s->id,
+                'project_id'   => $s->project_id,
+                'project_name' => $s->project?->name ?? '—',
+                'project_code' => $s->project?->code ?? '—',
+                'net_a_payer'  => (float) $s->net_a_payer,
+            ]);
+
+        // Pending invoices count — shown on comptable dashboard
+        $invoicesPendingCount = Invoice::query()
+            ->where('status', 'soumise')
+            ->whereHas('project', fn ($q) => $q->where('company_id', $companyId))
+            ->count();
+
+        $stats['invoices_pending_count'] = $invoicesPendingCount;
+
         return response()->json([
-            'stats'             => $stats,
-            'active_projects'   => $activeProjectsWithHealth,
-            'recent_activities' => $recentActivities,
-            'leaderboard'       => $leaderboard,
-            'alerts'            => $alerts,
+            'stats'                   => $stats,
+            'active_projects'         => $activeProjectsWithHealth,
+            'recent_activities'       => $recentActivities,
+            'leaderboard'             => $leaderboard,
+            'alerts'                  => $alerts,
+            'situations_en_revue_ct'  => $situationsEnRevueCt->values(),
         ]);
     }
 

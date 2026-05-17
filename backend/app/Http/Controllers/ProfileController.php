@@ -45,6 +45,20 @@ class ProfileController extends Controller
         return response()->json(['message' => 'Mot de passe mis à jour.']);
     }
 
+    public function forceChangePassword(Request $request): JsonResponse
+    {
+        $request->validate([
+            'password' => ['required', 'confirmed', Password::min(8)],
+        ]);
+
+        $request->user()->update([
+            'password'             => Hash::make($request->password),
+            'must_change_password' => false,
+        ]);
+
+        return response()->json(['message' => 'Mot de passe défini.']);
+    }
+
     public function updateCompany(Request $request): JsonResponse
     {
         $user = $request->user();

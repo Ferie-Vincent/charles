@@ -1,9 +1,12 @@
 import axios from 'axios';
 import { enqueueRequest, replayQueue } from './offline-queue';
 
-// Attach _silentOn403: true on a request config to skip the global 403 toast.
+// Attach _silentOn403/_silentOn401: true on a request config to skip global error toasts.
 declare module 'axios' {
-  interface AxiosRequestConfig { _silentOn403?: boolean }
+  interface AxiosRequestConfig {
+    _silentOn403?: boolean;
+    _silentOn401?: boolean;
+  }
 }
 
 export const api = axios.create({
@@ -53,7 +56,7 @@ api.interceptors.response.use(
       window.dispatchEvent(new CustomEvent('api-error', {
         detail: data?.message ?? 'Accès refusé (403).',
       }));
-    } else if (status === 401) {
+    } else if (status === 401 && !err.config?._silentOn401) {
       window.dispatchEvent(new CustomEvent('api-error', {
         detail: 'Non authentifié. Reconnectez-vous.',
       }));

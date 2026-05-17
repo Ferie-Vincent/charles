@@ -2,17 +2,21 @@ import { api } from '../../../lib/api';
 
 export const TRADES = [
   'Maçon',
-  'Ferrailleur',
   'Coffreur',
+  'Ferrailleur',
   'Charpentier',
-  'Électricien',
+  'Menuisier',
   'Plombier',
+  'Électricien',
   'Carreleur',
   'Peintre',
+  'Soudeur',
+  'Grutier',
+  "Conducteur d'engins",
+  'Chauffeur',
   'Manœuvre',
-  "Conducteur d'engin",
   "Chef d'équipe",
-  'Technicien',
+  'Contremaître',
   'Autre',
 ] as const;
 

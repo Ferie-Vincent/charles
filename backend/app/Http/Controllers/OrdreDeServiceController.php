@@ -3,6 +3,10 @@ namespace App\Http\Controllers;
 
 use App\Models\OrdreDeService;
 use App\Models\Project;
+use App\Models\ProjectMember;
+use App\Models\User;
+use App\Notifications\OsNouveauNotification;
+use App\Support\Roles;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -45,9 +49,13 @@ class OrdreDeServiceController extends Controller
             'document_path' => $path,
         ]);
 
-        // Auto-update project lifecycle_status when OS type = demarrage
+        // Auto-update project state based on OS type
         if ($data['type'] === 'demarrage') {
-            $project->update(['lifecycle_status' => 'execution']);
+            $project->update(['lifecycle_status' => 'execution', 'is_arrete' => false, 'arret_depuis' => null]);
+        } elseif ($data['type'] === 'arret') {
+            $project->update(['is_arrete' => true, 'arret_depuis' => $data['date_os']]);
+        } elseif ($data['type'] === 'reprise') {
+            $project->update(['is_arrete' => false, 'arret_depuis' => null]);
         }
 
         return response()->json(['ordre_de_service' => $os->load('emetteur:id,name')], 201);
@@ -60,6 +68,17 @@ class OrdreDeServiceController extends Controller
             'accuse_reception' => true,
             'date_accuse'      => now()->toDateString(),
         ]);
+
+        // Item 13: notify chefs de chantier assigned to this project
+        $os->load('project:id,name,code,company_id');
+        $memberIds = ProjectMember::where('project_id', $project->id)->pluck('user_id');
+        User::whereHas('role', fn($q) => $q->where('name', Roles::CHEF_CHANTIER_SLUG))
+            ->where('company_id', $project->company_id)
+            ->whereIn('id', $memberIds)
+            ->where('id', '!=', $request->user()->id)
+            ->get()
+            ->each(fn($u) => $u->notify(new OsNouveauNotification($os)));
+
         return response()->json(['ordre_de_service' => $os]);
     }
 

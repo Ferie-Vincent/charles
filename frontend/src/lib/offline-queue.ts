@@ -7,7 +7,7 @@ interface QueuedRequest {
   timestamp: number;
 }
 
-const QUEUE_KEY = 'helaman_offline_queue';
+const QUEUE_KEY = 'charles_offline_queue';
 
 function getQueue(): QueuedRequest[] {
   try {

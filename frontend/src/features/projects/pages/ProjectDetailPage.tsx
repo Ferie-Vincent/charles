@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { api } from '../../../lib/api';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, Link } from 'react-router-dom';
 import { getProject } from '../api/get-project';
 import ActivityTimeline from '../components/ActivityTimeline';
@@ -17,7 +17,6 @@ import MaterialReceiptsPanel from '../components/MaterialReceiptsPanel';
 import PhaseGanttWidget from '../components/PhaseGanttWidget';
 import MeetingReportModal from '../components/MeetingReportModal';
 import SituationTravauxModal from '../components/SituationTravauxModal';
-import WhatsAppTestButton from '../components/WhatsAppTestButton';
 import DqePanel from '../../dqe/components/DqePanel';
 import ProjectDocumentsPanel from '../../ged/components/ProjectDocumentsPanel';
 import { useAuth } from '../../auth/stores/auth-store';
@@ -194,6 +193,7 @@ export default function ProjectDetailPage() {
     }
   }
 
+  const qc = useQueryClient();
   const { user } = useAuth();
   const group = getRoleGroup(user?.role?.name ?? '');
   // Direction + DT : vue pilotage complète (ordre réunion CT)
@@ -201,6 +201,12 @@ export default function ProjectDetailPage() {
   // Management élargi : accès trésorerie/DQE
   const isManagement = isDGDT || group === 'metreur' || group === 'comptable';
   const isTerrain = group === 'terrain';
+
+  const [cautionDate, setCautionDate] = useState('');
+  const liberateCautionMut = useMutation({
+    mutationFn: (date: string) => api.patch(`/projects/${numId}/caution-liberation`, { date_liberation: date }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['project', numId] }); setCautionDate(''); },
+  });
 
   const { data: project, isLoading, isError } = useQuery({
     queryKey: ['project', numId],
@@ -368,6 +374,44 @@ export default function ProjectDetailPage() {
                   Réception prov. {formatDate(project.date_reception_provisoire)}
                 </span>
               )}
+              {project.caution_bonne_execution_pct && isDGDT && (
+                project.caution_liberee ? (
+                  <span className="proj-hero__chip" style={{ borderColor: '#22c55e55', color: '#22c55e' }}>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="12" height="12"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    Caution libérée {project.caution_liberee_at ? `le ${new Date(project.caution_liberee_at).toLocaleDateString('fr-FR')}` : ''}
+                  </span>
+                ) : (
+                  <span className="proj-hero__chip" style={{ borderColor: '#8b5cf655', color: '#8b5cf6', display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="12" height="12"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    Caution exec. {project.caution_bonne_execution_pct}%
+                    {group === 'direction' && (
+                      <>
+                        <input
+                          type="date"
+                          className="form-control form-control--sm"
+                          style={{ width: 'auto', fontSize: '0.7rem', padding: '0.1rem 0.3rem' }}
+                          value={cautionDate}
+                          onChange={e => setCautionDate(e.target.value)}
+                        />
+                        <button
+                          className="btn btn--sm btn--success"
+                          style={{ fontSize: '0.7rem', padding: '0.15rem 0.5rem' }}
+                          disabled={!cautionDate || liberateCautionMut.isPending}
+                          onClick={() => cautionDate && liberateCautionMut.mutate(cautionDate)}
+                        >
+                          Libérer
+                        </button>
+                      </>
+                    )}
+                  </span>
+                )
+              )}
+              {project.penalites_retard_par_jour && isDGDT && (
+                <span className="proj-hero__chip" style={{ borderColor: '#ef444455', color: '#ef4444' }}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="12" height="12"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                  Pénalités {Number(project.penalites_retard_par_jour).toLocaleString('fr-FR')} XOF/j
+                </span>
+              )}
             </div>
           </div>
 
@@ -448,6 +492,12 @@ export default function ProjectDetailPage() {
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="14" height="14"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
               Ordres de Service
             </Link>
+            {isManagement && (
+              <Link to={`/projects/${project.id}/dgd`} className="proj-action-bar__btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="14" height="14"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                DGD
+              </Link>
+            )}
           </>
         )}
       </div>
@@ -677,9 +727,6 @@ export default function ProjectDetailPage() {
               <ReportsWidget projectId={project.id} />
             </PanelErrorBoundary>
           </CollapsibleSection>
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: -8, marginBottom: 8 }}>
-            <WhatsAppTestButton projectId={project.id} />
-          </div>
 
           {/* 7. Équipe + Historique */}
           <div className="detail-grid">
@@ -798,8 +845,6 @@ export default function ProjectDetailPage() {
             </CollapsibleSection>
           )}
 
-          {/* fix: WhatsAppTestButton est un <button> — ne pas passer en extra
-              (qui se retrouve dans un <button> header = HTML invalide) */}
           <CollapsibleSection
             title="Rapports hebdomadaires"
             subtitle="Archives générées automatiquement"
@@ -809,9 +854,6 @@ export default function ProjectDetailPage() {
               <ReportsWidget projectId={project.id} />
             </PanelErrorBoundary>
           </CollapsibleSection>
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: -8, marginBottom: 8 }}>
-            <WhatsAppTestButton projectId={project.id} />
-          </div>
 
           <div className="detail-grid">
             <CollapsibleSection className="col-half" title="Équipe du chantier" icon={icons.team}>

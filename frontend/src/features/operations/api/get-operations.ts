@@ -62,6 +62,14 @@ export interface DqePending {
   project_code: string;
 }
 
+export interface SituationPending {
+  id: number;
+  project_id: number;
+  project_name: string;
+  project_code: string;
+  net_a_payer: number;
+}
+
 export interface OperationsData {
   health_summary: HealthSummary;
   budget_summary: BudgetSummary;
@@ -70,6 +78,7 @@ export interface OperationsData {
   critical_projects: CriticalProject[];
   invoices_pending: InvoicePending[];
   dqe_pending: DqePending[];
+  situations_en_revue_dt: SituationPending[];
 }
 
 export async function getOperations(): Promise<OperationsData> {

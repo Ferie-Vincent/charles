@@ -156,31 +156,39 @@ export default function DailyLogForm({ projectId, onSuccess }: Props) {
       {/* #33 Effectif */}
       <div className="form-row">
         <div className="form-group">
-          <label htmlFor="workers_count">Effectif sur site *</label>
-          <input
-            id="workers_count"
-            type="number"
-            min="0"
-            max="999"
-            value={workersCount}
-            onChange={e => setWorkersCount(Number(e.target.value))}
-            required
-          />
+          <label>Effectif sur site *</label>
+          <div className="workers-stepper">
+            <button
+              type="button"
+              className="workers-stepper__btn"
+              onClick={() => setWorkersCount(c => Math.max(0, c - 1))}
+              aria-label="Moins"
+            >−</button>
+            <span className="workers-stepper__value">{workersCount}</span>
+            <button
+              type="button"
+              className="workers-stepper__btn"
+              onClick={() => setWorkersCount(c => Math.min(999, c + 1))}
+              aria-label="Plus"
+            >+</button>
+          </div>
         </div>
 
-        {/* Équipement — optionnel */}
+        {/* Équipement — radio buttons */}
         <div className="form-group">
-          <label htmlFor="equipment_status">État équipement</label>
-          <select
-            id="equipment_status"
-            value={equipmentStatus}
-            onChange={e => setEquipmentStatus(e.target.value as EquipmentStatus)}
-          >
-            <option value="">-- Optionnel --</option>
+          <label>État équipement <span className="form-optional">(optionnel)</span></label>
+          <div className="equipment-radio-grid">
             {EQUIPMENT_STATUSES.map(s => (
-              <option key={s} value={s}>{s}</option>
+              <button
+                key={s}
+                type="button"
+                className={`equipment-radio-btn ${equipmentStatus === s ? 'equipment-radio-btn--active' : ''}`}
+                onClick={() => setEquipmentStatus(equipmentStatus === s ? '' : s)}
+              >
+                {s}
+              </button>
             ))}
-          </select>
+          </div>
         </div>
       </div>
 

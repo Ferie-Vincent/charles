@@ -131,10 +131,10 @@ tr:nth-child(even) td { background: #f8fafc; }
   <div class="cover__top">
     <div class="cover__logo-wrap">
       <img class="cover__logo"
-           src="data:image/png;base64,{{ base64_encode(file_get_contents(public_path('images/heleman.png'))) }}"
-           alt="Helaman Expertise" />
+           src="data:image/png;base64,{{ base64_encode(file_get_contents(public_path('images/charles.png'))) }}"
+           alt="Charles" />
       <div>
-        <div class="cover__brand-name">Helaman Expertise</div>
+        <div class="cover__brand-name">Charles</div>
         <div class="cover__brand-sub">Rapport de chantier</div>
       </div>
     </div>
@@ -310,7 +310,7 @@ tr:nth-child(even) td { background: #f8fafc; }
 </div>
 
 <div class="footer">
-  <span><span class="footer__brand">Helaman Expertise</span> — Document confidentiel — Ne pas diffuser</span>
+  <span><span class="footer__brand">Charles</span> — Document confidentiel — Ne pas diffuser</span>
   <span>{{ $project->code }} · Rapport du {{ now()->format('d/m/Y') }}</span>
 </div>
 

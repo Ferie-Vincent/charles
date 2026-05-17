@@ -59,11 +59,35 @@ class AvenantController extends Controller
             'date_signature'             => 'nullable|date',
             'notes'                      => 'nullable|string',
         ]);
+
+        // Gap #8: signature avenant significatif (> 5% marché) réservée DT/direction
+        if (($data['status'] ?? null) === 'signe' && $project->montant_marche) {
+            $montantSigne = (float)($data['montant_ht'] ?? $avenant->montant_ht ?? 0);
+            $seuil = (float)$project->montant_marche * 0.05;
+            if ($montantSigne > $seuil) {
+                $group = $request->user()->role->name ?? '';
+                $allowed = Roles::MANAGEMENT; // direction + directeur-technique
+                abort_unless(in_array($group, $allowed), 403,
+                    "Avenant > 5% du marché (" . number_format($montantSigne, 0, ',', ' ') . " XOF) — signature réservée au Directeur Technique ou à la Direction."
+                );
+            }
+        }
+
         $avenant->update($data);
 
-        // P2: notify metreurs when avenant transitions to signed
+        $situationsActivesCount = 0;
         if (!$wasSigne && ($data['status'] ?? null) === 'signe') {
             $avenant->load('project:id,name,code');
+
+            // Gap #2: avenant délai → mettre à jour end_date contractuelle du projet
+            $typeFinal = $data['type'] ?? $avenant->type;
+            $delaiJours = (int)($data['delai_supplementaire_jours'] ?? $avenant->delai_supplementaire_jours ?? 0);
+            if (in_array($typeFinal, ['delai', 'montant_et_delai']) && $delaiJours > 0 && $project->end_date) {
+                $project->update([
+                    'end_date' => $project->end_date->addDays($delaiJours),
+                ]);
+            }
+
             User::whereHas('role', fn($q) => $q->whereIn('name', [
                 Roles::METREUR_ECONOMISTE_SLUG,
                 Roles::CONDUCTEUR_TRAVAUX_SLUG,
@@ -71,9 +95,18 @@ class AvenantController extends Controller
                 ->where('company_id', $avenant->company_id)
                 ->get()
                 ->each(fn($u) => $u->notify(new AvenantSigneNotification($avenant)));
+
+            $situationsActivesCount = \App\Models\SituationTravaux::where('project_id', $avenant->project_id)
+                ->whereIn('status', ['brouillon', 'en_revue_ct', 'en_revue_dt', 'soumise', 'contestee'])
+                ->count();
         }
 
-        return response()->json(['avenant' => $avenant]);
+        return response()->json([
+            'avenant' => $avenant,
+            'situations_actives_warning' => $situationsActivesCount > 0
+                ? "Avenant signé avec {$situationsActivesCount} situation(s) en cours. La nouvelle base de calcul s'appliquera aux prochaines situations uniquement."
+                : null,
+        ]);
     }
 
     public function destroy(Project $project, Avenant $avenant): JsonResponse

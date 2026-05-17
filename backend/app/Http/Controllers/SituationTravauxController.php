@@ -281,7 +281,13 @@ PROMPT;
         $avancementPct = (float) $request->query('avancement_pct', 0);
         $dqeVersionId  = $request->query('dqe_version_id');
 
-        ['base' => $base, 'avenants_sum' => $avenants] = $this->resolveBaseCalcul($project, $dqeVersionId);
+        if ($project->type_marche === 'forfait' && $project->montant_marche) {
+            $avenants = (float) Avenant::where('project_id', $project->id)
+                ->where('status', 'signe')->sum('montant_ht');
+            $base = (float) $project->montant_marche + $avenants;
+        } else {
+            ['base' => $base, 'avenants_sum' => $avenants] = $this->resolveBaseCalcul($project, $dqeVersionId);
+        }
 
         $montantBrut = round($base * ($avancementPct / 100), 2);
 
@@ -301,6 +307,7 @@ PROMPT;
             'avance_demarrage_pct'      => $project->avance_demarrage_pct,
             'progress_from_journal'     => $lastLog ? (float) $lastLog->progress_percent : null,
             'last_log_date'             => $lastLog?->log_date,
+            'type_marche'               => $project->type_marche,
         ]);
     }
 
@@ -340,6 +347,12 @@ PROMPT;
             ->whereIn('status', ['validee_moe', 'payee'])
             ->sum('avance_remboursement');
 
+        $retenueCumulee = SituationTravaux::where('project_id', $project->id)
+            ->sum('retenue_garantie_amount');
+        $retenueLiberable = SituationTravaux::where('project_id', $project->id)
+            ->where('status', 'payee')
+            ->sum('retenue_garantie_amount');
+
         return response()->json([
             'situations'    => $enriched,
             'avance_summary' => [
@@ -350,12 +363,22 @@ PROMPT;
                 'is_frozen'   => $project->avance_demarrage_montant_accorde !== null,
                 'accorde_le'  => $project->avance_demarrage_accorde_le?->format('Y-m-d'),
             ],
+            'retenue_summary' => [
+                'cumulee'        => (float) $retenueCumulee,
+                'liberable'      => (float) $retenueLiberable,
+                'pct'            => config('btp.retenue_garantie_pct'),
+            ],
         ]);
     }
 
     public function storeSituation(Request $request, Project $project): JsonResponse
     {
         $this->authorize('update', $project);
+
+        // Gap #17: no new situations once DGD is signed (financial close)
+        abort_if($project->lifecycle_status === 'cloture', 422,
+            "Situation de travaux non autorisée — chantier clôturé financièrement (DGD signé)."
+        );
 
         $data = $request->validate([
             'periode'        => ['required', 'string', 'regex:/^\d{4}-\d{2}$/'],
@@ -379,7 +402,14 @@ PROMPT;
         }
 
         // P0: compute montant_brut_ht server-side — saisie libre interdite
-        ['base' => $base] = $this->resolveBaseCalcul($project, $data['dqe_version_id'] ?? null);
+        // Item 10: forfait = montant_marche is the fixed price; ignore DQE lines for calculation
+        if ($project->type_marche === 'forfait' && $project->montant_marche) {
+            $avenants = (float) \App\Models\Avenant::where('project_id', $project->id)
+                ->where('status', 'signe')->sum('montant_ht');
+            $base = (float) $project->montant_marche + $avenants;
+        } else {
+            ['base' => $base] = $this->resolveBaseCalcul($project, $data['dqe_version_id'] ?? null);
+        }
 
         if ($base <= 0) {
             return response()->json([
@@ -388,6 +418,14 @@ PROMPT;
         }
 
         $montantBrutHT = round($base * ($data['avancement_pct'] / 100), 2);
+
+        // Règle 3 logique-metier: situation ≤ montant marché + avenants signés
+        // Explicit guard — normally enforced by avancement_pct ≤ 100, but catches DQE/montant drift
+        if ($base > 0 && $montantBrutHT > $base + 0.01) {
+            return response()->json([
+                'message' => "Montant de la situation ({$montantBrutHT} FCFA) dépasse le marché + avenants signés ({$base} FCFA).",
+            ], 422);
+        }
 
         $cumulPrecedent = SituationTravaux::where('project_id', $project->id)
             ->whereIn('status', ['validee_moe', 'payee'])

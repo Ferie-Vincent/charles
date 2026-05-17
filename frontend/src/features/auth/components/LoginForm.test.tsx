@@ -10,10 +10,10 @@ describe('LoginForm', () => {
     fireEvent.change(screen.getByLabelText('Email'), {
       target: { value: 'direction@example.com' },
     });
-    fireEvent.change(screen.getByLabelText('Password'), {
+    fireEvent.change(screen.getByLabelText('Mot de passe'), {
       target: { value: 'password' },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Se connecter' }));
 
     expect(handleSubmit).toHaveBeenCalledWith({
       email: 'direction@example.com',

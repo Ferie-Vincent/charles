@@ -1,10 +1,10 @@
-/* ─── Design Tokens — Helaman Expertise Platform ─── */
-/* Palette: Helaman Navy Blue + Teal (Brand Colors) */
+/* ─── Design Tokens — Charles Platform ─── */
+/* Palette: Charles Navy Blue + Teal (Brand Colors) */
 
 :root {
   --font: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 
-  /* Brand — Helaman Expertise */
+  /* Brand — Charles */
   --accent:        #2F60B0;
   --accent-hover:  #254FA0;
   --accent-light:  #EEF4FB;
@@ -136,11 +136,19 @@ body {
   color: white;
 }
 
+.sidebar-brand__mascot {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+  flex-shrink: 0;
+  image-rendering: auto;
+}
+
 .sidebar-brand__logo-img {
   height: 36px;
   width: auto;
   object-fit: contain;
-  filter: brightness(0) invert(1);
+  /*filter: brightness(0) invert(1);*/
 }
 
 .sidebar-brand h2 {
@@ -745,9 +753,8 @@ button[type="submit"]:disabled {
 }
 
 .login-panel__logo-img {
-  height: 48px;
+  height: 150px;
   width: auto;
-  filter: brightness(0) invert(1);
   object-fit: contain;
 }
 
@@ -816,6 +823,19 @@ button[type="submit"]:disabled {
   flex-direction: column;
   justify-content: center;
   padding: 56px 48px;
+}
+
+.login-icon-wrap {
+  width: 68px;
+  height: 68px;
+  background: linear-gradient(135deg, var(--color-primary, #2F60B0), #78CDD4);
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 28px;
+  box-shadow: 0 10px 28px rgba(47, 96, 176, 0.32);
+  color: white;
 }
 
 .login-form-side h1 {
@@ -905,6 +925,60 @@ button[type="submit"]:disabled {
 .login-form button[type="submit"]:disabled {
   opacity: 0.55;
   cursor: not-allowed;
+}
+
+@media (max-width: 640px) {
+  .login-page {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+    min-height: 100vh;
+  }
+
+  .login-panel {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+    min-height: auto;
+  }
+
+  .login-panel::before,
+  .login-panel::after {
+    display: none;
+  }
+
+  .login-panel__content,
+  .login-panel__stats {
+    display: none;
+  }
+
+  .login-panel__brand {
+    gap: 10px;
+  }
+
+  .login-panel__logo-img {
+    height: 36px;
+  }
+
+  /* Compact tagline next to logo on mobile */
+  .login-panel__mobile-tag {
+    font-size: 11px;
+    color: rgba(148, 163, 184, 0.75);
+    font-weight: 500;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+  }
+
+  .login-form-side {
+    padding: 40px 24px 56px;
+    background: var(--bg-app);
+    justify-content: flex-start;
+    padding-top: 48px;
+  }
+
+  .login-form-side h1 {
+    font-size: 22px;
+  }
 }
 
 /* ─── Misc ─── */
@@ -3382,9 +3456,11 @@ code {
   font-size: 11px;
   color: var(--text-subtle);
   margin-top: 1px;
-  white-space: nowrap;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 /* ─── Scrollbar ─── */
@@ -9881,4 +9957,81 @@ code {
     font-size: 13px;
   }
 }
+
+/* ─── App loading splash ─── */
+.app-splash {
+  display: flex;
+  height: 100vh;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-app);
+}
+.app-splash__spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid var(--accent-subtle);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+/* ─── Workers count stepper ─── */
+.workers-stepper {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--bg-panel);
+}
+.workers-stepper__btn {
+  width: 44px;
+  height: 44px;
+  border: none;
+  background: var(--bg-app);
+  color: var(--text-main);
+  font-size: 1.25rem;
+  font-weight: 600;
+  cursor: pointer;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+.workers-stepper__btn:hover { background: var(--accent-subtle); color: var(--accent); }
+.workers-stepper__btn:active { background: var(--accent-light); }
+.workers-stepper__value {
+  flex: 1;
+  text-align: center;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-main);
+  min-width: 48px;
+  padding: 0 4px;
+  user-select: none;
+}
+
+/* ─── Equipment status radio buttons ─── */
+.equipment-radio-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+}
+.equipment-radio-btn {
+  padding: 8px 6px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-panel);
+  color: var(--text-body);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s;
+  min-height: 40px;
+}
+.equipment-radio-btn:hover { border-color: var(--accent); color: var(--accent); }
+.equipment-radio-btn--active { border-color: var(--accent); background: var(--accent-light); color: var(--accent); font-weight: 600; }
 

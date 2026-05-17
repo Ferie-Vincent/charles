@@ -49,16 +49,20 @@ export default function AvenantsPage() {
   const signMut   = useMutation({
     mutationFn: ({ id, date }: { id: number; date: string }) =>
       updateAvenant(projectId, id, { status: 'signe', date_signature: date }),
-    onSuccess: invalidate,
+    onSuccess: (result) => {
+      invalidate();
+      setWarning(result.situations_actives_warning);
+    },
   });
   const refuseMut = useMutation({
     mutationFn: (id: number) => updateAvenant(projectId, id, { status: 'refuse' }),
     onSuccess: invalidate,
   });
 
-  const [showForm, setShowForm] = useState(false);
-  const [form, setForm]         = useState(BLANK_FORM);
-  const [signDate, setSignDate] = useState<Record<number, string>>({});
+  const [showForm, setShowForm]   = useState(false);
+  const [form, setForm]           = useState(BLANK_FORM);
+  const [signDate, setSignDate]   = useState<Record<number, string>>({});
+  const [signWarning, setWarning] = useState<string | null>(null);
 
   function handleCreate(e: React.FormEvent) {
     e.preventDefault();
@@ -87,6 +91,21 @@ export default function AvenantsPage() {
           </button>
         }
       />
+
+      {signWarning && (
+        <div className="card" style={{ background: '#f59e0b11', border: '1px solid #f59e0b55', marginBottom: '1rem' }}>
+          <p style={{ color: '#b45309', margin: 0, padding: '0.75rem 1rem' }}>
+            ⚠️ {signWarning}
+            <button
+              className="btn btn--ghost btn--sm"
+              style={{ marginLeft: '1rem' }}
+              onClick={() => setWarning(null)}
+            >
+              ×
+            </button>
+          </p>
+        </div>
+      )}
 
       {showForm && (
         <form className="card card--form" onSubmit={handleCreate}>

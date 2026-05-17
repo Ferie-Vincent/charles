@@ -6,7 +6,15 @@ import { router } from './router';
 import { queryClient } from './lib/query-client';
 import { AuthProvider, useAuth } from './features/auth/stores/auth-store';
 import { PermissionsProvider } from './lib/permissions-context';
-import { getMe, login } from './features/auth/api/login';
+import { getMe } from './features/auth/api/login';
+
+function AppSplash() {
+  return (
+    <div className="app-splash">
+      <div className="app-splash__spinner" />
+    </div>
+  );
+}
 
 function SessionRestorer({ children }: { children: ReactNode }) {
   const { setUser } = useAuth();
@@ -17,21 +25,15 @@ function SessionRestorer({ children }: { children: ReactNode }) {
     if (attempted.current) return;
     attempted.current = true;
 
-    const refreshCsrf = () =>
-      axios.get('http://localhost:8000/sanctum/csrf-cookie', { withCredentials: true });
-
-    refreshCsrf()
+    axios
+      .get('http://localhost:8000/sanctum/csrf-cookie', { withCredentials: true })
       .then(() => getMe())
       .then(data => setUser(data.user))
-      .catch(() =>
-        login({ email: 'direction@charles.ci', password: 'password' })
-          .then(data => setUser(data.user))
-          .catch(() => {})
-      )
+      .catch(() => {})
       .finally(() => setReady(true));
   }, []);
 
-  if (!ready) return null;
+  if (!ready) return <AppSplash />;
   return <>{children}</>;
 }
 

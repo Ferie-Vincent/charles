@@ -5,6 +5,9 @@ import RoleGuard from './components/guards/RoleGuard';
 import { useAuth } from './features/auth/stores/auth-store';
 import { getRoleGroup } from './lib/roles';
 import LoginPage from './features/auth/pages/LoginPage';
+import SetPasswordPage from './features/auth/pages/SetPasswordPage';
+import ForgotPasswordPage from './features/auth/pages/ForgotPasswordPage';
+import ChangePasswordPage from './features/auth/pages/ChangePasswordPage';
 import DashboardPage from './features/dashboard/pages/DashboardPage';
 import OperationsDashboardPage from './features/operations/pages/OperationsDashboardPage';
 import ProjectsPage from './features/projects/pages/ProjectsPage';
@@ -35,6 +38,7 @@ import TasksPage from './features/tasks/pages/TasksPage';
 import SituationsPage from './features/projects/pages/SituationsPage';
 import AvenantsPage from './features/projects/pages/AvenantsPage';
 import OsPage from './features/projects/pages/OsPage';
+import DgdPage from './features/projects/pages/DgdPage';
 
 function Shell({ children }: { children: ReactNode }) {
   return <AppShell>{children}</AppShell>;
@@ -55,7 +59,10 @@ function Guarded({ path, children }: { path: string; children: ReactNode }) {
 }
 
 export const router = createBrowserRouter([
-  { path: '/login', element: <LoginPage /> },
+  { path: '/login',            element: <LoginPage /> },
+  { path: '/invitation/:token', element: <SetPasswordPage /> },
+  { path: '/forgot-password',  element: <ForgotPasswordPage /> },
+  { path: '/change-password',  element: <ChangePasswordPage /> },
   { path: '/',                         element: <Shell><RootPage /></Shell> },
   { path: '/operations',               element: <Guarded path="/operations"><OperationsDashboardPage /></Guarded> },
   { path: '/projects',                 element: <Shell><ProjectsPage /></Shell> },
@@ -67,6 +74,7 @@ export const router = createBrowserRouter([
   { path: '/projects/:id/situations',  element: <Shell><SituationsPage /></Shell> },
   { path: '/projects/:id/avenants',    element: <Shell><AvenantsPage /></Shell> },
   { path: '/projects/:id/os',          element: <Shell><OsPage /></Shell> },
+  { path: '/projects/:id/dgd',         element: <Shell><DgdPage /></Shell> },
   { path: '/map',                      element: <Guarded path="/map"><MapPage /></Guarded> },
   { path: '/timeline',                 element: <Guarded path="/timeline"><TimelinePage /></Guarded> },
   { path: '/dqe',                      element: <Guarded path="/dqe"><DqePage /></Guarded> },

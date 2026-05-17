@@ -28,8 +28,8 @@ export default defineConfig({
         ],
       },
       manifest: {
-        name: 'Helaman Expertise',
-        short_name: 'Helaman',
+        name: 'Charles',
+        short_name: 'Charles',
         description: 'Gestion de projets de construction — Côte d\'Ivoire',
         theme_color: '#0E1E52',
         background_color: '#0E1E52',

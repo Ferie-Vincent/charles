@@ -4,6 +4,7 @@ export type AuthUser = {
   id: number;
   name: string;
   email: string;
+  must_change_password?: boolean;
   role: { name: string; label: string };
   company: { id: number; name: string; slug?: string };
 } | null;
