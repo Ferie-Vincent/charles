@@ -6,6 +6,7 @@ import Topbar from './Topbar';
 import MobileBottomNav from './MobileBottomNav';
 import OfflineBanner from '../ui/OfflineBanner';
 import { useAuth } from '../../features/auth/stores/auth-store';
+import AiFab from '../../features/ai/components/AiFab';
 
 export default function AppShell({ children }: { children: ReactNode }) {
   const { user } = useAuth();
@@ -27,6 +28,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
         </div>
       </div>
       <MobileBottomNav />
+      <AiFab />
     </>
   );
 }
