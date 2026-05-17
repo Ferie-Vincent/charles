@@ -141,6 +141,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/ged', [GedController::class, 'index']);
         Route::post('/ged', [GedController::class, 'store']);
         Route::get('/ged/{gedDocument}/url', [GedController::class, 'url']);
+        Route::get('/ged/{gedDocument}/content', [GedController::class, 'content']);
         Route::get('/ged/{gedDocument}/download', [GedController::class, 'download']);
         Route::put('/ged/{gedDocument}', [GedController::class, 'update']);
         Route::delete('/ged/{gedDocument}', [GedController::class, 'destroy']);
@@ -322,12 +323,19 @@ Route::middleware('auth')->group(function () {
     Route::patch('/notifications/{id}/read', [\App\Http\Controllers\MeetingController::class, 'markRead']);
     Route::post('/notifications/read-all', [\App\Http\Controllers\MeetingController::class, 'markAllRead']);
 
-    // ── IA Platform ────────────────────────────────────────────────────────────
-    Route::get('/ai/briefing', [AiBriefingController::class, 'briefing'])->middleware('throttle:30,1');
-    Route::get('/projects/{project}/ai/material-suggestions', [AiBriefingController::class, 'materialSuggestions']);
-    Route::post('/ai/feedback', [AiFeedbackController::class, 'store']);
-    Route::post('/ai/query', [AiRagController::class, 'query'])->middleware('throttle:20,1');
-    Route::post('/projects/{project}/photos/{photo}/ai-analyze', [AiVisionController::class, 'analyzePhoto'])->middleware('throttle:10,1');
+    // ── Paramètres IA ──────────────────────────────────────────────────────────
+    Route::get('/settings/ai', [ProfileController::class, 'getAiSettings']);
+    Route::put('/settings/ai', [ProfileController::class, 'updateAiSettings']);
+    Route::post('/settings/ai/test', [ProfileController::class, 'testAiConnection']);
+
+    // ── IA Platform (désactivable via paramètre entreprise) ────────────────────
+    Route::middleware('ai.enabled')->group(function () {
+        Route::get('/ai/briefing', [AiBriefingController::class, 'briefing'])->middleware('throttle:30,1');
+        Route::get('/projects/{project}/ai/material-suggestions', [AiBriefingController::class, 'materialSuggestions']);
+        Route::post('/ai/feedback', [AiFeedbackController::class, 'store']);
+        Route::post('/ai/query', [AiRagController::class, 'query'])->middleware('throttle:20,1');
+        Route::post('/projects/{project}/photos/{photo}/ai-analyze', [AiVisionController::class, 'analyzePhoto'])->middleware('throttle:10,1');
+    });
 });
 
 // ── RSVP sans auth (lien email tokenisé) ──────────────────────────────────────

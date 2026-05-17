@@ -137,8 +137,8 @@ body {
 }
 
 .sidebar-brand__mascot {
-  width: 56px;
-  height: 56px;
+  width: 90px;
+  height: 90px;
   object-fit: contain;
   flex-shrink: 0;
   image-rendering: auto;
@@ -10482,8 +10482,8 @@ h4.ai-md-heading { font-size: 13px; }
 /* ── Main button ── */
 .ai-fab-btn {
   position: relative;
-  width: 56px;
-  height: 56px;
+  width: 68px;
+  height: 68px;
   border-radius: 50%;
   background: linear-gradient(135deg, #6366f1 0%, #2F60B0 60%, #0ea5e9 100%);
   background-size: 200% 200%;
@@ -10491,15 +10491,13 @@ h4.ai-md-heading { font-size: 13px; }
   border: none;
   cursor: pointer;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 1px;
   box-shadow: 0 4px 20px rgba(99,102,241,0.45), 0 1px 4px rgba(0,0,0,0.2);
   transition: transform 0.25s cubic-bezier(.34,1.56,.64,1), box-shadow 0.25s;
   flex-shrink: 0;
   animation: fabPulse 2.8s ease-out infinite;
-  overflow: hidden;
+  overflow: visible;
 }
 .ai-fab-btn:hover {
   transform: scale(1.1);
@@ -10516,7 +10514,7 @@ h4.ai-md-heading { font-size: 13px; }
 /* Rotating ring around button */
 .ai-fab-btn__ring {
   position: absolute;
-  inset: -3px;
+  inset: -4px;
   border-radius: 50%;
   border: 2px solid transparent;
   border-top-color: rgba(255,255,255,0.6);
@@ -10534,13 +10532,28 @@ h4.ai-md-heading { font-size: 13px; }
   transition: transform 0.35s cubic-bezier(.34,1.56,.64,1);
   line-height: 1;
 }
-.ai-fab-btn__text {
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 1px;
-  opacity: 0.85;
-  line-height: 1;
-  margin-top: 1px;
+/* Mascot image — floats above/over the circular gradient base */
+.ai-fab-btn__mascot {
+  position: absolute;
+  width: 96px;
+  height: 96px;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  object-fit: contain;
+  pointer-events: none;
+  transition: opacity 0.22s ease, transform 0.22s cubic-bezier(.34,1.56,.64,1);
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.25));
+}
+
+/* Close X icon — centered, layered above */
+.ai-fab-btn__close {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.22s ease, transform 0.22s cubic-bezier(.34,1.56,.64,1);
 }
 
 /* ── Speed dial items ── */

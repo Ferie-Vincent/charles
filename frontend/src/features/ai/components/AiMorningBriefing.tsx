@@ -7,8 +7,9 @@ import AiMarkdown from './AiMarkdown';
 
 export default function AiMorningBriefing({ alwaysExpanded = false }: { alwaysExpanded?: boolean }) {
   const { enabled } = useAiEnabled();
-  if (!enabled) return null;
   const [expanded, setExpanded] = useState(true);
+
+  if (!enabled) return null;
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['ai-briefing'],

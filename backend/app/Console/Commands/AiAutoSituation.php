@@ -15,7 +15,10 @@ class AiAutoSituation extends Command
     protected $signature = 'ai:auto-situation {--project= : Specific project ID}';
     protected $description = 'Auto-generate situation de travaux via Mistral for active projects (end of month)';
 
-    public function __construct(private readonly GroqService $ai) {}
+    public function __construct(private readonly GroqService $ai)
+    {
+        parent::__construct();
+    }
 
     public function handle(): int
     {

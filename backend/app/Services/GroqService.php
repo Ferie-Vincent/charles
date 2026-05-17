@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Company;
 use Illuminate\Support\Facades\Http;
 
 class GroqService
@@ -9,12 +10,33 @@ class GroqService
     private string $mistralKey;
     private string $groqKey;
     private string $anthropicKey;
+    private ?string $activeProvider = null;
 
     public function __construct()
     {
         $this->mistralKey   = config('services.mistral.key', '');
         $this->groqKey      = config('services.groq.key', '');
         $this->anthropicKey = config('services.anthropic.key', '');
+    }
+
+    /**
+     * Override keys/provider from company-level config (DB beats .env).
+     * Call this before analyze() when the request has an authenticated user.
+     */
+    public function applyCompanyConfig(Company $company): void
+    {
+        if (! $company->ai_api_key || ! $company->ai_provider) {
+            return;
+        }
+
+        $key = $company->ai_api_key;
+        match ($company->ai_provider) {
+            'mistral'   => $this->mistralKey   = $key,
+            'groq'      => $this->groqKey      = $key,
+            'anthropic' => $this->anthropicKey = $key,
+            default     => null,
+        };
+        $this->activeProvider = $company->ai_provider;
     }
 
     public function available(): bool
@@ -24,6 +46,14 @@ class GroqService
 
     public function analyze(string $prompt, int $maxTokens = 2000): array
     {
+        // If company pinned a specific provider, use it first
+        if ($this->activeProvider === 'groq' && $this->groqKey) {
+            return $this->callGroq($prompt, $maxTokens);
+        }
+        if ($this->activeProvider === 'anthropic' && $this->anthropicKey) {
+            return $this->callAnthropic($prompt, $maxTokens);
+        }
+
         if ($this->mistralKey) {
             return $this->callMistral($prompt, $maxTokens);
         }
