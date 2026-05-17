@@ -40,6 +40,7 @@ use App\Http\Controllers\AvenantController;
 use App\Http\Controllers\OrdreDeServiceController;
 use App\Http\Controllers\BpuController;
 use App\Http\Controllers\DgdController;
+use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/health', function () {
@@ -75,6 +76,12 @@ Route::middleware('auth')->group(function () {
     Route::post('/users', [UserController::class, 'store']);
     Route::put('/users/{user}', [UserController::class, 'update']);
     Route::delete('/users/{user}', [UserController::class, 'destroy']);
+
+    // ── Profil utilisateur ────────────────────────────────────────────────────
+    Route::put('/profile', [ProfileController::class, 'update']);
+    Route::put('/profile/password', [ProfileController::class, 'changePassword']);
+    Route::put('/profile/force-password', [ProfileController::class, 'forceChangePassword']);
+    Route::put('/profile/company', [ProfileController::class, 'updateCompany']);
 
     // ── Portfolio (costs / accounting) ───────────────────────────────────────
     Route::middleware('permission:costs')->group(function () {
@@ -313,3 +320,9 @@ Route::middleware('auth')->group(function () {
 
 // ── RSVP sans auth (lien email tokenisé) ──────────────────────────────────────
 Route::get('/meetings/rsvp/{token}/{status}', [\App\Http\Controllers\MeetingController::class, 'rsvpViaToken']);
+
+// ── Invitation & réinitialisation de mot de passe (publiques) ─────────────────
+Route::get('/auth/invitation/{token}', [AuthController::class, 'showInvitation']);
+Route::post('/auth/invitation/{token}', [AuthController::class, 'acceptInvitation']);
+Route::post('/auth/forgot-password', [AuthController::class, 'forgotPassword'])->middleware('throttle:5,1');
+Route::post('/auth/reset-password', [AuthController::class, 'resetPassword'])->middleware('throttle:5,1');

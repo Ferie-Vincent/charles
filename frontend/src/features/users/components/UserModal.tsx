@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
-import { getRoles, type AppUser, type Role, type UserPayload } from '../api/users';
+import { createUser, getRoles, updateUser, type AppUser, type Role, type UserPayload } from '../api/users';
 
 interface Props {
   user: AppUser | null;
-  onSave: (payload: UserPayload & { password?: string }) => Promise<void>;
+  onSaved: (user: AppUser) => void;
   onClose: () => void;
 }
 
@@ -12,16 +12,18 @@ const ROLE_GROUP_ORDER = [
   'chef-chantier', 'metreur-economiste', 'comptable', 'lecture-seule',
 ];
 
-export default function UserModal({ user, onSave, onClose }: Props) {
+export default function UserModal({ user, onSaved, onClose }: Props) {
   const isEdit = user !== null;
 
-  const [roles, setRoles]       = useState<Role[]>([]);
-  const [name, setName]         = useState(user?.name ?? '');
-  const [email, setEmail]       = useState(user?.email ?? '');
-  const [roleId, setRoleId]     = useState<number>(user?.role.id ?? 0);
-  const [password, setPassword] = useState('');
-  const [loading, setLoading]   = useState(false);
-  const [error, setError]       = useState<string | null>(null);
+  const [roles, setRoles]             = useState<Role[]>([]);
+  const [name, setName]               = useState(user?.name ?? '');
+  const [email, setEmail]             = useState(user?.email ?? '');
+  const [roleId, setRoleId]           = useState<number>(user?.role.id ?? 0);
+  const [password, setPassword]       = useState('');
+  const [loading, setLoading]         = useState(false);
+  const [error, setError]             = useState<string | null>(null);
+  const [invitationUrl, setInvitationUrl] = useState<string | null>(null);
+  const [copied, setCopied]           = useState(false);
 
   useEffect(() => {
     getRoles().then(r => {
@@ -40,13 +42,19 @@ export default function UserModal({ user, onSave, onClose }: Props) {
     setError(null);
     if (!roleId) { setError('Sélectionner un rôle'); return; }
 
-    const payload: UserPayload & { password?: string } = { name, email, role_id: roleId };
-    if (!isEdit || password) payload.password = password;
-
     setLoading(true);
     try {
-      await onSave(payload);
-      onClose();
+      if (isEdit) {
+        const payload: UserPayload & { password?: string } = { name, email, role_id: roleId };
+        if (password) payload.password = password;
+        const updated = await updateUser(user.id, payload);
+        onSaved(updated);
+        onClose();
+      } else {
+        const created = await createUser({ name, email, role_id: roleId });
+        onSaved(created);
+        setInvitationUrl(created.invitation_url);
+      }
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string; errors?: Record<string, string[]> } } })
         ?.response?.data;
@@ -60,14 +68,65 @@ export default function UserModal({ user, onSave, onClose }: Props) {
     }
   }
 
+  function handleCopy() {
+    if (!invitationUrl) return;
+    navigator.clipboard.writeText(invitationUrl).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
+
+  if (invitationUrl) {
+    return (
+      <div className="mr-modal-overlay" onClick={onClose}>
+        <div className="mr-modal" style={{ maxWidth: 480 }} onClick={e => e.stopPropagation()}>
+          <div className="mr-modal__head">
+            <h2 className="mr-modal__title">Utilisateur créé</h2>
+            <button className="mr-modal__close" aria-label="Fermer" onClick={onClose}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="14" height="14">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          </div>
+          <div className="mr-modal__body" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <p style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>
+              Un email d'invitation a été envoyé à <strong>{email}</strong>. Vous pouvez aussi partager ce lien directement :
+            </p>
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+              <input
+                className="form-input"
+                readOnly
+                value={invitationUrl}
+                style={{ flex: 1, fontSize: '0.75rem', fontFamily: 'monospace' }}
+              />
+              <button type="button" className="btn btn--secondary" onClick={handleCopy} style={{ whiteSpace: 'nowrap' }}>
+                {copied ? 'Copié !' : 'Copier'}
+              </button>
+            </div>
+            <p style={{ color: 'var(--color-text-muted)', fontSize: '0.75rem' }}>
+              Ce lien expire dans 7 jours.
+            </p>
+            <div className="mr-modal__actions">
+              <button type="button" className="btn btn--primary" onClick={onClose}>Fermer</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="mr-modal-overlay" onClick={onClose}>
       <div className="mr-modal" style={{ maxWidth: 480 }} onClick={e => e.stopPropagation()}>
         <div className="mr-modal__head">
           <h2 className="mr-modal__title">
-            {isEdit ? 'Modifier l\'utilisateur' : 'Nouvel utilisateur'}
+            {isEdit ? "Modifier l'utilisateur" : 'Nouvel utilisateur'}
           </h2>
-          <button className="mr-modal__close" aria-label="Fermer" onClick={onClose}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+          <button className="mr-modal__close" aria-label="Fermer" onClick={onClose}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="14" height="14">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
         </div>
 
         <form onSubmit={handleSubmit} className="mr-modal__body" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -91,6 +150,7 @@ export default function UserModal({ user, onSave, onClose }: Props) {
               onChange={e => setEmail(e.target.value)}
               required
               placeholder="utilisateur@charles.ci"
+              disabled={isEdit}
             />
           </div>
 
@@ -108,20 +168,28 @@ export default function UserModal({ user, onSave, onClose }: Props) {
             </select>
           </div>
 
-          <div className="form-field">
-            <label className="form-label">
-              Mot de passe {isEdit && <span style={{ color: 'var(--color-text-muted)', fontWeight: 400 }}>(laisser vide = inchangé)</span>}
-            </label>
-            <input
-              className="form-input"
-              type="password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              required={!isEdit}
-              placeholder={isEdit ? '••••••••' : 'Min. 8 caractères'}
-              minLength={8}
-            />
-          </div>
+          {isEdit && (
+            <div className="form-field">
+              <label className="form-label">
+                Nouveau mot de passe{' '}
+                <span style={{ color: 'var(--color-text-muted)', fontWeight: 400 }}>(laisser vide = inchangé)</span>
+              </label>
+              <input
+                className="form-input"
+                type="password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                placeholder="••••••••"
+                minLength={8}
+              />
+            </div>
+          )}
+
+          {!isEdit && (
+            <p style={{ color: 'var(--color-text-muted)', fontSize: '0.8rem' }}>
+              Un email d'invitation sera envoyé automatiquement. L'utilisateur définira son mot de passe via le lien.
+            </p>
+          )}
 
           {error && <p className="form-error">{error}</p>}
 
@@ -130,7 +198,7 @@ export default function UserModal({ user, onSave, onClose }: Props) {
               Annuler
             </button>
             <button type="submit" className="btn btn--primary" disabled={loading}>
-              {loading ? 'Enregistrement…' : isEdit ? 'Enregistrer' : 'Créer'}
+              {loading ? 'Enregistrement…' : isEdit ? 'Enregistrer' : 'Créer & inviter'}
             </button>
           </div>
         </form>

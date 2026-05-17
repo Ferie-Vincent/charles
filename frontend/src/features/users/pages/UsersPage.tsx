@@ -4,8 +4,8 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import PageHeader from '../../../components/ui/PageHeader';
 import UserModal from '../components/UserModal';
 import {
-  getUsers, createUser, updateUser, deleteUser,
-  type AppUser, type UserPayload,
+  getUsers, deleteUser,
+  type AppUser,
 } from '../api/users';
 
 const ROLE_COLOR: Record<string, string> = {
@@ -31,12 +31,7 @@ export default function UsersPage() {
     staleTime: 60_000,
   });
 
-  async function handleSave(payload: UserPayload & { password?: string }) {
-    if (editing) {
-      await updateUser(editing.id, payload);
-    } else {
-      await createUser(payload as UserPayload & { password: string });
-    }
+  function handleSaved(_user: AppUser) {
     queryClient.invalidateQueries({ queryKey: ['users'] });
   }
 
@@ -209,7 +204,7 @@ export default function UsersPage() {
       {showModal && (
         <UserModal
           user={editing}
-          onSave={handleSave}
+          onSaved={handleSaved}
           onClose={() => { setShowModal(false); setEditing(null); }}
         />
       )}
