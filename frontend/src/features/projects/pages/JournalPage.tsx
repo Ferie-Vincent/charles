@@ -134,6 +134,8 @@ export default function JournalPage() {
           {project ? (
             <DailyLogForm
               projectId={project.id}
+              projectLatitude={project.latitude}
+              projectLongitude={project.longitude}
               onSuccess={() => navigate(`/projects/${id}`)}
             />
           ) : (

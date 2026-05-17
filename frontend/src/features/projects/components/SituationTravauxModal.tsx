@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
+import { marked } from 'marked';
+import DOMPurify from 'dompurify';
 import { useQuery } from '@tanstack/react-query';
 import {
   getDqeVersionOptions,
@@ -23,6 +25,10 @@ export default function SituationTravauxModal({ projectId, onClose }: Props) {
   const [result, setResult]       = useState<SituationResult | null>(null);
   const [error, setError]         = useState<string | null>(null);
   const [copied, setCopied]       = useState(false);
+  const renderedHtml = useMemo(
+    () => result ? DOMPurify.sanitize(marked.parse(result.situation) as string) : '',
+    [result],
+  );
 
   const { data: versions = [] } = useQuery({
     queryKey: ['situation-versions', projectId],
@@ -144,7 +150,7 @@ export default function SituationTravauxModal({ projectId, onClose }: Props) {
               <span className="st-meta-tag">Marché : {fmtHT(result.total_ht)}</span>
             </div>
             <div className="mr-output st-output">
-              <pre className="mr-markdown">{result.situation}</pre>
+              <div className="mr-markdown-rendered" dangerouslySetInnerHTML={{ __html: renderedHtml }} />
             </div>
             <div className="mr-modal__footer">
               <button className="btn-ghost" onClick={() => setResult(null)}>← Modifier</button>

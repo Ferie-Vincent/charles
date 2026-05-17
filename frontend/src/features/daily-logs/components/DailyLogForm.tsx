@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { createDailyLog } from '../api/create-daily-log';
 import type { CreateDailyLogPayload, EquipmentStatus, IncidentType, MaterialItem, Weather } from '../types';
 import ProgressVisualPicker from './ProgressVisualPicker';
@@ -27,12 +27,26 @@ const MATERIAL_OPTIONS: { name: string; icon: string }[] = [
 const INCIDENT_TYPES: IncidentType[] = ['Retard', 'Accident', 'Litige', 'Rupture stock', 'Panne', 'RAS', 'Autre'];
 const EQUIPMENT_STATUSES: EquipmentStatus[] = ['Bon', 'Moyen', 'Mauvais', 'Hors service'];
 
+const GEOFENCE_RADIUS_KM = 2;
+
+function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
 type Props = {
   projectId: number;
+  projectLatitude?: number | null;
+  projectLongitude?: number | null;
   onSuccess: () => void;
 };
 
-export default function DailyLogForm({ projectId, onSuccess }: Props) {
+export default function DailyLogForm({ projectId, projectLatitude, projectLongitude, onSuccess }: Props) {
   const [hasIncident, setHasIncident] = useState(false);
   const [incidentType, setIncidentType] = useState<IncidentType | ''>('');
   const [weather, setWeather] = useState<Weather | ''>('');
@@ -44,6 +58,28 @@ export default function DailyLogForm({ projectId, onSuccess }: Props) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [alreadyLogged, setAlreadyLogged] = useState(false);
+  const [geoBlocked, setGeoBlocked] = useState<string | null>(null);
+  const [geoChecking, setGeoChecking] = useState(false);
+
+  useEffect(() => {
+    if (!projectLatitude || !projectLongitude) return;
+    if (!navigator.geolocation) return;
+
+    setGeoChecking(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const dist = haversineKm(pos.coords.latitude, pos.coords.longitude, projectLatitude, projectLongitude);
+        if (dist > GEOFENCE_RADIUS_KM) {
+          setGeoBlocked(
+            `Vous êtes à ${dist.toFixed(1)} km du chantier. Vous devez être dans un rayon de ${GEOFENCE_RADIUS_KM} km pour remplir le journal.`,
+          );
+        }
+        setGeoChecking(false);
+      },
+      () => setGeoChecking(false),
+      { enableHighAccuracy: true, timeout: 10000 },
+    );
+  }, [projectLatitude, projectLongitude]);
 
   function toggleMaterial(name: string) {
     setMaterials(prev =>
@@ -100,6 +136,33 @@ export default function DailyLogForm({ projectId, onSuccess }: Props) {
       <div className="daily-log-done">
         <span className="daily-log-done__icon">✓</span>
         <p>Journal déjà saisi pour aujourd'hui.</p>
+      </div>
+    );
+  }
+
+  if (geoChecking) {
+    return (
+      <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-subtle)' }}>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="20" height="20" style={{ display: 'block', margin: '0 auto 8px' }}>
+          <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/>
+        </svg>
+        Vérification de votre position…
+      </div>
+    );
+  }
+
+  if (geoBlocked) {
+    return (
+      <div style={{ padding: '20px' }}>
+        <div className="btp-alert btp-alert--danger" style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="20" height="20" style={{ flexShrink: 0, marginTop: 2 }}>
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          <div>
+            <strong>Accès refusé — hors zone chantier</strong>
+            <p style={{ margin: '4px 0 0', fontSize: '13px' }}>{geoBlocked}</p>
+          </div>
+        </div>
       </div>
     );
   }
