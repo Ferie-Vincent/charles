@@ -51,8 +51,9 @@ RUN apt-get update && apt-get install -y \
 
                                                                 EXPOSE 80
 
-                                                                # Create startup script: runs migrations+seed then starts Apache
-                                                                RUN printf '#!/bin/bash\nset -e\nphp artisan config:clear\nphp artisan migrate --seed --force\napache2-foreground\n' > /start.sh \
+                                                                # Script de démarrage : migrations + seed des rôles uniquement (pas les users)
+                                                                # Les utilisateurs sont créés via /setup (super-admin) puis via invitations.
+                                                                RUN printf '#!/bin/bash\nset -e\nphp artisan config:clear\nphp artisan migrate --force\nphp artisan db:seed --class=RoleSeeder --force\nphp artisan db:seed --class=RolePermissionSeeder --force\napache2-foreground\n' > /start.sh \\
                                                                     && chmod +x /start.sh
 
                                                                     CMD ["/start.sh"]
