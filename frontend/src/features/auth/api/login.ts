@@ -17,6 +17,6 @@ export async function logout() {
 }
 
 export async function getMe() {
-  const response = await api.get('/auth/me');
+  const response = await api.get('/auth/me', { _silentOn401: true });
   return response.data;
 }
