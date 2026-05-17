@@ -11,6 +11,7 @@ export interface Dgd {
   total_situations_ht: number;
   penalites_retard: number;
   retenue_garantie_liberee: number;
+  avance_remboursement_restant: number;
   solde_final: number;
   status: DgdStatus;
   date_signature_entreprise: string | null;
@@ -31,5 +32,10 @@ export async function initializeDgd(projectId: number): Promise<Dgd> {
 
 export async function signDgd(projectId: number, signataire: 'entreprise' | 'moa', date: string): Promise<Dgd> {
   const res = await api.patch(`/projects/${projectId}/dgd/sign`, { signataire, date });
+  return res.data.dgd;
+}
+
+export async function updateDgdObservations(projectId: number, observations: string): Promise<Dgd> {
+  const res = await api.patch(`/projects/${projectId}/dgd/observations`, { observations });
   return res.data.dgd;
 }

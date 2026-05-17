@@ -271,6 +271,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/projects/{project}/dgd', [DgdController::class, 'show']);
     Route::post('/projects/{project}/dgd/initialize', [DgdController::class, 'initialize']);
     Route::patch('/projects/{project}/dgd/sign', [DgdController::class, 'sign']);
+    Route::patch('/projects/{project}/dgd/observations', [DgdController::class, 'updateObservations']);
 
     // ── DQE ──────────────────────────────────────────────────────────────────
     Route::middleware('permission:dqe')->group(function () {
