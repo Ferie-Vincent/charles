@@ -1,6 +1,8 @@
 import { useState, useCallback, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
+import { useAuth } from '../../auth/stores/auth-store';
+import { getRoleGroup } from '../../../lib/roles';
 import { dismissAlert } from '../../meetings/api/meetings-api';
 import TakeChargeModal from '../../meetings/components/TakeChargeModal';
 import type { ProjectAlert } from '../api/get-dashboard';
@@ -21,6 +23,14 @@ const ACTION_LABEL: Record<ProjectAlert['type'], string> = {
   health_critical:'Définir un plan correctif',
 };
 
+const ACTION_LABEL_TERRAIN: Record<ProjectAlert['type'], string> = {
+  overdue:        'Saisir le journal du jour',
+  no_journal:     'Saisir le journal du jour',
+  planning_lag:   'Voir le chantier',
+  open_incident:  'Voir les incidents',
+  health_critical:'Voir le chantier',
+};
+
 const SNOOZE_OPTIONS: { label: string; hours: 0 | 24 | 72 | 168 }[] = [
   { label: '24 heures',     hours: 24 },
   { label: '3 jours',       hours: 72 },
@@ -34,6 +44,9 @@ type Props = { alerts: ProjectAlert[] };
 
 export default function AlertsPanel({ alerts }: Props) {
   const queryClient                     = useQueryClient();
+  const { user }                        = useAuth();
+  const navigate                        = useNavigate();
+  const isTerrain                       = getRoleGroup(user?.role?.name ?? '') === 'terrain';
   const [optimisticDismissed, setOpt]   = useState<Set<string>>(new Set());
   const [taken, setTaken]               = useState<Set<string>>(new Set());
   const [expanded, setExpanded]         = useState(false);
@@ -96,10 +109,14 @@ export default function AlertsPanel({ alerts }: Props) {
                       <button
                         type="button"
                         className={`ap-item__take-charge ap-item__take-charge--primary${isTaken ? ' ap-item__take-charge--done' : ''}`}
-                        onClick={() => !isTaken && setModalAlert(alert)}
+                        onClick={() => {
+                          if (isTaken) return;
+                          if (isTerrain) { navigate(alert.action_url); }
+                          else { setModalAlert(alert); }
+                        }}
                         disabled={isTaken}
                       >
-                        {isTaken ? '✓ Réunion planifiée' : '🚨 Prendre en charge'}
+                        {isTaken ? '✓ Pris en charge' : isTerrain ? '📋 Voir le chantier' : '🚨 Prendre en charge'}
                       </button>
                       <div className="ap-snooze-wrap" ref={snoozeRef}>
                         <button
@@ -167,7 +184,9 @@ export default function AlertsPanel({ alerts }: Props) {
 
                   {isDecision && (
                     <div className="ap-item__action-row">
-                      <span className="ap-item__action-label">→ {ACTION_LABEL[alert.type]}</span>
+                      <span className="ap-item__action-label">
+                        → {isTerrain ? ACTION_LABEL_TERRAIN[alert.type] : ACTION_LABEL[alert.type]}
+                      </span>
                     </div>
                   )}
                 </li>

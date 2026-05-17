@@ -23,7 +23,9 @@ export default function LoginForm({ onSubmit, isLoading, error }: LoginFormProps
         <label htmlFor="email">Email</label>
         <input
           id="email"
+          name="email"
           type="email"
+          autoComplete="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
@@ -31,10 +33,12 @@ export default function LoginForm({ onSubmit, isLoading, error }: LoginFormProps
       </div>
 
       <div className="form-group">
-        <label htmlFor="password">Password</label>
+        <label htmlFor="password">Mot de passe</label>
         <input
           id="password"
+          name="password"
           type="password"
+          autoComplete="current-password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
@@ -44,7 +48,7 @@ export default function LoginForm({ onSubmit, isLoading, error }: LoginFormProps
       {error && <p className="form-error">{error}</p>}
 
       <button type="submit" disabled={isLoading}>
-        {isLoading ? 'Connexion…' : 'Sign in'}
+        {isLoading ? 'Connexion…' : 'Se connecter'}
       </button>
     </form>
   );
