@@ -131,13 +131,15 @@ it('reports critical projects with health score below 50', function () {
         'company_id'      => $this->company->id,
         'status'          => 'active',
         'target_progress' => 100,
+        'start_date'      => now()->subDays(60)->toDateString(),
     ]);
     foreach (range(1, 5) as $i) {
         DailyLog::factory()->create([
-            'project_id'   => $project->id,
-            'user_id'      => $this->user->id,
-            'has_incident' => true,
-            'log_date'     => now()->subDays($i)->toDateString(),
+            'project_id'      => $project->id,
+            'user_id'         => $this->user->id,
+            'has_incident'    => true,
+            'progress_percent' => 0,
+            'log_date'        => now()->subDays($i)->toDateString(),
         ]);
     }
 
