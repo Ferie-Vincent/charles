@@ -375,6 +375,11 @@ PROMPT;
     {
         $this->authorize('update', $project);
 
+        // Gap #17: no new situations once DGD is signed (financial close)
+        abort_if($project->lifecycle_status === 'cloture', 422,
+            "Situation de travaux non autorisée — chantier clôturé financièrement (DGD signé)."
+        );
+
         $data = $request->validate([
             'periode'        => ['required', 'string', 'regex:/^\d{4}-\d{2}$/'],
             'dqe_version_id' => ['nullable', 'integer', Rule::exists('dqe_versions', 'id')->where('project_id', $project->id)],

@@ -63,6 +63,10 @@ class PurchaseOrderController extends Controller
         if (! empty($data['project_id'])) {
             $proj = \App\Models\Project::find($data['project_id']);
             abort_if($proj && $proj->status === 'completed', 422, 'Impossible de créer un BDC sur un projet terminé.');
+            // Gap #18: block BDC on financially closed project
+            abort_if($proj && $proj->lifecycle_status === 'cloture', 422,
+                'Impossible de créer un BDC sur un chantier clôturé financièrement (DGD signé).'
+            );
         }
 
         $items = collect($data['items'])->map(fn($i) => [
