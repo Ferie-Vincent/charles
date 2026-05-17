@@ -24,9 +24,9 @@ use Illuminate\Support\Facades\Http;
  */
 class GroqService
 {
-    private string $mistralKey;
-    private string $groqKey;
-    private string $anthropicKey;
+        private string $mistralKey = '';
+        private string $groqKey = '';
+        private string $anthropicKey = '';
     private ?string $activeProvider = null;
 
     public function __construct()
