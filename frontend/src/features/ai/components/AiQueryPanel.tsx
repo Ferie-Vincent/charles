@@ -1,6 +1,8 @@
 import { useState, useRef } from 'react';
 import { api } from '../../../lib/api';
+import { useAiEnabled } from '../hooks/useAiEnabled';
 import AiFeedbackButton from './AiFeedbackButton';
+import AiMarkdown from './AiMarkdown';
 
 type QueryResult = {
   answer: string | null;
@@ -16,11 +18,14 @@ type Props = {
 };
 
 export default function AiQueryPanel({ projectId, placeholder = 'Ex : Quel est l\'avancement global ? Y a-t-il des retards critiques ?' }: Props) {
+  const { enabled } = useAiEnabled();
   const [question, setQuestion] = useState('');
   const [result, setResult] = useState<QueryResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  if (!enabled) return null;
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -109,7 +114,7 @@ export default function AiQueryPanel({ projectId, placeholder = 'Ex : Quel est l
             <p className="ai-query-panel__insufficient">{result.message}</p>
           ) : (
             <>
-              <p className="ai-query-panel__answer">{result.answer}</p>
+              <AiMarkdown text={result.answer ?? ''} />
 
               {result.sources.length > 0 && (
                 <div className="ai-briefing__sources" style={{ marginTop: 10 }}>

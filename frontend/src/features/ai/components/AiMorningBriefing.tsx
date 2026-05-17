@@ -1,9 +1,13 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getAiBriefing } from '../api/ai';
+import { useAiEnabled } from '../hooks/useAiEnabled';
 import AiFeedbackButton from './AiFeedbackButton';
+import AiMarkdown from './AiMarkdown';
 
 export default function AiMorningBriefing({ alwaysExpanded = false }: { alwaysExpanded?: boolean }) {
+  const { enabled } = useAiEnabled();
+  if (!enabled) return null;
   const [expanded, setExpanded] = useState(true);
 
   const { data, isLoading, error } = useQuery({
@@ -59,7 +63,7 @@ export default function AiMorningBriefing({ alwaysExpanded = false }: { alwaysEx
 
       {(expanded || alwaysExpanded) && (
         <>
-          <p className="ai-briefing__text">{data.text}</p>
+          <AiMarkdown text={data.text ?? ''} />
 
           {data.sources.length > 0 && (
             <div className="ai-briefing__sources">
