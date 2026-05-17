@@ -247,11 +247,14 @@ Route::middleware('auth')->group(function () {
     Route::patch('/projects/{project}/bpu/{version}/validate', [BpuController::class, 'validateVersion']);
 
     // ── Situation Travaux — DB workflow ───────────────────────────────────────
+    Route::get('/projects/{project}/situations', [SituationTravauxController::class, 'list']);
+    Route::post('/projects/{project}/situations', [SituationTravauxController::class, 'storeSituation']);
+    Route::patch('/projects/{project}/situations/{situation}/submit', [SituationTravauxController::class, 'submit']);
+    Route::patch('/projects/{project}/situations/{situation}/validate', [SituationTravauxController::class, 'validateSituation']);
+    Route::patch('/projects/{project}/situations/{situation}/pay', [SituationTravauxController::class, 'pay']);
+    // Legacy aliases kept for backward compat
     Route::get('/projects/{project}/situation-travaux/list', [SituationTravauxController::class, 'list']);
     Route::post('/projects/{project}/situation-travaux/store', [SituationTravauxController::class, 'storeSituation']);
-    Route::patch('/projects/{project}/situation-travaux/{situation}/submit', [SituationTravauxController::class, 'submit']);
-    Route::patch('/projects/{project}/situation-travaux/{situation}/validate', [SituationTravauxController::class, 'validateSituation']);
-    Route::patch('/projects/{project}/situation-travaux/{situation}/pay', [SituationTravauxController::class, 'pay']);
 
     // ── DGD ───────────────────────────────────────────────────────────────────
     Route::get('/projects/{project}/dgd', [DgdController::class, 'show']);

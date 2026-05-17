@@ -6,6 +6,7 @@ import { router } from './router';
 import { queryClient } from './lib/query-client';
 import { AuthProvider, useAuth } from './features/auth/stores/auth-store';
 import { PermissionsProvider } from './lib/permissions-context';
+import { ToastProvider } from './components/ui/Toast';
 import { getMe, login } from './features/auth/api/login';
 
 function SessionRestorer({ children }: { children: ReactNode }) {
@@ -66,8 +67,10 @@ export default function App() {
       <AuthProvider>
         <SessionRestorer>
           <PermissionsProvider>
-            <RouterProvider router={router} />
-            <GlobalErrorToast />
+            <ToastProvider>
+              <RouterProvider router={router} />
+              <GlobalErrorToast />
+            </ToastProvider>
           </PermissionsProvider>
         </SessionRestorer>
       </AuthProvider>

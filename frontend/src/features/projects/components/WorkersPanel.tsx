@@ -6,6 +6,7 @@ import {
 } from '../api/workers';
 import AddWorkerForm from './workers/AddWorkerForm';
 import WorkerRow from './workers/WorkerRow';
+import { useToast } from '../../../components/ui/Toast';
 
 interface Props {
   projectId: number;
@@ -16,6 +17,7 @@ interface Props {
 export default function WorkersPanel({ projectId, date, readonly = false }: Props) {
   const qc = useQueryClient();
   const qKey = ['workers', projectId, date];
+  const { showToast } = useToast();
 
   const { data: workers = [], isLoading } = useQuery({
     queryKey: qKey,
@@ -28,7 +30,8 @@ export default function WorkersPanel({ projectId, date, readonly = false }: Prop
   const addMutation = useMutation({
     mutationFn: (d: { name: string; trade: string; phone?: string }) =>
       createWorker(projectId, d),
-    onSuccess: invalidate,
+    onSuccess: () => { invalidate(); showToast('Ouvrier ajouté'); },
+    onError: () => showToast("Erreur lors de l'ajout", 'error'),
   });
 
   const attendanceMutation = useMutation({
@@ -39,17 +42,18 @@ export default function WorkersPanel({ projectId, date, readonly = false }: Prop
       heures_sup: number;
       task_assigned?: string | null;
     }) => upsertAttendance(projectId, { ...d, log_date: date }),
-    onSuccess: invalidate,
+    onSuccess: () => { invalidate(); showToast('Pointage enregistré'); },
+    onError: () => showToast('Erreur pointage', 'error'),
   });
 
   const deactivateMutation = useMutation({
     mutationFn: (id: number) => updateWorker(projectId, id, { is_active: false }),
-    onSuccess: invalidate,
+    onSuccess: () => { invalidate(); showToast('Ouvrier retiré du chantier'); },
   });
 
   const reactivateMutation = useMutation({
     mutationFn: (id: number) => updateWorker(projectId, id, { is_active: true }),
-    onSuccess: invalidate,
+    onSuccess: () => { invalidate(); showToast('Ouvrier réactivé'); },
   });
 
   const [showAdd, setShowAdd]           = useState(false);
