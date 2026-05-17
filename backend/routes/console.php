@@ -31,3 +31,6 @@ Schedule::command('invoices:check-fournisseur-overdue')->dailyAt('08:30')->timez
 
 // Budget dépassé > 5% — daily 09:30 Abidjan
 Schedule::command('projects:check-budget-depasse')->dailyAt('09:30')->timezone('Africa/Abidjan');
+
+// Retenue de garantie libérable (1 an après réception prov.) — weekly Monday 10:00 Abidjan
+Schedule::command('projects:check-retenue-liberable')->weeklyOn(1, '10:00')->timezone('Africa/Abidjan');

@@ -35,6 +35,7 @@ import TasksPage from './features/tasks/pages/TasksPage';
 import SituationsPage from './features/projects/pages/SituationsPage';
 import AvenantsPage from './features/projects/pages/AvenantsPage';
 import OsPage from './features/projects/pages/OsPage';
+import DgdPage from './features/projects/pages/DgdPage';
 
 function Shell({ children }: { children: ReactNode }) {
   return <AppShell>{children}</AppShell>;
@@ -67,6 +68,7 @@ export const router = createBrowserRouter([
   { path: '/projects/:id/situations',  element: <Shell><SituationsPage /></Shell> },
   { path: '/projects/:id/avenants',    element: <Shell><AvenantsPage /></Shell> },
   { path: '/projects/:id/os',          element: <Shell><OsPage /></Shell> },
+  { path: '/projects/:id/dgd',         element: <Shell><DgdPage /></Shell> },
   { path: '/map',                      element: <Guarded path="/map"><MapPage /></Guarded> },
   { path: '/timeline',                 element: <Guarded path="/timeline"><TimelinePage /></Guarded> },
   { path: '/dqe',                      element: <Guarded path="/dqe"><DqePage /></Guarded> },

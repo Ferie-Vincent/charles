@@ -33,13 +33,18 @@ class DgdController extends Controller
         $totalSituations = SituationTravaux::where('project_id', $project->id)
             ->whereIn('status', ['validee_moe', 'payee'])->sum('montant_brut_ht');
 
+        // Gap #3: utiliser date_reception_provisoire comme point d'arrêt des pénalités,
+        // pas now() — le DGD peut être initialisé des semaines après la réception
         $penalites = 0;
         if ($project->end_date && $project->penalites_retard_par_jour) {
-            $retard    = max(0, now()->diffInDays($project->end_date, false) * -1);
+            $dateRef   = $project->date_reception_provisoire ?? now();
+            $retard    = max(0, $dateRef->diffInDays($project->end_date, false) * -1);
             $penalites = $retard * (float)$project->penalites_retard_par_jour;
         }
 
+        // Gap #4: retenue libérée = seulement sur les situations effectivement payées
         $retenueGarantie = SituationTravaux::where('project_id', $project->id)
+            ->where('status', 'payee')
             ->sum('retenue_garantie_amount');
 
         $dgd = DecompteGeneralDefinitif::create([
@@ -81,6 +86,10 @@ class DgdController extends Controller
         if ($data['signataire'] === 'entreprise') {
             $dgd->update(['status' => 'signe_entreprise', 'date_signature_entreprise' => $data['date']]);
         } else {
+            // Gap #6: le MOA ne peut signer qu'après l'entreprise (ordre contractuel obligatoire)
+            abort_unless($dgd->status === 'signe_entreprise', 422,
+                "Le DGD doit être signé par l'entreprise avant la signature MOA."
+            );
             $dgd->update(['status' => 'signe_moa', 'date_signature_moa' => $data['date']]);
             $project->update(['lifecycle_status' => 'cloture', 'status' => 'termine']);
         }
