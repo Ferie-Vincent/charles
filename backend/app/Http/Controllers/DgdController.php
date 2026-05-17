@@ -5,7 +5,11 @@ namespace App\Http\Controllers;
 use App\Models\Avenant;
 use App\Models\DecompteGeneralDefinitif;
 use App\Models\Project;
+use App\Models\ProjectMember;
 use App\Models\SituationTravaux;
+use App\Models\User;
+use App\Notifications\DgdSigneNotification;
+use App\Support\Roles;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -105,6 +109,20 @@ class DgdController extends Controller
             );
             $dgd->update(['status' => 'signe_moa', 'date_signature_moa' => $data['date']]);
             $project->update(['lifecycle_status' => 'cloture', 'status' => 'termine']);
+
+            // Gap #13: notifier CDT + métreur + direction à la clôture financière
+            $dgd->load('project:id,code,name,company_id');
+            $memberIds = ProjectMember::where('project_id', $project->id)->pluck('user_id');
+            User::whereHas('role', fn($q) => $q->whereIn('name', [
+                Roles::CONDUCTEUR_TRAVAUX_SLUG,
+                Roles::METREUR_ECONOMISTE_SLUG,
+                Roles::DIRECTION_SLUG,
+                Roles::DIRECTEUR_TECHNIQUE_SLUG,
+            ]))
+                ->where('company_id', $project->company_id)
+                ->where('id', '!=', $request->user()->id)
+                ->get()
+                ->each(fn($u) => $u->notify(new DgdSigneNotification($dgd)));
         }
 
         return response()->json(['dgd' => $dgd]);
