@@ -10759,6 +10759,12 @@ h4.ai-md-heading { font-size: 13px; }
 }
 /* Hide inner header — modal already shows title */
 .ai-fab-modal-body .ai-query-panel__header { display: none; }
+
+/* AiMarkdown elements — dark text on white modal bg */
+.ai-fab-modal-body .ai-md-p,
+.ai-fab-modal-body .ai-md-list li,
+.ai-fab-modal-body .ai-md-heading { color: #1e293b; }
+.ai-fab-modal-body strong         { color: #0f172a; }
 /* ─────────────────────────────────────────────────────────────────── */
 
 /* ═══════════════════════════════════════════════
