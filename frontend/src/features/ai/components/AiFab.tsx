@@ -87,22 +87,26 @@ export default function AiFab() {
         >
           {/* Spark ring */}
           <span className="ai-fab-btn__ring" />
-          {/* Icon rotates on open */}
-          <span className="ai-fab-btn__icon" style={{ transform: open ? 'rotate(135deg)' : 'rotate(0deg)' }}>
-            {open ? (
-              /* X when open */
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" width="16" height="16">
-                <line x1="18" y1="6" x2="6" y2="18"/>
-                <line x1="6" y1="6" x2="18" y2="18"/>
-              </svg>
-            ) : (
-              /* Spark / AI icon when closed */
-              <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
-                <path d="M12 2 L13.5 9 L20 10.5 L13.5 12 L12 19 L10.5 12 L4 10.5 L10.5 9 Z" />
-              </svg>
-            )}
+          {/* Mascot — visible when closed */}
+          <img
+            src="/assets/ai-mascot.png"
+            alt="IA"
+            className="ai-fab-btn__mascot"
+            style={{
+              opacity: open ? 0 : 1,
+              transform: `translate(-50%, -50%) scale(${open ? 0.7 : 1})`,
+            }}
+          />
+          {/* X — visible when open */}
+          <span
+            className="ai-fab-btn__icon ai-fab-btn__close"
+            style={{ opacity: open ? 1 : 0, transform: open ? 'rotate(0deg) scale(1)' : 'rotate(-45deg) scale(0.7)' }}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" width="18" height="18">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
           </span>
-          <span className="ai-fab-btn__text">IA</span>
         </button>
       </div>
 
