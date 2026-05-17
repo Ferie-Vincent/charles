@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\BudgetEntry;
 use App\Models\GedDocument;
 use App\Models\DailyLog;
+use App\Models\Project;
 use App\Models\ProjectSnapshot;
 use App\Models\Incident;
+use App\Models\PurchaseOrder;
 use App\Services\GroqService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -66,21 +69,27 @@ class AiRagController extends Controller
             $sources[] = ['label' => 'GED', 'data' => "{$docs->count()} document(s)"];
         }
 
-        // 3. Recent daily log observations (last 30 days)
+        // 3. Recent daily logs — structured fields (no free text required)
         $logs = DailyLog::whereHas('project', fn($q) => $q->where('company_id', $companyId))
             ->when($projectId, fn($q) => $q->where('project_id', $projectId))
-            ->whereNotNull('notes')
-            ->where('notes', '!=', '')
             ->where('log_date', '>=', now()->subDays(30)->toDateString())
             ->orderByDesc('log_date')
-            ->limit(10)
+            ->limit(15)
             ->get();
 
         if ($logs->isNotEmpty()) {
-            $context .= "=== OBSERVATIONS TERRAIN (30j) ===\n"
-                . $logs->map(fn($l) => "[{$l->log_date}] {$l->notes}")->join("\n")
+            $context .= "=== JOURNAUX TERRAIN (30 derniers jours) ===\n"
+                . $logs->map(function ($l) {
+                    $mats = collect(is_array($l->materials_received) ? $l->materials_received : json_decode($l->materials_received ?? '[]', true) ?? [])
+                        ->pluck('name')->filter()->implode(', ');
+                    $line = "[{$l->log_date}] météo:{$l->weather}, effectif:{$l->workers_count}, avancement:{$l->progress_percent}%";
+                    if ($l->has_incident) $line .= ", incident:{$l->incident_type}";
+                    if ($mats) $line .= ", matériaux:{$mats}";
+                    if ($l->notes) $line .= ", note:{$l->notes}";
+                    return $line;
+                })->join("\n")
                 . "\n\n";
-            $sources[] = ['label' => 'Journaux terrain', 'data' => "{$logs->count()} observation(s)"];
+            $sources[] = ['label' => 'Journaux terrain', 'data' => "{$logs->count()} journal(aux) sur 30j"];
         }
 
         // 4. Recent incidents (60 days)
@@ -93,9 +102,43 @@ class AiRagController extends Controller
 
         if ($incidents->isNotEmpty()) {
             $context .= "=== INCIDENTS RÉCENTS ===\n"
-                . $incidents->map(fn($i) => "[{$i->occurred_at}] {$i->type} — {$i->description}")->join("\n")
+                . $incidents->map(fn($i) => "[{$i->occurred_at}] {$i->type} sévérité:{$i->severity} — {$i->description}")->join("\n")
                 . "\n\n";
             $sources[] = ['label' => 'Incidents', 'data' => "{$incidents->count()} incident(s)"];
+        }
+
+        // 5. Budget entries summary
+        $budgetQuery = BudgetEntry::whereHas('project', fn($q) => $q->where('company_id', $companyId))
+            ->when($projectId, fn($q) => $q->where('project_id', $projectId));
+        $budgetPrev = (clone $budgetQuery)->where('type', 'previsionnel')->sum('amount');
+        $budgetReal = (clone $budgetQuery)->where('type', 'paiement')->sum('amount');
+        if ($budgetPrev > 0 || $budgetReal > 0) {
+            $pct = $budgetPrev > 0 ? round(($budgetReal / $budgetPrev) * 100, 1) : 0;
+            $context .= "=== BUDGET ===\n"
+                . "Prévisionnel: " . number_format($budgetPrev, 0, ',', ' ') . " XOF, "
+                . "Réalisé: " . number_format($budgetReal, 0, ',', ' ') . " XOF ({$pct}% consommé)\n\n";
+            $sources[] = ['label' => 'Budget', 'data' => "{$pct}% du budget consommé"];
+        }
+
+        // 6. BDC pending
+        $bdcPending = PurchaseOrder::whereHas('project', fn($q) => $q->where('company_id', $companyId))
+            ->when($projectId, fn($q) => $q->where('project_id', $projectId))
+            ->where('status', 'pending')
+            ->count();
+        if ($bdcPending > 0) {
+            $context .= "=== ACHATS ===\n{$bdcPending} bon(s) de commande en attente d'approbation.\n\n";
+            $sources[] = ['label' => 'BDC', 'data' => "{$bdcPending} en attente"];
+        }
+
+        // 7. Project list (when no project_id filter — gives AI a map of all projects)
+        if (!$projectId) {
+            $projects = Project::where('company_id', $companyId)->select('name', 'code', 'status', 'start_date', 'end_date')->get();
+            if ($projects->isNotEmpty()) {
+                $context .= "=== PORTEFEUILLE CHANTIERS ===\n"
+                    . $projects->map(fn($p) => "- {$p->name} ({$p->code}) statut:{$p->status} du {$p->start_date} au {$p->end_date}")->join("\n")
+                    . "\n\n";
+                $sources[] = ['label' => 'Portefeuille', 'data' => "{$projects->count()} chantier(s)"];
+            }
         }
 
         if (empty(trim($context))) {

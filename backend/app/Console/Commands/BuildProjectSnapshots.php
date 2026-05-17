@@ -86,7 +86,7 @@ class BuildProjectSnapshots extends Command
 
         // Stocks
         $stockAlerts = StockItem::where('company_id', $cid)
-            ->whereColumn('quantity', '<=', 'min_quantity')
+            ->whereColumn('quantity', '<=', 'threshold')
             ->count();
 
         // BDC pending
