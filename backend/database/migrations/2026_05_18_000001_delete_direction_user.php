@@ -2,24 +2,28 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 return new class extends Migration
 {
     public function up(): void
     {
-        $userIds = DB::table('users')
-            ->where('email', 'direction@charles.ci')
-            ->pluck('id')
-            ->all();
+        $old = 'direction@charles.ci';
+        $new = 'direction-deleted@charles.ci';
 
-        if (!empty($userIds)) {
-            DB::table('daily_logs')->whereIn('user_id', $userIds)->delete();
-            DB::table('users')->whereIn('id', $userIds)->delete();
+        $count = DB::table('users')->where('email', $old)->count();
+
+        if ($count > 0) {
+            DB::table('users')
+                ->where('email', $old)
+                ->update([
+                    'email' => $new . '-' . (string) Str::uuid(),
+                ]);
         }
     }
 
     public function down(): void
     {
-        // no-op
+        // noop
     }
 };
