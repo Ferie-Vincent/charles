@@ -1,5 +1,6 @@
 import SkeletonPage from '../../../components/ui/SkeletonPage';
 import MdViewerModal from '../../../components/ui/MdViewerModal';
+import { API_BASE } from '../../../lib/base-url';
 import { useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -300,7 +301,7 @@ export default function GedPage() {
                           Ouvrir
                         </button>
                         <a
-                          href={`${import.meta.env.VITE_API_URL ?? 'http://localhost:8000'}/api/ged/${doc.id}/download`}
+                          href={`${API_BASE}/api/ged/${doc.id}/download`}
                           download={doc.original_name}
                           className="btn btn--sm btn--secondary"
                         >

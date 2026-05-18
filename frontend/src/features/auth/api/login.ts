@@ -1,14 +1,14 @@
+import axios from 'axios';
 import { api } from '../../../lib/api';
+import { CSRF_URL } from '../../../lib/base-url';
 
 export type LoginPayload = {
   email: string;
   password: string;
 };
 
-const BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:8000';
-
 export async function login(payload: LoginPayload) {
-  await api.get(`${BASE}/sanctum/csrf-cookie`, { withCredentials: true });
+  await axios.get(CSRF_URL, { withCredentials: true });
   const response = await api.post('/auth/login', payload);
   return response.data;
 }

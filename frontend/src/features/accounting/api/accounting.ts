@@ -1,3 +1,4 @@
+import { API_BASE } from '../../../lib/base-url';
 import { api } from '../../../lib/api';
 
 export interface Supplier {
@@ -128,11 +129,11 @@ export async function deleteInvoice(projectId: number, id: number): Promise<void
 }
 
 export function invoiceAttachmentUrl(projectId: number, invoiceId: number): string {
-  return `http://localhost:8000/api/projects/${projectId}/invoices/${invoiceId}/attachment`;
+  return `${API_BASE}/api/projects/${projectId}/invoices/${invoiceId}/attachment`;
 }
 
 export function invoicePaymentProofUrl(projectId: number, invoiceId: number): string {
-  return `http://localhost:8000/api/projects/${projectId}/invoices/${invoiceId}/payment-proof`;
+  return `${API_BASE}/api/projects/${projectId}/invoices/${invoiceId}/payment-proof`;
 }
 
 export async function validateInvoice(projectId: number, invoiceId: number): Promise<Invoice> {

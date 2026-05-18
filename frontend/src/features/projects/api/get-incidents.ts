@@ -1,3 +1,4 @@
+import { API_BASE } from '../../../lib/base-url';
 import { api } from '../../../lib/api';
 
 export type Incident = {
@@ -51,5 +52,5 @@ export async function deleteIncident(projectId: number, incidentId: number): Pro
 }
 
 export function incidentPdfUrl(projectId: number, incidentId: number): string {
-  return `http://localhost:8000/api/projects/${projectId}/incidents/${incidentId}/pdf`;
+  return `${API_BASE}/api/projects/${projectId}/incidents/${incidentId}/pdf`;
 }

@@ -12,6 +12,7 @@
 
 import axios from 'axios';
 import { enqueueRequest, replayQueue } from './offline-queue';
+import { API_BASE } from './base-url';
 
 // Permet de passer _silentOn403/_silentOn401 dans la config d'une requête
 // pour désactiver les toasts d'erreur globaux sur certains appels silencieux.
@@ -23,7 +24,7 @@ declare module 'axios' {
 }
 
 export const api = axios.create({
-    baseURL: (import.meta.env.VITE_API_URL ?? 'http://localhost:8000') + '/api',
+    baseURL: `${API_BASE}/api`,
   // Obligatoire pour Sanctum cookie-based auth
   withCredentials: true,
 });

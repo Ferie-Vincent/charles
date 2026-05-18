@@ -1,3 +1,4 @@
+import { API_BASE } from '../../../lib/base-url';
 import { api } from '../../../lib/api';
 
 export type PortfolioReportStats = {
@@ -30,5 +31,5 @@ export async function getPortfolioReports(): Promise<PortfolioReportsResponse> {
 }
 
 export function reportDownloadUrl(projectId: number, reportId: number): string {
-  return `http://localhost:8000/api/projects/${projectId}/reports/${reportId}/download`;
+  return `${API_BASE}/api/projects/${projectId}/reports/${reportId}/download`;
 }

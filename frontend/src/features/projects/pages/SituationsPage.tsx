@@ -1,3 +1,4 @@
+import { API_BASE } from '../../../lib/base-url';
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -549,7 +550,7 @@ export default function SituationsPage() {
                       {/* Export PDF — soumise exclue : encore contestable, ne doit pas circuler comme document officiel */}
                       {(s.status === 'validee_moe' || s.status === 'payee') && (
                         <a
-                          href={`http://localhost:8000/api/projects/${projectId}/situations/${s.id}/pdf`}
+                          href={`${API_BASE}/api/projects/${projectId}/situations/${s.id}/pdf`}
                           target="_blank"
                           rel="noreferrer"
                           className="btn btn--sm btn--ghost"
