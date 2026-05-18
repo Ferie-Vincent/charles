@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { RouterProvider } from 'react-router-dom';
 import { QueryClientProvider } from '@tanstack/react-query';
-import axios from 'axios';
 import { router } from './router';
 import { queryClient } from './lib/query-client';
+import { api } from './lib/api';
 import { AuthProvider, useAuth } from './features/auth/stores/auth-store';
 import { PermissionsProvider } from './lib/permissions-context';
 import { getMe } from './features/auth/api/login';
@@ -25,8 +25,9 @@ function SessionRestorer({ children }: { children: ReactNode }) {
     if (attempted.current) return;
     attempted.current = true;
 
-    axios
-      .get('http://localhost:8000/sanctum/csrf-cookie', { withCredentials: true })
+    const base = import.meta.env.VITE_API_URL ?? 'http://localhost:8000';
+    api
+      .get(`${base}/sanctum/csrf-cookie`, { withCredentials: true })
       .then(() => getMe())
       .then(data => setUser(data.user))
       .catch(() => {})
