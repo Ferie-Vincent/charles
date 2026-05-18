@@ -48,5 +48,8 @@ class DatabaseSeeder extends Seeder
             GeneralExpenseSeeder::class,
             DemandeBesoinSeeder::class,
         ]);
+
+        $this->command->info('Generating AI snapshots…');
+        $this->callSilently('ai:build-snapshots');
     }
 }

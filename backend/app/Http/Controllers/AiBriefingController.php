@@ -31,13 +31,21 @@ class AiBriefingController extends Controller
         }
 
         if ($snapshots->isEmpty()) {
+            // Lazy-init : génère les snapshots à la demande si le scheduler n'a pas encore tourné
+            \Artisan::call('ai:build-snapshots');
+            $snapshots = ProjectSnapshot::where('company_id', $companyId)
+                ->where('snapshot_date', $today)
+                ->get();
+        }
+
+        if ($snapshots->isEmpty()) {
             return response()->json([
                 'text'       => null,
                 'sources'    => [],
                 'model'      => null,
                 'data_date'  => null,
                 'sufficient' => false,
-                'message'    => 'Données insuffisantes — aucun snapshot disponible. Le briefing sera actif dès le premier journal de chantier saisi.',
+                'message'    => 'Données insuffisantes — aucun journal de chantier saisi.',
             ]);
         }
 
