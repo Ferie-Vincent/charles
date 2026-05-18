@@ -169,7 +169,8 @@ return [
     |
     */
 
-    'secure' => env('SESSION_SECURE_COOKIE'),
+    // En production (HTTPS cross-domain Sanctum) : true obligatoire avec SameSite=none
+    'secure' => env('SESSION_SECURE_COOKIE', app()->isProduction()),
 
     /*
     |--------------------------------------------------------------------------
@@ -199,7 +200,8 @@ return [
     |
     */
 
-    'same_site' => env('SESSION_SAME_SITE', 'lax'),
+    // 'none' requis pour les cookies cross-domain (frontend ≠ backend sur Render)
+    'same_site' => env('SESSION_SAME_SITE', app()->isProduction() ? 'none' : 'lax'),
 
     /*
     |--------------------------------------------------------------------------
