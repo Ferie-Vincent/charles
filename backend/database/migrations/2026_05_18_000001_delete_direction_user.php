@@ -7,7 +7,15 @@ return new class extends Migration
 {
     public function up(): void
     {
-        DB::table('users')->where('email', 'direction@charles.ci')->delete();
+        $userIds = DB::table('users')
+            ->where('email', 'direction@charles.ci')
+            ->pluck('id')
+            ->all();
+
+        if (!empty($userIds)) {
+            DB::table('daily_logs')->whereIn('user_id', $userIds)->delete();
+            DB::table('users')->whereIn('id', $userIds)->delete();
+        }
     }
 
     public function down(): void
