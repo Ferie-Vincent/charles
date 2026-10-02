@@ -16,3 +16,9 @@ All data queries scoped by `company_id`. Users belong to one company (V1).
 
 ## Roles (7 slugs seeded)
 direction, directeur-technique, conducteur-travaux, chef-chantier, metreur-economiste, comptable, lecture-seule
+
+## Current state (2026-10)
+V1 complete: Daily Logs, Health Score, Map, Timeline, DQE engine, Costs/Invoices/Suppliers, QSE, Photos/GED,
+Reporting PDF, PWA, WhatsApp, Achats/BDC, Stocks, Operations dashboard DT, Accounting dashboard.
+In progress: Dashboard Opérationnel DT/DG. API docs via Scramble (`backend/config/scramble.php`).
+Role groups (7): direction / metreur / comptable / logistique / DT / terrain / DG — centralized in `Roles.php`.

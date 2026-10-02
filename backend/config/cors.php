@@ -22,6 +22,8 @@ return [
         'allowed_origins' => array_filter([
                                                   'http://localhost:5173',
                                                   'http://localhost:5174',
+                                                  'http://localhost:5175',
+                                                  'http://192.168.100.10:5173',
                                                   env('FRONTEND_URL'),
                                                   'https://charles-frontend-app.onrender.com',
                                               ]),
