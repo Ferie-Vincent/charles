@@ -14,6 +14,9 @@ use App\Models\Project;
  *  - rac         = max(0, budget_ref - engage - realise)
  *  - cat         = realise + engage + rac                 (Coût à Terminaison)
  *  - ecart       = budget_ref - realise - engage          (positif=disponible, négatif=dépassement)
+ *  - materiaux_stock_consommes = Σ sorties de stock valorisées (quantité × PMP) rattachées au projet.
+ *    INFORMATIF : non ajouté à l'engagé/réalisé — les achats centraux sont déjà dans les factures ;
+ *    sert à voir le poste matériaux réellement consommé par chantier (Winston / Mary, round 1).
  *
  * Prérequis : le projet doit avoir les relations 'budgetEntries', 'invoices', 'dqeVersions' chargées.
  */
@@ -40,8 +43,13 @@ class ProjectFinancialMetricsService
         $cat    = $realise + $engage + $rac;
         $ecart  = $budgetRef - $realise - $engage;
 
+        $materiauxStock = (float) \App\Models\StockMovement::where('project_id', $project->id)
+            ->where('type', 'sortie')
+            ->sum('total_cost');
+
         return [
             'budget_ref'    => $budgetRef,
+            'materiaux_stock_consommes' => round($materiauxStock, 2),
             'realise'       => $realise,
             'engage'        => $engage,
             'rac'           => $rac,

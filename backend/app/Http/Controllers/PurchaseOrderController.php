@@ -458,15 +458,22 @@ class PurchaseOrderController extends Controller
                 ->first();
 
             if ($stockItem) {
+                // Valorisation : PU du BDC → mouvement figé + nouveau PMP de l'article (avant incrément)
+                $unitPrice = isset($item['unit_price']) && is_numeric($item['unit_price']) ? (float) $item['unit_price'] : null;
+                $newPmp    = $stockItem->weightedUnitCostAfterEntry($qty, $unitPrice);
+
                 $stockItem->movements()->create([
                     'type'              => 'entree',
                     'quantity'          => $qty,
+                    'unit_cost'         => $unitPrice,
+                    'total_cost'        => $unitPrice !== null ? round($unitPrice * $qty, 2) : null,
                     'reason'            => "Réception BDC #{$order->reference}",
                     'movement_date'     => now()->toDateString(),
                     'created_by'        => $by->id,
                     'purchase_order_id' => $order->id,
                     'project_id'        => $order->project_id,
                 ]);
+                $stockItem->update(['unit_cost' => $newPmp]);
                 $stockItem->increment('quantity', $qty);
                 $created++;
             }

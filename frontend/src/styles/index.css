@@ -10899,3 +10899,6 @@ h4.ai-md-heading { font-size: 13px; }
 .bud-creance-row__date { margin-left: auto; color: var(--text-muted); }
 .bud-creance-row__amount { font-weight: 700; color: #8b5cf6; min-width: 120px; text-align: right; }
 .proj-params-chip input { width: 54px; font-size: 0.7rem; padding: 0.1rem 0.3rem; }
+
+/* ── Rapprochement journal / magasin ───────────────────────────────────── */
+.mr-recon { margin-bottom: 16px; padding: 12px 14px; border: 1px solid var(--border); border-left: 3px solid #f59e0b; border-radius: var(--radius-lg); background: var(--bg-card); overflow-x: auto; }

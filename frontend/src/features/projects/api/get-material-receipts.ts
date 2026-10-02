@@ -15,9 +15,21 @@ export type MaterialEntry = {
   unit: string;
 };
 
+/** Rapprochement journal (reçu sur site) ↔ stock central (sorties imputées au chantier) */
+export type MaterialReconciliation = {
+  name: string;
+  unit: string;
+  journal_qty: number;
+  stock_qty: number;
+  ecart_qty: number;
+  stock_value: number;
+  status: 'ok' | 'ecart' | 'journal_only' | 'stock_only';
+};
+
 export type MaterialReceiptsData = {
   totals: MaterialTotal[];
   entries: MaterialEntry[];
+  rapprochement: MaterialReconciliation[];
 };
 
 export async function getMaterialReceipts(projectId: number): Promise<MaterialReceiptsData> {
