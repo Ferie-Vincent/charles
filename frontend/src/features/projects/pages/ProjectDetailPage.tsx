@@ -202,6 +202,15 @@ export default function ProjectDetailPage() {
   const isManagement = isDGDT || group === 'metreur' || group === 'comptable';
   const isTerrain = group === 'terrain';
 
+  // Paramètres financiers du chantier (TVA / RG / délai paiement) — édition inline direction
+  const [editParams, setEditParams] = useState(false);
+  const [paramsForm, setParamsForm] = useState({ tva_rate: '', retenue_garantie_pct: '', delai_paiement_jours: '' });
+  const updateParamsMut = useMutation({
+    mutationFn: (payload: { tva_rate: number | null; retenue_garantie_pct: number | null; delai_paiement_jours: number | null }) =>
+      api.put(`/projects/${numId}`, payload),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['project', numId] }); setEditParams(false); },
+  });
+
   const [cautionDate, setCautionDate] = useState('');
   const liberateCautionMut = useMutation({
     mutationFn: (date: string) => api.patch(`/projects/${numId}/caution-liberation`, { date_liberation: date }),
@@ -410,6 +419,58 @@ export default function ProjectDetailPage() {
                 <span className="proj-hero__chip" style={{ borderColor: '#ef444455', color: '#ef4444' }}>
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="12" height="12"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                   Pénalités {Number(project.penalites_retard_par_jour).toLocaleString('fr-FR')} XOF/j
+                </span>
+              )}
+              {isManagement && project.effective_tva_rate !== undefined && (
+                <span
+                  className="proj-hero__chip proj-params-chip"
+                  style={{ borderColor: '#0ea5e955', color: '#0ea5e9', display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}
+                  title="Taux appliqués aux situations de travaux et factures de ce chantier. Vide = défaut entreprise."
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="12" height="12"><line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>
+                  {!editParams ? (
+                    <>
+                      TVA {project.effective_tva_rate}% · RG {project.effective_retenue_garantie_pct}% · Paiement {project.effective_delai_paiement_jours} j
+                      {(project.tva_rate === null && project.retenue_garantie_pct === null && project.delai_paiement_jours === null) && (
+                        <span style={{ opacity: 0.7 }}>(défauts entreprise)</span>
+                      )}
+                      {group === 'direction' && (
+                        <button
+                          className="btn btn--sm"
+                          style={{ fontSize: '0.7rem', padding: '0.1rem 0.4rem' }}
+                          onClick={() => {
+                            setParamsForm({
+                              tva_rate:             project.tva_rate !== null ? String(project.tva_rate) : '',
+                              retenue_garantie_pct: project.retenue_garantie_pct !== null ? String(project.retenue_garantie_pct) : '',
+                              delai_paiement_jours: project.delai_paiement_jours !== null ? String(project.delai_paiement_jours) : '',
+                            });
+                            setEditParams(true);
+                          }}
+                        >
+                          Modifier
+                        </button>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <label style={{ fontSize: '0.7rem' }}>TVA % <input type="number" min={0} max={100} step={0.01} className="form-control form-control--sm" value={paramsForm.tva_rate} placeholder="18" onChange={e => setParamsForm(f => ({ ...f, tva_rate: e.target.value }))} /></label>
+                      <label style={{ fontSize: '0.7rem' }}>RG % <input type="number" min={0} max={20} step={0.5} className="form-control form-control--sm" value={paramsForm.retenue_garantie_pct} placeholder="5" onChange={e => setParamsForm(f => ({ ...f, retenue_garantie_pct: e.target.value }))} /></label>
+                      <label style={{ fontSize: '0.7rem' }}>Délai j <input type="number" min={0} max={365} className="form-control form-control--sm" value={paramsForm.delai_paiement_jours} placeholder="60" onChange={e => setParamsForm(f => ({ ...f, delai_paiement_jours: e.target.value }))} /></label>
+                      <button
+                        className="btn btn--sm btn--success"
+                        style={{ fontSize: '0.7rem', padding: '0.15rem 0.5rem' }}
+                        disabled={updateParamsMut.isPending}
+                        onClick={() => updateParamsMut.mutate({
+                          tva_rate:             paramsForm.tva_rate === '' ? null : Number(paramsForm.tva_rate),
+                          retenue_garantie_pct: paramsForm.retenue_garantie_pct === '' ? null : Number(paramsForm.retenue_garantie_pct),
+                          delai_paiement_jours: paramsForm.delai_paiement_jours === '' ? null : Number(paramsForm.delai_paiement_jours),
+                        })}
+                      >
+                        Enregistrer
+                      </button>
+                      <button className="btn btn--sm" style={{ fontSize: '0.7rem', padding: '0.15rem 0.5rem' }} onClick={() => setEditParams(false)}>Annuler</button>
+                    </>
+                  )}
                 </span>
               )}
             </div>

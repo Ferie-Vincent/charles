@@ -14,7 +14,14 @@ export async function changePassword(data: {
   return res.data;
 }
 
-export async function updateCompany(data: { name: string }) {
+export type CompanyUpdate = {
+  name: string;
+  tva_rate?: number;
+  retenue_garantie_pct?: number;
+  delai_paiement_jours?: number;
+};
+
+export async function updateCompany(data: CompanyUpdate) {
   const res = await api.put('/profile/company', data);
   return res.data;
 }

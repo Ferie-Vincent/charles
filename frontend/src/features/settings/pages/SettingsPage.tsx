@@ -172,7 +172,12 @@ function TabProfil() {
    ════════════════════════════════════════════════ */
 function TabEntreprise() {
   const { user, setUser } = useAuth();
-  const [form, setForm] = useState({ name: user?.company?.name ?? '' });
+  const [form, setForm] = useState({
+    name:                 user?.company?.name ?? '',
+    tva_rate:             String(user?.company?.tva_rate ?? 18),
+    retenue_garantie_pct: String(user?.company?.retenue_garantie_pct ?? 5),
+    delai_paiement_jours: String(user?.company?.delai_paiement_jours ?? 60),
+  });
   const [status, setStatus] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -181,8 +186,14 @@ function TabEntreprise() {
     setSaving(true);
     setStatus(null);
     try {
-      await updateCompany(form);
-      setUser({ ...user!, company: { ...user!.company, name: form.name } });
+      const payload = {
+        name:                 form.name,
+        tva_rate:             Number(form.tva_rate),
+        retenue_garantie_pct: Number(form.retenue_garantie_pct),
+        delai_paiement_jours: Number(form.delai_paiement_jours),
+      };
+      await updateCompany(payload);
+      setUser({ ...user!, company: { ...user!.company, ...payload } });
       setStatus({ type: 'success', msg: 'Informations société mises à jour.' });
     } catch (err: any) {
       setStatus({ type: 'error', msg: err?.response?.data?.message ?? 'Erreur.' });
@@ -193,13 +204,30 @@ function TabEntreprise() {
 
   return (
     <div className="settings-content">
-      <Section title="Informations de la société" desc="Ces informations apparaissent dans les rapports PDF et documents générés.">
+      <Section title="Informations de la société" desc="Nom (rapports PDF) et paramètres financiers par défaut : TVA CI 18 %, retenue de garantie 5 %, délai de paiement marchés publics 60–90 j.">
         <form onSubmit={handleSave} className="settings-form">
           {status && <Alert {...status} />}
           <div className="form-field">
             <label className="form-label">Nom de la société</label>
-            <input className="form-input" value={form.name} onChange={e => setForm({ name: e.target.value })} required />
+            <input className="form-input" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} required />
           </div>
+          <div className="form-row" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12 }}>
+            <div className="form-field">
+              <label className="form-label">TVA par défaut (%)</label>
+              <input className="form-input" type="number" min={0} max={100} step={0.01} value={form.tva_rate} onChange={e => setForm(f => ({ ...f, tva_rate: e.target.value }))} required />
+            </div>
+            <div className="form-field">
+              <label className="form-label">Retenue de garantie (%)</label>
+              <input className="form-input" type="number" min={0} max={20} step={0.5} value={form.retenue_garantie_pct} onChange={e => setForm(f => ({ ...f, retenue_garantie_pct: e.target.value }))} required />
+            </div>
+            <div className="form-field">
+              <label className="form-label">Délai de paiement MOA (jours)</label>
+              <input className="form-input" type="number" min={0} max={365} value={form.delai_paiement_jours} onChange={e => setForm(f => ({ ...f, delai_paiement_jours: e.target.value }))} required />
+            </div>
+          </div>
+          <p className="form-hint" style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+            Défauts appliqués à chaque nouveau chantier et à ses situations de travaux. Surchargeables chantier par chantier (fiche projet).
+          </p>
           <div className="settings-form__footer">
             <button type="submit" className="btn btn--primary" disabled={saving}>
               {saving ? 'Enregistrement…' : 'Mettre à jour'}

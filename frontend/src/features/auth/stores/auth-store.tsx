@@ -6,7 +6,7 @@ export type AuthUser = {
   email: string;
   must_change_password?: boolean;
   role: { name: string; label: string };
-  company: { id: number; name: string; slug?: string };
+  company: { id: number; name: string; slug?: string; tva_rate?: number; retenue_garantie_pct?: number; delai_paiement_jours?: number };
 } | null;
 
 type AuthContextType = {

@@ -73,11 +73,13 @@ class InvoiceController extends Controller
             }
         }
 
-        $vatRate   = $data['vat_rate'] ?? 18;
+        // Défauts : taux TVA du chantier ; retenue de garantie appliquée d'office aux sous-traitants
+        // (logique-metier §5.2 — un sous-traitant subit la même RG que l'entreprise vis-à-vis du MOA)
+        $vatRate   = $data['vat_rate'] ?? $project->effective_tva_rate;
         $amountHt  = $data['amount_ht'];
         $vatAmount = round($amountHt * $vatRate / 100, 2);
         $amountTtc = $data['amount_ttc'] ?? round($amountHt + $vatAmount, 2);
-        $rdgPct    = $data['retenue_garantie_pct'] ?? 0;
+        $rdgPct    = $data['retenue_garantie_pct'] ?? $this->defaultRetenueForSupplier($project, $data['supplier_id'] ?? null);
         $rdgAmount = round($amountTtc * $rdgPct / 100, 2);
         $rasPct    = $data['ras_pct'] ?? 0;
         $rasAmount = round($amountTtc * $rasPct / 100, 2);
@@ -159,7 +161,7 @@ class InvoiceController extends Controller
         // Recalculer TVA + retenues BTP si les montants ont changé
         if (isset($data['amount_ht']) || isset($data['vat_rate']) || isset($data['retenue_garantie_pct']) || isset($data['ras_pct'])) {
             $amountHt  = $data['amount_ht'] ?? $invoice->amount_ht;
-            $vatRate   = $data['vat_rate'] ?? $invoice->vat_rate ?? 18;
+            $vatRate   = $data['vat_rate'] ?? $invoice->vat_rate ?? $project->effective_tva_rate;
             $vatAmount = round($amountHt * $vatRate / 100, 2);
             $amountTtc = $data['amount_ttc'] ?? round($amountHt + $vatAmount, 2);
             $rdgPct    = $data['retenue_garantie_pct'] ?? $invoice->retenue_garantie_pct ?? 0;
@@ -270,6 +272,20 @@ class InvoiceController extends Controller
         $invoice->load('supplier:id,name');
 
         return response()->json($invoice);
+    }
+
+    /**
+     * RG par défaut d'une facture fournisseur : taux du chantier si le fournisseur est un sous-traitant, sinon 0.
+     */
+    private function defaultRetenueForSupplier(Project $project, ?int $supplierId): float
+    {
+        if (! $supplierId) {
+            return 0.0;
+        }
+
+        $category = \App\Models\Supplier::whereKey($supplierId)->value('category');
+
+        return $category === 'sous-traitance' ? $project->effective_retenue_garantie_pct : 0.0;
     }
 
     public function downloadAttachment(Project $project, Invoice $invoice): \Symfony\Component\HttpFoundation\StreamedResponse

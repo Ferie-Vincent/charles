@@ -329,6 +329,10 @@ PROMPT;
             'progress_from_journal'     => $lastLog ? (float) $lastLog->progress_percent : null,
             'last_log_date'             => $lastLog?->log_date,
             'type_marche'               => $project->type_marche,
+            // Taux réellement appliqués (projet → entreprise → config)
+            'retenue_garantie_pct'      => $project->effective_retenue_garantie_pct,
+            'vat_rate'                  => $project->effective_tva_rate,
+            'delai_paiement_jours'      => $project->effective_delai_paiement_jours,
         ]);
     }
 
@@ -394,7 +398,7 @@ PROMPT;
             'retenue_summary' => [
                 'cumulee'        => (float) $retenueCumulee,
                 'liberable'      => (float) $retenueLiberable,
-                'pct'            => config('btp.retenue_garantie_pct'),
+                'pct'            => $project->effective_retenue_garantie_pct,
             ],
         ]);
     }
@@ -459,9 +463,9 @@ PROMPT;
             ->whereIn('status', ['validee_moe', 'payee'])
             ->sum('montant_brut_ht');
 
-        $retenueAmount  = round($montantBrutHT * (config('btp.retenue_garantie_pct') / 100), 2);
+        $retenueAmount  = round($montantBrutHT * ($project->effective_retenue_garantie_pct / 100), 2);
         $avanceRembours = SituationTravaux::computeAvanceRemboursement($project, $montantBrutHT);
-        $vatRate        = config('btp.tva_taux_standard');
+        $vatRate        = $project->effective_tva_rate;
         $baseHT         = $montantBrutHT - $retenueAmount - $avanceRembours;
         $vatAmount      = round($baseHT * ($vatRate / 100), 2);
         $netAPayer      = round($baseHT + $vatAmount, 2);
@@ -482,7 +486,7 @@ PROMPT;
             'avancement_pct'          => $data['avancement_pct'],
             'montant_brut_ht'         => $montantBrutHT,
             'cumul_precedent_ht'      => $cumulPrecedent,
-            'retenue_garantie_pct'    => config('btp.retenue_garantie_pct'),
+            'retenue_garantie_pct'    => $project->effective_retenue_garantie_pct,
             'retenue_garantie_amount' => $retenueAmount,
             'avance_remboursement'    => $avanceRembours,
             'vat_rate'                => $vatRate,

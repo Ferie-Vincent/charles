@@ -45,9 +45,17 @@ class ProjectController extends Controller
     {
         $this->authorize('view', $project);
 
-        $project->load(['members.user.role', 'activities.user']);
+        $project->load(['members.user.role', 'activities.user', 'company:id,tva_rate,retenue_garantie_pct,delai_paiement_jours']);
 
-        return response()->json(['data' => $project]);
+        // Taux financiers effectivement appliqués (projet → entreprise → config) — pas en $appends
+        // pour éviter un N+1 sur les listes ; exposés uniquement sur la fiche.
+        $payload = $project->toArray();
+        $payload['effective_tva_rate']               = $project->effective_tva_rate;
+        $payload['effective_retenue_garantie_pct']   = $project->effective_retenue_garantie_pct;
+        $payload['effective_delai_paiement_jours']   = $project->effective_delai_paiement_jours;
+        unset($payload['company']);
+
+        return response()->json(['data' => $payload]);
     }
 
     public function update(UpdateProjectRequest $request, Project $project): JsonResponse

@@ -16,11 +16,18 @@ class Company extends Model
         'ai_enabled',
         'ai_provider',
         'ai_api_key',
+        // Défauts financiers entreprise (surchargés par chantier)
+        'tva_rate',
+        'retenue_garantie_pct',
+        'delai_paiement_jours',
     ];
 
     protected $casts = [
-        'ai_enabled' => 'boolean',
-        'ai_api_key' => 'encrypted',
+        'ai_enabled'           => 'boolean',
+        'ai_api_key'           => 'encrypted',
+        'tva_rate'             => 'float',
+        'retenue_garantie_pct' => 'float',
+        'delai_paiement_jours' => 'integer',
     ];
 
     public function users(): HasMany

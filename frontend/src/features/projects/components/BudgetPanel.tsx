@@ -5,7 +5,7 @@ import {
 } from 'recharts';
 import {
   getBudget, createBudgetEntry, deleteBudgetEntry,
-  type BudgetData, type BudgetEntryInput, type BudgetEntryType, type OrphanPayment,
+  type BudgetData, type BudgetEntryInput, type BudgetEntryType, type OrphanPayment, type Creance,
 } from '../api/get-budget';
 
 // Catégories budget BTP — alignées SYSCOHADA-CI (plan comptable OHADA classe 6)
@@ -52,6 +52,13 @@ function fmtFCFA(n: number): string {
 
 function fmtFCFAFull(n: number): string {
   return Number(n).toLocaleString('fr-FR') + ' FCFA';
+}
+
+/** Libellé de la base de calcul dominante des créances (service fait > validation > soumission). */
+function creanceBasisLabel(creances: Creance[]): string {
+  if (creances.some(c => c.basis === 'service_fait')) return 'service fait / validation MOE';
+  if (creances.some(c => c.basis === 'validation_moe')) return 'validation MOE';
+  return 'soumission';
 }
 
 const EMPTY_FORM: BudgetEntryInput = {
@@ -105,7 +112,8 @@ export default function BudgetPanel({ projectId }: Props) {
   if (loading) return <p className="bud-empty">Chargement…</p>;
   if (!data)   return <p className="bud-empty">Erreur de chargement.</p>;
 
-  const { totals, chart, entries, orphan_payments = [] } = data;
+  const { totals, chart, entries, orphan_payments = [], creances = [] } = data;
+  const overdueCount = creances.filter(c => c.overdue).length;
   const filtered = activeTab === 'all' ? entries : entries.filter(e => e.type === activeTab);
 
   const engagePct = totals.previsionnel > 0
@@ -142,12 +150,19 @@ export default function BudgetPanel({ projectId }: Props) {
             {fmtFCFA(totals.solde)} FCFA
           </span>
         </div>
+        <div className="bud-kpi" title={`Situations soumises / validées non encore encaissées — délai MOA ${totals.delai_paiement_jours} j`}>
+          <span className="bud-kpi__label">Créances MOA attendues</span>
+          <span className="bud-kpi__value" style={{ color: '#8b5cf6' }}>{fmtFCFA(totals.creances_en_attente ?? 0)} FCFA</span>
+          {overdueCount > 0 && (
+            <span className="bud-kpi__pct" style={{ color: '#ef4444' }}>{overdueCount} en retard</span>
+          )}
+        </div>
       </div>
 
       {/* 90j chart */}
       {chart.length > 0 && (
         <div className="bud-chart-wrap">
-          <p className="bud-chart-title">Prévision décaissements — 90 jours</p>
+          <p className="bud-chart-title">Trésorerie prévisionnelle — 90 jours (décaissements vs encaissements MOA)</p>
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={chart} barCategoryGap="30%">
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
@@ -166,6 +181,7 @@ export default function BudgetPanel({ projectId }: Props) {
               <Bar dataKey="previsionnel" name="Prévisionnel" fill="#3b82f6" radius={[3, 3, 0, 0]} />
               <Bar dataKey="engagement"   name="Engagement"   fill="#f59e0b" radius={[3, 3, 0, 0]} />
               <Bar dataKey="paiement"     name="Paiement"     fill="#10b981" radius={[3, 3, 0, 0]} />
+              <Bar dataKey="encaissement" name="Encaissement attendu" fill="#8b5cf6" radius={[3, 3, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -269,6 +285,33 @@ export default function BudgetPanel({ projectId }: Props) {
               </button>
             </div>
           ))}
+        </div>
+      )}
+
+      {creances.length > 0 && (
+        <div className="bud-creances">
+          <div className="bud-creances__header">
+            <strong>Créances MOA en attente ({creances.length})</strong>
+            <span className="bud-creances__sub">
+              Date estimée = {creanceBasisLabel(creances)} + {totals.delai_paiement_jours} j (délai de paiement du chantier).
+            </span>
+          </div>
+          <ul className="bud-creances-list">
+            {creances.map((c: Creance) => (
+              <li key={c.id} className={`bud-creance-row ${c.overdue ? 'bud-creance-row--overdue' : ''}`}>
+                <span className="bud-creance-row__num">{c.numero}</span>
+                <span className="bud-creance-row__periode">{c.periode}</span>
+                <span className={`bud-badge bud-badge--${c.status === 'validee_moe' ? 'engagement' : 'previsionnel'}`}>
+                  {c.status === 'validee_moe' ? 'Validée MOE' : 'Soumise'}
+                </span>
+                <span className="bud-creance-row__date">
+                  {c.overdue ? 'En retard depuis le ' : 'Attendu le '}
+                  {new Date(c.expected_date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })}
+                </span>
+                <span className="bud-creance-row__amount">{fmtFCFAFull(c.amount)}</span>
+              </li>
+            ))}
+          </ul>
         </div>
       )}
 
