@@ -5,6 +5,10 @@ export type AiBriefingResponse = {
   sources: { label: string; data: string }[];
   model: string | null;
   data_date: string | null;
+  /** Horodatage ISO du calcul du snapshot — l'IA ne voit rien de plus récent */
+  data_as_of?: string | null;
+  /** Rappel produit : indicatif, jamais base d'approbation */
+  advisory?: string;
   sufficient: boolean;
   message?: string;
 };

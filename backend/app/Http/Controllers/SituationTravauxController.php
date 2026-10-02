@@ -764,6 +764,36 @@ PROMPT;
         return $pdf->download($filename);
     }
 
+    /**
+     * Trace le côté MOA : attestation de service fait et/ou ordre de paiement.
+     * Non bloquant (pas de changement d'état) — mais c'est la meilleure base pour dater l'encaissement.
+     */
+    public function serviceFait(Request $request, Project $project, SituationTravaux $situation): JsonResponse
+    {
+        $this->authorize('view', $project);
+        abort_if($situation->project_id !== $project->id, 404);
+        abort_unless(
+            in_array($request->user()->role->name, Roles::FINANCE, true),
+            403,
+            'Suivi MOA réservé à la comptabilité et à la direction.'
+        );
+        abort_unless(
+            in_array($situation->status, ['validee_moe', 'payee'], true),
+            422,
+            'Le service fait ne se constate que sur une situation validée MOE.'
+        );
+
+        $data = $request->validate([
+            'service_fait_at'    => 'nullable|date',
+            'ordre_paiement_ref' => 'nullable|string|max:100',
+            'ordre_paiement_at'  => 'nullable|date|after_or_equal:service_fait_at',
+        ]);
+
+        $situation->update($data);
+
+        return response()->json(['situation' => $situation->fresh()->load('creator:id,name')]);
+    }
+
     public function pay(Request $request, Project $project, SituationTravaux $situation): JsonResponse
     {
         $this->authorize('update', $project);

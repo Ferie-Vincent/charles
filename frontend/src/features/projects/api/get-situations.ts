@@ -24,6 +24,10 @@ export interface Situation {
   validated_at: string | null;
   paid_at: string | null;
   date_paiement: string | null;
+  /** Côté MOA (non bloquant) : attestation de service fait, ordre de paiement */
+  service_fait_at: string | null;
+  ordre_paiement_ref: string | null;
+  ordre_paiement_at: string | null;
   ct_reviewed_at: string | null;
   ct_rejection_comment: string | null;
   dt_reviewed_at: string | null;
@@ -97,6 +101,11 @@ export async function submitSituation(projectId: number, situationId: number): P
 
 export async function validateSituation(projectId: number, situationId: number): Promise<Situation> {
   const res = await api.patch(`/projects/${projectId}/situations/${situationId}/validate`);
+  return res.data.situation;
+}
+
+export async function recordServiceFait(projectId: number, situationId: number, data: { service_fait_at?: string | null; ordre_paiement_ref?: string | null; ordre_paiement_at?: string | null }): Promise<Situation> {
+  const res = await api.patch(`/projects/${projectId}/situations/${situationId}/service-fait`, data);
   return res.data.situation;
 }
 

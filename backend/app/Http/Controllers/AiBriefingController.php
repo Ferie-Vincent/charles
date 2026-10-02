@@ -50,6 +50,8 @@ class AiBriefingController extends Controller
         }
 
         $dataDate = $snapshots->first()->snapshot_date->toDateString();
+        // Horodatage réel de calcul (les snapshots tournent à 01h : à 11h, une situation validée à 10h n'y est pas)
+        $dataAsOf = optional($snapshots->max('updated_at'))?->toIso8601String();
         $prompt   = $this->buildBriefingPrompt($snapshots->toArray(), $dataDate);
 
         $result = $this->ai->analyze($prompt, 800);
@@ -65,7 +67,11 @@ class AiBriefingController extends Controller
             'sources'    => $sources,
             'model'      => 'mistral-small-latest',
             'data_date'  => $dataDate,
+            'data_as_of' => $dataAsOf,
             'sufficient' => true,
+            // Contrat produit : le briefing commente, il n'est jamais la base d'une approbation.
+            // Les montants près d'un bouton d'approbation viennent de ProjectFinancialMetricsService en direct.
+            'advisory'   => 'Indicatif — calculé sur un instantané. Les décisions financières se prennent sur les chiffres temps réel des écrans.',
         ]);
     }
 
@@ -100,6 +106,8 @@ Règles :
 - Langage professionnel, direct
 - Si tout va bien, dis-le en 1 phrase
 - Termine par 1 action recommandée aujourd'hui
+- Ces données sont un instantané de la nuit : ne recommande JAMAIS d'approuver, valider ou payer un montant précis
+  (BDC, facture, situation). Signale, oriente vers l'écran concerné — la décision se prend sur les chiffres temps réel.
 PROMPT;
     }
 

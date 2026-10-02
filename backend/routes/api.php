@@ -281,6 +281,7 @@ Route::middleware('auth')->group(function () {
     Route::patch('/projects/{project}/situations/{situation}/contest', [SituationTravauxController::class, 'contest']);
     Route::patch('/projects/{project}/situations/{situation}/correct', [SituationTravauxController::class, 'correct']);
     Route::patch('/projects/{project}/situations/{situation}/validate', [SituationTravauxController::class, 'validateSituation']);
+    Route::patch('/projects/{project}/situations/{situation}/service-fait', [SituationTravauxController::class, 'serviceFait']);
     Route::patch('/projects/{project}/situations/{situation}/pay', [SituationTravauxController::class, 'pay']);
     Route::get('/projects/{project}/situations/{situation}/pdf', [SituationTravauxController::class, 'pdfSituation']);
     // Legacy aliases kept for backward compat
