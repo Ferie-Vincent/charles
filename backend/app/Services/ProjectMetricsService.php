@@ -112,34 +112,12 @@ class ProjectMetricsService
      */
     private function computeBudgetScore(Project $project): array
     {
-        // Référence budgétaire : DQE validé prioritaire sur budget_amount du projet.
-        $dqeVersions = $project->relationLoaded('dqeVersions')
-            ? $project->dqeVersions
-            : $project->dqeVersions()->get();
+        // Source canonique unique (budget_ref, engagé, réalisé) — plus de recalcul local divergent.
+        $m = app(ProjectFinancialMetricsService::class)->compute($project);
 
-        $validatedDqe = $dqeVersions
-            ->where('status', 'validated')
-            ->sortByDesc('version_number')
-            ->first();
-
-        $budgetRef = $validatedDqe
-            ? (float) $validatedDqe->total_ht
-            : (float) ($project->budget_amount ?? 0);
-
-        $invoices = $project->relationLoaded('invoices')
-            ? $project->invoices
-            : $project->invoices()->get();
-
-        $budgetEntries = $project->relationLoaded('budgetEntries')
-            ? $project->budgetEntries
-            : $project->budgetEntries()->get();
-
-        // Réalisé = factures au statut payée uniquement (décaissé).
-        $realise = (float) $invoices->where('status', 'payee')->sum('amount_ht');
-
-        // Engagé = entrées BDC + factures validées (engagement ferme total, source canonique).
-        $engagement = (float) $budgetEntries->where('type', 'engagement')->sum('amount');
-        $engage     = $engagement + (float) $invoices->where('status', 'validee')->sum('amount_ht');
+        $budgetRef = $m['budget_ref'];
+        $realise   = $m['realise'];
+        $engage    = $m['engage'];
 
         // Aucune référence budgétaire → score neutre.
         if ($budgetRef <= 0) {

@@ -8,6 +8,7 @@ use App\Events\BdcReceived;
 use App\Events\BdcRejected;
 use App\Models\PurchaseOrder;
 use App\Support\Roles;
+use App\Support\Transition;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -195,7 +196,8 @@ class PurchaseOrderController extends Controller
             }
         }
 
-        $purchaseOrder->update([
+        // Garde atomique : double approbation concurrente → 409, un seul événement BdcApproved
+        Transition::apply($purchaseOrder, 'soumis', [
             'status'      => 'approuve',
             'approved_by' => $request->user()->id,
             'approved_at' => now(),
@@ -217,7 +219,7 @@ class PurchaseOrderController extends Controller
 
         $request->validate(['reason' => 'required|string|max:500']);
 
-        $purchaseOrder->update([
+        Transition::apply($purchaseOrder, 'soumis', [
             'status'           => 'rejete',
             'approved_by'      => $request->user()->id,
             'rejection_reason' => $request->reason,
@@ -359,7 +361,7 @@ class PurchaseOrderController extends Controller
             'Seul le créateur ou la direction peut soumettre ce BDC.'
         );
 
-        $purchaseOrder->update(['status' => 'soumis']);
+        Transition::apply($purchaseOrder, 'brouillon', ['status' => 'soumis']);
 
         return response()->json($purchaseOrder->load('supplier:id,name', 'project:id,name,code', 'requester:id,name'));
     }
@@ -377,7 +379,7 @@ class PurchaseOrderController extends Controller
 
         $data = $request->validate(['correction_note' => 'nullable|string|max:500']);
 
-        $purchaseOrder->update([
+        Transition::apply($purchaseOrder, 'rejete', [
             'status'           => 'soumis',
             'rejection_reason' => null,
             'approved_by'      => null,
@@ -422,7 +424,7 @@ class PurchaseOrderController extends Controller
             );
         }
 
-        $purchaseOrder->update(['status' => 'annule']);
+        Transition::apply($purchaseOrder, ['brouillon', 'soumis', 'approuve'], ['status' => 'annule']);
 
         event(new BdcCancelled($purchaseOrder, $user, $wasApproved));
 

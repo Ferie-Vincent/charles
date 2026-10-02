@@ -9,6 +9,7 @@ use App\Models\Project;
 use App\Models\ProjectMember;
 use App\Models\SituationTravaux;
 use App\Models\BudgetEntry;
+use App\Support\Transition;
 use App\Models\User;
 use App\Notifications\ContractThresholdNotification;
 use App\Notifications\SituationContestedNotification;
@@ -43,14 +44,6 @@ class SituationTravauxController extends Controller
             'avancement'     => ['nullable', 'numeric', 'min:0', 'max:100'],
         ]);
 
-        $mistralKey   = config('services.mistral.key');
-        $groqKey      = config('services.groq.key');
-        $anthropicKey = config('services.anthropic.key');
-
-        if (! $mistralKey && ! $groqKey && ! $anthropicKey) {
-            return response()->json(['error' => 'Aucune clé IA configurée (MISTRAL_API_KEY, GROQ_API_KEY ou ANTHROPIC_API_KEY).'], 503);
-        }
-
         // Charger la version DQE — préférer celle demandée, sinon la plus haute version_number validée
         $dqeVersion = ($data['dqe_version_id'] ?? null)
             ? DqeVersion::with('lines')->find($data['dqe_version_id'])
@@ -61,6 +54,14 @@ class SituationTravauxController extends Controller
         }
 
         abort_if($dqeVersion->project_id !== $project->id, 403);
+
+        $mistralKey   = config('services.mistral.key');
+        $groqKey      = config('services.groq.key');
+        $anthropicKey = config('services.anthropic.key');
+
+        if (! $mistralKey && ! $groqKey && ! $anthropicKey) {
+            return response()->json(['error' => 'Aucune clé IA configurée (MISTRAL_API_KEY, GROQ_API_KEY ou ANTHROPIC_API_KEY).'], 503);
+        }
 
         abort_if(
             $dqeVersion->status !== 'validated',
@@ -506,7 +507,7 @@ PROMPT;
         abort_if($situation->status !== 'brouillon', 422, 'Seul un brouillon peut être soumis.');
 
         // Passe d'abord au CT pour validation de cohérence terrain
-        $situation->update(['status' => 'en_revue_ct', 'submitted_at' => now()]);
+        Transition::apply($situation, 'brouillon', ['status' => 'en_revue_ct', 'submitted_at' => now()]);
         $situation->load('project:id,name,code');
 
         // Notifier uniquement les CT affectés au projet (pas tous les CT de l'entreprise)
@@ -526,7 +527,7 @@ PROMPT;
         abort_unless(in_array($request->user()->role->name, [Roles::CONDUCTEUR_TRAVAUX_SLUG, ...Roles::MANAGEMENT]), 403, 'Seul le CT ou la direction peut approuver en revue CT.');
         abort_if($situation->status !== 'en_revue_ct', 422, 'Seule une situation en revue CT peut être approuvée par le CT.');
 
-        $situation->update([
+        Transition::apply($situation, 'en_revue_ct', [
             'status'         => 'en_revue_dt',
             'ct_reviewed_by' => $request->user()->id,
             'ct_reviewed_at' => now(),
@@ -558,7 +559,7 @@ PROMPT;
 
         $data = $request->validate(['ct_rejection_comment' => 'required|string|max:2000']);
 
-        $situation->update([
+        Transition::apply($situation, 'en_revue_ct', [
             'status'               => 'brouillon',
             'ct_reviewed_by'       => $request->user()->id,
             'ct_reviewed_at'       => now(),
@@ -581,7 +582,7 @@ PROMPT;
         abort_unless(in_array($request->user()->role->name, Roles::MANAGEMENT), 403, 'Seul le DT ou la direction peut approuver.');
         abort_if($situation->status !== 'en_revue_dt', 422, 'Seule une situation en revue DT peut être approuvée.');
 
-        $situation->update([
+        Transition::apply($situation, 'en_revue_dt', [
             'status'          => 'soumise',
             'dt_reviewed_by'  => $request->user()->id,
             'dt_reviewed_at'  => now(),
@@ -598,7 +599,7 @@ PROMPT;
 
         $data = $request->validate(['dt_rejection_comment' => 'required|string|max:2000']);
 
-        $situation->update([
+        Transition::apply($situation, 'en_revue_dt', [
             'status'                => 'brouillon',
             'dt_reviewed_by'        => $request->user()->id,
             'dt_reviewed_at'        => now(),
@@ -623,7 +624,7 @@ PROMPT;
 
         $data = $request->validate(['contest_reason' => 'required|string|max:2000']);
 
-        $situation->update([
+        Transition::apply($situation, 'soumise', [
             'status'        => 'contestee',
             'contested_by'  => $request->user()->id,
             'contested_at'  => now(),
@@ -657,7 +658,7 @@ PROMPT;
         $this->authorize('update', $project);
         abort_if($situation->status !== 'contestee', 422, 'Seule une situation contestée peut être renvoyée en brouillon.');
 
-        $situation->update(['status' => 'brouillon']);
+        Transition::apply($situation, 'contestee', ['status' => 'brouillon']);
 
         return response()->json(['situation' => $situation]);
     }
@@ -672,7 +673,7 @@ PROMPT;
             ->whereIn('status', ['validee_moe', 'payee'])
             ->sum('montant_brut_ht');
 
-        $situation->update([
+        Transition::apply($situation, 'soumise', [
             'status'       => 'validee_moe',
             'validated_by' => $request->user()->id,
             'validated_at' => now(),
@@ -765,18 +766,18 @@ PROMPT;
         abort_if($situation->status !== 'validee_moe', 422, 'Seule une situation validée MOE peut être payée.');
         $data = $request->validate(['date_paiement' => 'required|date']);
 
-        $situation->update([
+        // Garde atomique : un second « pay » concurrent lève 409 au lieu de doubler l'écriture
+        Transition::apply($situation, 'validee_moe', [
             'status'        => 'payee',
             'paid_by'       => $request->user()->id,
             'paid_at'       => now(),
             'date_paiement' => $data['date_paiement'],
         ]);
 
-        // Piste d'audit : budget_entry type=paiement lié à cette situation
-        BudgetEntry::create([
+        // Piste d'audit : budget_entry type=paiement lié à cette situation (idempotent par situation)
+        BudgetEntry::upsertForSource(BudgetEntry::SOURCE_SITUATION, $situation->id, 'paiement', [
             'project_id'           => $project->id,
             'created_by'           => $request->user()->id,
-            'type'                 => 'paiement',
             'category'             => 'Situations de travaux',
             'label'                => "Paiement {$situation->numero} – {$situation->periode}",
             'amount'               => $situation->net_a_payer,

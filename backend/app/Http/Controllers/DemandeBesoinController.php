@@ -232,10 +232,10 @@ class DemandeBesoinController extends Controller
             $locked = DemandeBesoin::where('id', $demande->id)->lockForUpdate()->first();
             abort_unless($locked->status === 'livre', 422, "Cette demande n'est pas dans l'état livré.");
 
-            $entry = BudgetEntry::create([
+            // Idempotent : rejouer la comptabilisation ne crée pas une seconde écriture
+            $entry = BudgetEntry::upsertForSource(BudgetEntry::SOURCE_DEMANDE, $locked->id, 'paiement', [
                 'project_id'  => $locked->project_id,
                 'created_by'  => $user->id,
-                'type'        => 'paiement',
                 'category'    => $categoryMap[$locked->category] ?? 'Matériaux',
                 'label'       => $locked->title,
                 'amount'      => $actualCost,

@@ -9,6 +9,8 @@ use App\Models\DailyLog;
 use App\Models\Incident;
 use App\Models\StockItem;
 use App\Models\PurchaseOrder;
+use App\Services\ProjectFinancialMetricsService;
+use App\Services\ProjectMetricsService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
@@ -24,7 +26,8 @@ class BuildProjectSnapshots extends Command
             ? Carbon::parse($this->option('date'))->toDateString()
             : today()->toDateString();
 
-        $projects = Project::with(['company'])->get();
+        // Relations nécessaires aux services canoniques (évite N+1 et garantit les mêmes chiffres que les écrans)
+        $projects = Project::with(['company', 'dailyLogs', 'budgetEntries', 'invoices', 'dqeVersions'])->get();
 
         $this->info("Construction des snapshots pour {$date} — {$projects->count()} projets…");
 
@@ -72,10 +75,12 @@ class BuildProjectSnapshots extends Command
         arsort($materialsFreq);
         $topMaterials = array_keys(array_slice($materialsFreq, 0, 5, true));
 
-        // Budget prévisionnel / engagé / réalisé
-        $budgetPrev = BudgetEntry::where('project_id', $pid)->where('type', 'previsionnel')->sum('amount');
-        $budgetEng  = BudgetEntry::where('project_id', $pid)->where('type', 'engagement')->sum('amount');
-        $budgetReal = BudgetEntry::where('project_id', $pid)->where('type', 'paiement')->sum('amount');
+        // Budget — SOURCE CANONIQUE (mêmes chiffres que BudgetController / ProjectAccountingController).
+        // Avant : somme brute de budget_entries.paiement → divergeait du « réalisé » affiché (factures payées).
+        $fin         = app(ProjectFinancialMetricsService::class)->compute($project);
+        $budgetPrev  = $fin['budget_ref'];
+        $budgetEng   = $fin['engage'];
+        $budgetReal  = $fin['realise'];
         $consumptionPct = $budgetPrev > 0 ? round(($budgetReal / $budgetPrev) * 100, 2) : 0;
 
         // Incidents sur le projet
@@ -104,15 +109,8 @@ class BuildProjectSnapshots extends Command
             ? min(100, (int) round(($daysElapsed / $daysTotal) * 100))
             : 0;
 
-        // Calcul simplifié du health score
-        $planningSc = $theoreticalProgress > 0
-            ? max(0, 25 - max(0, $theoreticalProgress - $progress) * 1.25)
-            : 25;
-        $regularitySc = $daysElapsed > 0
-            ? min(1, $totalLogs / max(1, $daysElapsed)) * 25
-            : 25;
-        $safetySc = max(0, 25 - $incidentsCritiques * 5);
-        $healthScore = (int) round($planningSc + $regularitySc + 25 + $safetySc);
+        // Health score — même service que l'écran (plus de « + 25 » budget codé en dur ici).
+        $healthScore = app(ProjectMetricsService::class)->compute($project)['score'];
 
         ProjectSnapshot::updateOrCreate(
             ['project_id' => $pid, 'snapshot_date' => $date],

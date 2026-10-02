@@ -6,6 +6,7 @@ use App\Events\InvoicePaid;
 use App\Models\Invoice;
 use App\Models\Project;
 use App\Services\WorkflowService;
+use App\Support\Transition;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -254,7 +255,8 @@ class InvoiceController extends Controller
         $safeName  = now()->format('YmdHis') . '_' . Str::uuid() . '.' . $extension;
         $path      = $file->storeAs("invoices/{$invoice->id}/proof", $safeName, 'public');
 
-        $invoice->update([
+        // Garde atomique : un second « pay » (retry réseau, double clic) lève 409 — jamais deux paiements
+        Transition::apply($invoice, 'validee', [
             'status'              => 'payee',
             'paid_by'             => $request->user()->id,
             'paid_at'             => now(),

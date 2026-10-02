@@ -11,6 +11,7 @@ use App\Models\PurchaseOrder;
 use App\Models\StockItem;
 use App\Models\StockMovement;
 use App\Models\User;
+use App\Support\Transition;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 use RuntimeException;
@@ -79,7 +80,8 @@ class WorkflowService
             $updates['paid_at'] = now();
         }
 
-        $invoice->update($updates);
+        // Garde atomique : l'état source est vérifié par la base dans l'UPDATE lui-même (409 si rejoué)
+        Transition::apply($invoice, $from, $updates);
 
         if ($to === 'validee') {
             event(new InvoiceValidated($invoice, $by));
@@ -120,7 +122,7 @@ class WorkflowService
         $roleSlug = $this->getRoleSlug($by);
         $this->assertRoleGate($to, $roleSlug, self::DQE_ROLE_GATES);
 
-        $dqe->update(['status' => $to]);
+        Transition::apply($dqe, $dqe->status, ['status' => $to]);
 
         if ($to === 'validated') {
             event(new DqeValidated($dqe->load('project'), $by));
@@ -195,7 +197,7 @@ class WorkflowService
             $updates['approved_at'] = now();
         }
 
-        $bdc->update($updates);
+        Transition::apply($bdc, $from, $updates);
 
         // Déclenchement des mouvements de stock à la réception.
         if ($to === 'recu') {

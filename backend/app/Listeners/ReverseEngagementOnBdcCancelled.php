@@ -5,19 +5,13 @@ namespace App\Listeners;
 use App\Events\BdcCancelled;
 use App\Models\BudgetEntry;
 
+/**
+ * BDC annulé → plus d'engagement (sync supprime l'écriture car statut non actif).
+ */
 class ReverseEngagementOnBdcCancelled
 {
     public function handle(BdcCancelled $event): void
     {
-        if (! $event->wasApproved) {
-            return;
-        }
-
-        $bdc = $event->bdc;
-
-        if ($bdc->engagement_entry_id) {
-            BudgetEntry::find($bdc->engagement_entry_id)?->delete();
-            $bdc->updateQuietly(['engagement_entry_id' => null]);
-        }
+        BudgetEntry::syncBdcEngagement($event->bdc, $event->by);
     }
 }
