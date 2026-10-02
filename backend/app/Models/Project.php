@@ -33,6 +33,10 @@ class Project extends Model
         'maitre_oeuvre',
         'bureau_controle',
         'montant_marche',
+        // Paramètres financiers — NULL = défaut entreprise
+        'tva_rate',
+        'retenue_garantie_pct',
+        'delai_paiement_jours',
         'avance_demarrage_pct',
         'avance_demarrage_montant_accorde',
         'avance_demarrage_accorde_le',
@@ -54,6 +58,9 @@ class Project extends Model
             'caution_bonne_execution_pct' => 'decimal:2',
             'penalites_retard_par_jour'  => 'decimal:2',
             'montant_marche'             => 'decimal:2',
+            'tva_rate'                   => 'float',
+            'retenue_garantie_pct'       => 'float',
+            'delai_paiement_jours'       => 'integer',
             'target_progress'            => 'integer',
             'current_progress'           => 'integer',
             'avance_demarrage_pct'                => 'integer',
@@ -146,5 +153,33 @@ class Project extends Model
             return 0.0;
         }
         return round((float)$this->montant_marche * ($this->avance_demarrage_pct / 100), 2);
+    }
+
+    // =========================================================================
+    // Paramètres financiers effectifs — résolution projet → entreprise → config/btp
+    // =========================================================================
+
+    /** Taux de TVA applicable au chantier (%). */
+    public function getEffectiveTvaRateAttribute(): float
+    {
+        return (float) ($this->tva_rate
+            ?? $this->company?->tva_rate
+            ?? config('btp.tva_taux_standard', 18));
+    }
+
+    /** Taux de retenue de garantie applicable (%). */
+    public function getEffectiveRetenueGarantiePctAttribute(): float
+    {
+        return (float) ($this->retenue_garantie_pct
+            ?? $this->company?->retenue_garantie_pct
+            ?? config('btp.retenue_garantie_pct', 5));
+    }
+
+    /** Délai de paiement MOA attendu après validation d'une situation (jours). */
+    public function getEffectiveDelaiPaiementJoursAttribute(): int
+    {
+        return (int) ($this->delai_paiement_jours
+            ?? $this->company?->delai_paiement_jours
+            ?? 60);
     }
 }

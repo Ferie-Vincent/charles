@@ -40,6 +40,13 @@ export type Project = {
   maitre_oeuvre: string | null;
   bureau_controle: string | null;
   montant_marche: number | null;
+  // Paramètres financiers — null = défaut entreprise ; effective_* = valeur réellement appliquée (fiche uniquement)
+  tva_rate: number | null;
+  retenue_garantie_pct: number | null;
+  delai_paiement_jours: number | null;
+  effective_tva_rate?: number;
+  effective_retenue_garantie_pct?: number;
+  effective_delai_paiement_jours?: number;
   avance_demarrage_pct: number | null;
   delai_execution_jours: number | null;
   date_reception_provisoire: string | null;
@@ -68,6 +75,9 @@ export type CreateProjectPayload = {
   maitre_oeuvre?: string;
   bureau_controle?: string;
   montant_marche?: number;
+  tva_rate?: number;
+  retenue_garantie_pct?: number;
+  delai_paiement_jours?: number;
   avance_demarrage_pct?: number;
   delai_execution_jours?: number;
   date_reception_provisoire?: string;

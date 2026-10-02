@@ -54,8 +54,14 @@ export default function AiMorningBriefing({ alwaysExpanded = false }: { alwaysEx
         <span className="ai-briefing__badge">IA</span>
         <span className="ai-briefing__title">Briefing matinal</span>
         {data.data_date && (
-          <span className="ai-briefing__date">
-            Données du {new Date(data.data_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+          <span
+            className="ai-briefing__date"
+            title={data.advisory ?? 'Indicatif — calculé sur un instantané nocturne.'}
+          >
+            Données au {data.data_as_of
+              ? new Date(data.data_as_of).toLocaleString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+              : new Date(data.data_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+            {' '}· indicatif
           </span>
         )}
         {!alwaysExpanded && (

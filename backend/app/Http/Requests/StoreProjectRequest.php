@@ -28,6 +28,10 @@ class StoreProjectRequest extends FormRequest
             'maitre_oeuvre'             => ['nullable', 'string', 'max:200'],
             'bureau_controle'           => ['nullable', 'string', 'max:200'],
             'montant_marche'            => ['nullable', 'numeric', 'min:0'],
+            // Paramètres financiers — null = défaut entreprise
+            'tva_rate'                  => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'retenue_garantie_pct'      => ['nullable', 'numeric', 'min:0', 'max:20'],
+            'delai_paiement_jours'      => ['nullable', 'integer', 'min:0', 'max:365'],
             'avance_demarrage_pct'      => ['nullable', 'integer', 'min:0', 'max:50'],
             'delai_execution_jours'     => ['nullable', 'integer', 'min:1'],
             'date_reception_provisoire' => ['nullable', 'date'],

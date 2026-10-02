@@ -11,6 +11,7 @@ use App\Models\PurchaseOrder;
 use App\Models\StockItem;
 use App\Models\StockMovement;
 use App\Models\User;
+use App\Support\Transition;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 use RuntimeException;
@@ -79,7 +80,8 @@ class WorkflowService
             $updates['paid_at'] = now();
         }
 
-        $invoice->update($updates);
+        // Garde atomique : l'état source est vérifié par la base dans l'UPDATE lui-même (409 si rejoué)
+        Transition::apply($invoice, $from, $updates);
 
         if ($to === 'validee') {
             event(new InvoiceValidated($invoice, $by));
@@ -120,7 +122,7 @@ class WorkflowService
         $roleSlug = $this->getRoleSlug($by);
         $this->assertRoleGate($to, $roleSlug, self::DQE_ROLE_GATES);
 
-        $dqe->update(['status' => $to]);
+        Transition::apply($dqe, $dqe->status, ['status' => $to]);
 
         if ($to === 'validated') {
             event(new DqeValidated($dqe->load('project'), $by));
@@ -195,7 +197,7 @@ class WorkflowService
             $updates['approved_at'] = now();
         }
 
-        $bdc->update($updates);
+        Transition::apply($bdc, $from, $updates);
 
         // Déclenchement des mouvements de stock à la réception.
         if ($to === 'recu') {
@@ -233,6 +235,9 @@ class WorkflowService
                     continue;
                 }
 
+                $unitPrice = isset($item['unit_price']) && is_numeric($item['unit_price']) ? (float) $item['unit_price'] : null;
+                $newPmp    = $stockItem->weightedUnitCostAfterEntry($quantity, $unitPrice);
+
                 StockMovement::create([
                     'stock_item_id'     => $stockItemId,
                     'created_by'        => $by->id,
@@ -240,12 +245,15 @@ class WorkflowService
                     'purchase_order_id' => $bdc->id,
                     'type'              => 'entree',
                     'quantity'          => $quantity,
+                    'unit_cost'         => $unitPrice,
+                    'total_cost'        => $unitPrice !== null ? round($unitPrice * $quantity, 2) : null,
                     'reason'            => "Réception BDC #{$bdc->reference}",
                     'movement_date'     => now()->toDateString(),
                     'notes'             => $item['description'] ?? null,
                 ]);
 
-                // Incrémente le stock physique de manière atomique.
+                // PMP puis incrément atomique du stock physique.
+                $stockItem->update(['unit_cost' => $newPmp]);
                 $stockItem->increment('quantity', $quantity);
             }
         });

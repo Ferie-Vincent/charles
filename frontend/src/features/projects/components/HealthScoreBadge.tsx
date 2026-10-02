@@ -39,9 +39,19 @@ export default function HealthScoreBadge({ projectId }: Props) {
         <div className="health-breakdown">
           <div className="health-breakdown__title">Score de santé</div>
           <div className="health-breakdown__rows">
-            <BreakdownRow label="Planning" score={data.planning_score} detail={`${data.latest_progress}% réel / ${data.target_progress}% cible`} />
+            <BreakdownRow
+              label="Planning"
+              score={data.planning_score}
+              detail={`${data.latest_progress}% ${data.progress_source === 'certified' ? 'certifié (situation)' : data.progress_source === 'declared' ? 'déclaré (journal)' : '—'} / ${data.target_progress}% cible`}
+            />
+            {data.progress_gap !== null && data.progress_gap !== undefined && Math.abs(data.progress_gap) >= 5 && (
+              <div className="health-breakdown__note" style={{ fontSize: 11, color: data.progress_gap > 0 ? 'var(--warning)' : 'var(--text-muted)', padding: '2px 0 6px' }}>
+                Écart journal / situation certifiée : {data.progress_gap > 0 ? '+' : ''}{data.progress_gap} pts
+                {data.progress_gap > 0 ? ' — le terrain se déclare en avance sur le contractuel' : ''}
+              </div>
+            )}
             <BreakdownRow label="Régularité" score={data.regularity_score} detail={`${data.total_logs} rapport${data.total_logs > 1 ? 's' : ''} saisi${data.total_logs > 1 ? 's' : ''}`} />
-            <BreakdownRow label="Budget" score={data.budget_score} detail="Module en développement" />
+            <BreakdownRow label="Budget" score={data.budget_score} detail="Engagé / budget de référence (DQE validé)" />
             <BreakdownRow label="Sécurité" score={data.safety_score} detail={`${data.incident_count} incident${data.incident_count > 1 ? 's' : ''}`} />
           </div>
           <div className="health-breakdown__total" style={{ color: cfg.color }}>

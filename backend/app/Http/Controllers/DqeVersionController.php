@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\Transition;
 use App\Events\DqeValidated;
 use App\Models\DqeLine;
 use App\Models\DqeVersion;
@@ -260,7 +261,8 @@ class DqeVersionController extends Controller
             $fields['rejection_reason'] = null;
         }
 
-        $dqeVersion->update($fields);
+        // Garde atomique : double validation concurrente → 409, un seul DqeValidated (budget_ref figé une fois)
+        Transition::apply($dqeVersion, $current, $fields);
 
         if ($to === 'validated') {
             event(new DqeValidated($dqeVersion, $user));

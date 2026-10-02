@@ -28,7 +28,7 @@ Toute décision technique (modèle DB, endpoint API, composant UI, règle de val
 Monorepo — two separate apps in one repo:
 
 ```
-backend/    Laravel 12 API  (running on http://localhost:8000)
+backend/    Laravel 13 API  (running on http://localhost:8000)
 frontend/   React SPA       (running on http://localhost:5174 — Vite may use 5173 if 5174 is free)
 docs/       Product spec and implementation plans
 ```
@@ -37,7 +37,7 @@ docs/       Product spec and implementation plans
 
 | Layer | Tech |
 |---|---|
-| Backend | Laravel 12, PHP 8.3+, MySQL 8+ (via MAMP, port 3306) |
+| Backend | Laravel 13, PHP 8.3+, MySQL 8+ (via MAMP, port 8889 — voir `phpunit.xml`) |
 | Auth | Laravel Sanctum (cookie-based session, not token) |
 | Testing (backend) | Pest + PHPUnit |
 | Frontend | React 18+, TypeScript, Vite |
@@ -91,11 +91,11 @@ cd frontend && npm run build
 
 ### Backend
 
-- **MySQL only** — no SQLite fallback. Test env must point to a real MySQL database (MAMP, port 3306). DB: `chantier_platform`, test DB: `chantier_platform_test`.
+- **MySQL in tests** — `phpunit.xml` points to MAMP MySQL on port **8889**, DB `chantier_platform_test` (start it with `/Applications/MAMP/bin/startMysql.sh`). Local `.env` may use sqlite for quick dev; migrations must stay portable (MySQL + PostgreSQL on Render — no `UPDATE … FROM` / `UPDATE … JOIN`, use correlated subqueries; guard `MODIFY COLUMN` with `DB::getDriverName()`).
 - **Cookie session auth** via Sanctum. The `withCredentials: true` flag is required on the frontend Axios client.
 - **Company-scoped queries** — every data-bearing query must filter by `request->user()->company_id`. Users belong to one company in V1.
 - **Authorization via Laravel Policies** — use `$this->authorize()` in controllers. Policies live in `backend/app/Policies/`.
-- **Role seeding** — roles are seeded via `RoleSeeder`, not created in migrations. Seven seeded role slugs: `direction`, `directeur-technique`, `conducteur-travaux`, `chef-chantier`, `metreur-economiste`, `comptable`, `lecture-seule`.
+- **Role seeding** — roles are seeded via `RoleSeeder`, not created in migrations. Eight seeded role slugs: `direction`, `directeur-technique`, `conducteur-travaux`, `chef-chantier`, `metreur-economiste`, `comptable`, `moyens-generaux`, `lecture-seule`.
 - **CORS** — allowed origins include both `http://localhost:5173` and `http://localhost:5174` (Vite port may vary).
 - **File storage** — `Storage::disk('public')` en dev. Swap to `disk('s3')` with MinIO in prod via `FILESYSTEM_DISK=s3`.
 
@@ -234,12 +234,21 @@ Score 0–100 per active project, computed from 4 groups:
 ```
 planning_score  = avancement_réel >= avancement_cible ? 25 : max(0, 25 - (cible - réel) * 1.25)
 regularity_score= min(total_logs / max(1, days_since_start), 1) * 25
-budget_score    = 25  (placeholder until budget module)
+budget_score    = f(engagé / budget_ref) via ProjectFinancialMetricsService (25 ≤50% · 20 ≤90% · 15 ≤100% · 8 ≤110% · 0)
 safety_score    = max(0, 25 - incident_count * 5)
 health_score    = planning_score + regularity_score + budget_score + safety_score
 ```
 
 Thresholds: 🔴 < 50 · 🟠 50–74 · 🟢 ≥ 75
+
+`avancement_réel` comes from `ProjectProgressResolver`: certified (last situation validée MOE < 60 days) beats declared (last daily log). Both values + `progress_source` are exposed.
+
+## Invariants financiers (oct. 2026)
+
+- **Source canonique** : `ProjectFinancialMetricsService` (budget_ref, engagé, réalisé, RAC, écart, materiaux_stock_consommes). `ProjectMetricsService`, snapshots IA, alertes et dashboards doivent le consommer — jamais recalculer.
+- **Écritures auto idempotentes** : `budget_entries` a une clé unique `(source_type, source_id, type)`. Toujours passer par `BudgetEntry::upsertForSource()` ; engagement BDC via `BudgetEntry::syncBdcEngagement()` (recalcul convergent). `php artisan budget:reconcile --dry-run` détecte les dérives.
+- **Transitions atomiques** : utiliser `App\Support\Transition::apply($model, $from, $updates)` pour tout changement de statut irréversible (409 `StateConflictException` si l'état a bougé).
+- **Paramètres financiers** : `$project->effective_tva_rate / effective_retenue_garantie_pct / effective_delai_paiement_jours` (projet → company → `config/btp`). Ne jamais lire `config('btp.tva_taux_standard')` directement dans un calcul chantier.
 
 ## Map Feature Notes (#3)
 

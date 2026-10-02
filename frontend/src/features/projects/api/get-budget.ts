@@ -22,6 +22,9 @@ export type BudgetTotals = {
   paiement: number;
   solde: number;
   taux_engagement: number;
+  /** Situations ≥ soumise non payées — argent dû par le MOA */
+  creances_en_attente: number;
+  delai_paiement_jours: number;
 };
 
 export type BudgetBucket = {
@@ -29,6 +32,19 @@ export type BudgetBucket = {
   previsionnel: number;
   engagement: number;
   paiement: number;
+  /** Encaissements attendus (créances MOA datées par le délai de paiement) */
+  encaissement: number;
+};
+
+export type Creance = {
+  id: number;
+  numero: string;
+  periode: string;
+  status: string;
+  amount: number;
+  expected_date: string;
+  overdue: boolean;
+  basis: 'service_fait' | 'validation_moe' | 'soumission' | 'creation';
 };
 
 export type OrphanPayment = {
@@ -44,6 +60,7 @@ export type BudgetData = {
   totals: BudgetTotals;
   chart: BudgetBucket[];
   orphan_payments: OrphanPayment[];
+  creances: Creance[];
 };
 
 export type BudgetEntryInput = {

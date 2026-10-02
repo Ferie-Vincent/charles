@@ -25,4 +25,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->shouldRenderJsonWhen(
             fn ($request, \Throwable $e) => $request->is('api/*')
         );
+
+        // Transition d'état déjà effectuée / concurrente → 409 Conflict (pas 500)
+        $exceptions->render(function (\App\Exceptions\StateConflictException $e, $request) {
+            return response()->json(['message' => $e->getMessage()], 409);
+        });
     })->create();

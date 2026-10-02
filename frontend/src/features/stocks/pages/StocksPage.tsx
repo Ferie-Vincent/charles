@@ -8,11 +8,13 @@ import {
   STOCK_CATEGORIES, type StockItem, type StockMovement,
 } from '../api/stocks';
 import PageHeader from '../../../components/ui/PageHeader';
+import { listProjects } from '../../projects/api/list-projects';
 
 const fmt = (n: number, unit = '') => `${n % 1 === 0 ? n : n.toFixed(2)}${unit ? ' ' + unit : ''}`;
 const fmtDate = (d: string) => new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
+const fmtFCFA = (n: number) => `${Math.round(n).toLocaleString('fr-FR')} FCFA`;
 
-const EMPTY_ITEM: Partial<StockItem> = { name: '', category: 'materiaux', unit: 'unité', quantity: 0, threshold: 0, location: '', notes: '' };
+const EMPTY_ITEM: Partial<StockItem> = { name: '', category: 'materiaux', unit: 'unité', quantity: 0, threshold: 0, unit_cost: 0, location: '', notes: '' };
 
 const CAT_COLOR: Record<string, string> = {
   materiaux: '#f97316', equipement: '#3b7ddd', fournitures: '#8b5cf6',
@@ -32,7 +34,11 @@ export default function StocksPage() {
   const [saving, setSaving]       = useState(false);
   const [movModal, setMovModal]   = useState<StockItem | null>(null);
   const [movements, setMovements] = useState<StockMovement[]>([]);
-  const [movForm, setMovForm]     = useState({ type: (isTerrain ? 'sortie' : 'entree') as StockMovement['type'], quantity: 0, reason: '', movement_date: new Date().toISOString().slice(0, 10), notes: '' });
+  const EMPTY_MOV = { type: (isTerrain ? 'sortie' : 'entree') as StockMovement['type'], quantity: 0, reason: '', movement_date: new Date().toISOString().slice(0, 10), notes: '', project_id: '' as string, unit_cost: '' as string };
+  const [movForm, setMovForm]     = useState(EMPTY_MOV);
+
+  // Chantiers actifs — une sortie doit être imputée à un chantier (coût matériaux par projet)
+  const { data: projects = [] } = useQuery({ queryKey: ['projects'], queryFn: listProjects, staleTime: 300_000 });
 
   const { data: items = [], isLoading: loading } = useQuery({
     queryKey: ['stock-items'],
@@ -67,10 +73,15 @@ export default function StocksPage() {
     if (!movModal || !movForm.reason || movForm.quantity <= 0) return;
     setSaving(true);
     try {
-      const res = await addMovement(movModal.id, movForm);
+      const payload: Partial<StockMovement> = {
+        type: movForm.type, quantity: movForm.quantity, reason: movForm.reason, movement_date: movForm.movement_date, notes: movForm.notes,
+        project_id: movForm.type !== 'ajustement' && movForm.project_id ? Number(movForm.project_id) : null,
+        unit_cost:  movForm.type === 'entree' && movForm.unit_cost !== '' ? Number(movForm.unit_cost) : null,
+      };
+      const res = await addMovement(movModal.id, payload);
       setMovements(prev => [res.movement, ...prev]);
       setMovModal(res.stock);
-      setMovForm({ type: 'entree', quantity: 0, reason: '', movement_date: new Date().toISOString().slice(0, 10), notes: '' });
+      setMovForm(EMPTY_MOV);
       queryClient.invalidateQueries({ queryKey: ['stock-items'] });
     } finally { setSaving(false); }
   };
@@ -241,6 +252,11 @@ export default function StocksPage() {
                           seuil : {fmt(item.threshold, item.unit)}
                         </p>
                       )}
+                      {(item.unit_cost ?? 0) > 0 && (
+                        <p style={{ margin: '1px 0 0', fontSize: '0.72rem', color: 'var(--text-muted)', textAlign: 'right' }} title="Valeur du stock = quantité × PU moyen pondéré">
+                          {fmtFCFA(item.quantity * (item.unit_cost ?? 0))} · PU {fmtFCFA(item.unit_cost ?? 0)}
+                        </p>
+                      )}
                     </td>
                     <td>
                       {isEmpty ? (
@@ -309,6 +325,10 @@ export default function StocksPage() {
                   <input className="form-input" type="number" min={0} value={itemModal.threshold ?? 0} onChange={e => setItemModal({ ...itemModal, threshold: parseFloat(e.target.value) || 0 })} />
                 </div>
                 <div className="form-field">
+                  <label className="form-label">PU moyen (FCFA)</label>
+                  <input className="form-input" type="number" min={0} value={itemModal.unit_cost ?? 0} onChange={e => setItemModal({ ...itemModal, unit_cost: parseFloat(e.target.value) || 0 })} placeholder="ex: 5000" />
+                </div>
+                <div className="form-field">
                   <label className="form-label">Référence</label>
                   <input className="form-input" value={itemModal.reference ?? ''} onChange={e => setItemModal({ ...itemModal, reference: e.target.value })} placeholder="Code interne" />
                 </div>
@@ -364,11 +384,33 @@ export default function StocksPage() {
                     <input className="form-input" type="date" value={movForm.movement_date} onChange={e => setMovForm({ ...movForm, movement_date: e.target.value })} />
                   </div>
                 </div>
+                {movForm.type !== 'ajustement' && (
+                  <div style={{ display: 'grid', gridTemplateColumns: movForm.type === 'entree' ? '1fr 1fr' : '1fr', gap: '0.75rem' }}>
+                    <div className="form-field">
+                      <label className="form-label">Chantier {movForm.type === 'sortie' ? '*' : ''}</label>
+                      <select className="form-select" value={movForm.project_id} onChange={e => setMovForm({ ...movForm, project_id: e.target.value })}>
+                        <option value="">{movForm.type === 'sortie' ? '— Imputer à un chantier —' : '— Dépôt central —'}</option>
+                        {projects.map(p => <option key={p.id} value={p.id}>{p.code} · {p.name}</option>)}
+                      </select>
+                      {movForm.type === 'sortie' && (
+                        <span className="form-hint" style={{ fontSize: 11 }}>
+                          Valorisée au PU moyen {fmtFCFA(movModal.unit_cost ?? 0)} → coût matériaux du chantier.
+                        </span>
+                      )}
+                    </div>
+                    {movForm.type === 'entree' && (
+                      <div className="form-field">
+                        <label className="form-label">PU d'achat (FCFA)</label>
+                        <input className="form-input" type="number" min={0} value={movForm.unit_cost} onChange={e => setMovForm({ ...movForm, unit_cost: e.target.value })} placeholder={`PMP actuel ${fmtFCFA(movModal.unit_cost ?? 0)}`} />
+                      </div>
+                    )}
+                  </div>
+                )}
                 <div className="form-field">
                   <label className="form-label">Motif *</label>
                   <input className="form-input" value={movForm.reason} onChange={e => setMovForm({ ...movForm, reason: e.target.value })} placeholder="ex: Livraison chantier Cocody, Inventaire mensuel…" />
                 </div>
-                <button className="btn btn--primary btn--sm" style={{ alignSelf: 'flex-end' }} onClick={handleAddMovement} disabled={saving || !movForm.reason || movForm.quantity <= 0}>
+                <button className="btn btn--primary btn--sm" style={{ alignSelf: 'flex-end' }} onClick={handleAddMovement} disabled={saving || !movForm.reason || movForm.quantity <= 0 || (movForm.type === 'sortie' && isTerrain && !movForm.project_id)}>
                   {saving ? '…' : 'Enregistrer mouvement'}
                 </button>
               </div>
@@ -391,8 +433,9 @@ export default function StocksPage() {
                             <span className="stocks-mov-reason">{m.reason}</span>
                             <span className="stocks-mov-meta">{fmtDate(m.movement_date)} · {m.creator?.name ?? '—'}{m.project ? ` · ${m.project.code}` : ''}</span>
                           </div>
-                          <span className={`stocks-mov-qty ${isIn ? 'stocks-mov-qty--in' : isAdj ? '' : 'stocks-mov-qty--out'}`}>
+                          <span className={`stocks-mov-qty ${isIn ? 'stocks-mov-qty--in' : isAdj ? '' : 'stocks-mov-qty--out'}`} title={m.total_cost ? `${fmtFCFA(m.total_cost)} (PU ${fmtFCFA(m.unit_cost ?? 0)})` : undefined}>
                             {isAdj ? fmt(m.quantity, movModal.unit) : `${isIn ? '+' : '−'}${fmt(m.quantity, movModal.unit)}`}
+                            {m.total_cost ? <small style={{ display: 'block', fontWeight: 400, fontSize: '0.7rem', opacity: 0.8 }}>{fmtFCFA(m.total_cost)}</small> : null}
                           </span>
                         </div>
                       );

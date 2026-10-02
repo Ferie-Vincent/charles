@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\BudgetEntry;
 use App\Models\Project;
+use App\Models\SituationTravaux;
 use App\Services\ProjectFinancialMetricsService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -32,8 +33,14 @@ class BudgetController extends Controller
         $totals['realise']    = $canonical['realise'];     // factures payées uniquement
         $totals['solde']      = $canonical['budget_ref'] - $canonical['realise'] - $canonical['engage'];
 
-        // Tranches mensuelles sur 90 jours à partir d'aujourd'hui
-        $buckets = $this->build90jBuckets($entries);
+        // Créances attendues : situations engagées (≥ soumise) non encore payées (Mary — trésorerie entrante)
+        $creances = $this->expectedReceivables($project);
+
+        // Tranches mensuelles sur 90 jours à partir d'aujourd'hui — décaissements ET encaissements
+        $buckets = $this->build90jBuckets($entries, $creances);
+
+        $totals['creances_en_attente'] = round($creances->sum('amount'), 2);
+        $totals['delai_paiement_jours'] = $project->effective_delai_paiement_jours;
 
         // Paiements manuels sans lien situation — saisie comptable non traçable
         $orphanPayments = $project->budgetEntries()
@@ -46,6 +53,7 @@ class BudgetController extends Controller
             'totals'          => $totals,
             'chart'           => $buckets,
             'orphan_payments' => $orphanPayments,
+            'creances'        => $creances->values(),
         ]);
     }
 
@@ -90,7 +98,44 @@ class BudgetController extends Controller
         return response()->noContent();
     }
 
-    private function build90jBuckets($entries): array
+    /**
+     * Créances attendues du MOA : une situation de travaux ≥ soumise et non payée est de l'argent
+     * dû. Date d'encaissement estimée = (service fait ?? validation ?? soumission) + délai de
+     * paiement du chantier. Sans cela la trésorerie 90 j ne voit que les sorties.
+     *
+     * @return \Illuminate\Support\Collection<int, array{id:int, numero:string, periode:string, status:string, amount:float, expected_date:string, overdue:bool, basis:string}>
+     */
+    private function expectedReceivables(Project $project): \Illuminate\Support\Collection
+    {
+        $delai = $project->effective_delai_paiement_jours;
+
+        return SituationTravaux::where('project_id', $project->id)
+            ->whereIn('status', ['soumise', 'validee_moe'])
+            ->orderBy('created_at')
+            ->get()
+            ->map(function (SituationTravaux $s) use ($delai) {
+                [$basisDate, $basis] = match (true) {
+                    $s->service_fait_at !== null => [$s->service_fait_at, 'service_fait'],
+                    $s->validated_at !== null    => [$s->validated_at, 'validation_moe'],
+                    $s->submitted_at !== null    => [$s->submitted_at, 'soumission'],
+                    default                      => [$s->created_at, 'creation'],
+                };
+                $expected = \Carbon\Carbon::parse($basisDate)->addDays($delai)->startOfDay();
+
+                return [
+                    'id'            => $s->id,
+                    'numero'        => $s->numero,
+                    'periode'       => $s->periode,
+                    'status'        => $s->status,
+                    'amount'        => (float) $s->net_a_payer,
+                    'expected_date' => $expected->toDateString(),
+                    'overdue'       => $expected->lt(now()->startOfDay()),
+                    'basis'         => $basis,
+                ];
+            });
+    }
+
+    private function build90jBuckets($entries, \Illuminate\Support\Collection $creances): array
     {
         $today = now()->startOfDay();
         $end   = $today->copy()->addDays(90);
@@ -114,6 +159,11 @@ class BudgetController extends Controller
                     ->whereBetween('entry_date', [$from, $to])->sum('amount'),
                 'paiement'     => (float) $entries->where('type', 'paiement')
                     ->whereBetween('entry_date', [$from, $to])->sum('amount'),
+                // Encaissements attendus : créances en retard comptées dans la première tranche
+                'encaissement' => (float) $creances->filter(function ($c) use ($from, $to, $i) {
+                    $d = \Carbon\Carbon::parse($c['expected_date']);
+                    return ($i === 0 && $d->lt($from)) || $d->between($from, $to);
+                })->sum('amount'),
             ];
         }
 

@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../auth/stores/auth-store';
 import {
   fetchSituations, createSituation, submitSituation,
-  validateSituation, paySituation, fetchPreviewCalcul,
+  validateSituation, paySituation, recordServiceFait, fetchPreviewCalcul,
   approveCtSituation, rejectCtSituation,
   approveDtSituation, rejectDtSituation, contestSituation, correctSituation,
   type Situation, type SituationStatut, type AvanceSummary, type RetenueSummary,
@@ -50,6 +50,7 @@ export default function SituationsPage() {
   const isCt         = roleName === 'conducteur-travaux' || isManagement;
   const isMoe        = ['conducteur-travaux', 'direction', 'directeur-technique'].includes(roleName);
   const isMetreur    = roleName === 'metreur-economiste';
+  const isFinance    = roleName === 'comptable' || isManagement;
 
   const { data: situationsData, isLoading } = useQuery({
     queryKey: ['situations', projectId],
@@ -76,6 +77,12 @@ export default function SituationsPage() {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ periode: currentMonth(), avancement_pct: 0, notes: '' });
   const [payDate, setPayDate] = useState<Record<number, string>>({});
+  // Suivi MOA (service fait / ordre de paiement) — saisie inline par situation
+  const [sfForm, setSfForm] = useState<Record<number, { service_fait_at: string; ordre_paiement_ref: string; ordre_paiement_at: string }>>({});
+  const serviceFaitMut = useMutation({
+    mutationFn: ({ sid, data }: { sid: number; data: { service_fait_at?: string | null; ordre_paiement_ref?: string | null; ordre_paiement_at?: string | null } }) => recordServiceFait(projectId, sid, data),
+    onSuccess: invalidate,
+  });
 
   // Modales de commentaire pour rejet CT, rejet DT et contestation
   const [rejectCtModal, setRejectCtModal] = useState<{ situationId: number; comment: string } | null>(null);
@@ -526,6 +533,45 @@ export default function SituationsPage() {
                         >
                           Corriger
                         </button>
+                      )}
+
+                      {/* Côté MOA : service fait + ordre de paiement (non bloquant, base de la date d'encaissement) */}
+                      {(s.status === 'validee_moe' || s.status === 'payee') && (s.service_fait_at || s.ordre_paiement_ref) && (
+                        <span className="badge badge--success" title="Attestation de service fait / ordre de paiement MOA">
+                          {s.service_fait_at && `Service fait ${new Date(s.service_fait_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })}`}
+                          {s.ordre_paiement_ref && ` · OP ${s.ordre_paiement_ref}`}
+                        </span>
+                      )}
+                      {s.status === 'validee_moe' && isFinance && !s.ordre_paiement_ref && (
+                        <div className="btp-pay-row" title="Étape MOA : attestation de service fait puis ordre de paiement. Fiabilise la date d'encaissement prévue.">
+                          <input
+                            type="date"
+                            className="form-control form-control--sm"
+                            value={sfForm[s.id]?.service_fait_at ?? (s.service_fait_at ?? '')}
+                            onChange={e => setSfForm(f => ({ ...f, [s.id]: { ...(f[s.id] ?? { service_fait_at: '', ordre_paiement_ref: '', ordre_paiement_at: '' }), service_fait_at: e.target.value } }))}
+                            aria-label="Date service fait"
+                          />
+                          <input
+                            type="text"
+                            className="form-control form-control--sm"
+                            style={{ width: 110 }}
+                            placeholder="Réf. OP"
+                            value={sfForm[s.id]?.ordre_paiement_ref ?? ''}
+                            onChange={e => setSfForm(f => ({ ...f, [s.id]: { ...(f[s.id] ?? { service_fait_at: s.service_fait_at ?? '', ordre_paiement_ref: '', ordre_paiement_at: '' }), ordre_paiement_ref: e.target.value } }))}
+                            aria-label="Référence ordre de paiement"
+                          />
+                          <button
+                            className="btn btn--sm btn--ghost"
+                            disabled={serviceFaitMut.isPending || !(sfForm[s.id]?.service_fait_at || sfForm[s.id]?.ordre_paiement_ref)}
+                            onClick={() => serviceFaitMut.mutate({ sid: s.id, data: {
+                              service_fait_at:    sfForm[s.id]?.service_fait_at || null,
+                              ordre_paiement_ref: sfForm[s.id]?.ordre_paiement_ref || null,
+                              ordre_paiement_at:  sfForm[s.id]?.ordre_paiement_ref ? (sfForm[s.id]?.ordre_paiement_at || new Date().toISOString().slice(0, 10)) : null,
+                            } })}
+                          >
+                            Service fait
+                          </button>
+                        </div>
                       )}
 
                       {/* Comptable/direction: pay validee_moe → payee */}

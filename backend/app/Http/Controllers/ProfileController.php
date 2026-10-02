@@ -70,7 +70,11 @@ class ProfileController extends Controller
         }
 
         $data = $request->validate([
-            'name' => 'required|string|max:255',
+            'name'                 => 'required|string|max:255',
+            // Défauts financiers entreprise (surchargeables par chantier)
+            'tva_rate'             => 'sometimes|numeric|min:0|max:100',
+            'retenue_garantie_pct' => 'sometimes|numeric|min:0|max:20',
+            'delai_paiement_jours' => 'sometimes|integer|min:0|max:365',
         ]);
 
         $user->company->update($data);

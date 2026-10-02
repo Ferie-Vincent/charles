@@ -33,6 +33,10 @@ export default function ProjectForm({ onSubmit, isLoading }: ProjectFormProps) {
   const [montantMarche, setMontantMarche]       = useState('');
   const [avancePct, setAvancePct]               = useState('');
   const [delaiJours, setDelaiJours]             = useState('');
+  // Paramètres financiers — vides = défauts entreprise (TVA 18 %, RG 5 %, 60 j)
+  const [tvaRate, setTvaRate]                   = useState('');
+  const [rgPct, setRgPct]                       = useState('');
+  const [delaiPaiement, setDelaiPaiement]       = useState('');
 
   function mapZone() {
     if (!navigator.geolocation) {
@@ -71,6 +75,9 @@ export default function ProjectForm({ onSubmit, isLoading }: ProjectFormProps) {
           montant_marche:        montantMarche ? Number(montantMarche) : undefined,
           avance_demarrage_pct:  avancePct ? Number(avancePct) : undefined,
           delai_execution_jours: delaiJours ? Number(delaiJours) : undefined,
+          tva_rate:              tvaRate !== '' ? Number(tvaRate) : undefined,
+          retenue_garantie_pct:  rgPct !== '' ? Number(rgPct) : undefined,
+          delai_paiement_jours:  delaiPaiement !== '' ? Number(delaiPaiement) : undefined,
           latitude:              latitude ?? undefined,
           longitude:             longitude ?? undefined,
         });
@@ -170,6 +177,23 @@ export default function ProjectForm({ onSubmit, isLoading }: ProjectFormProps) {
           <input id="avance_pct" type="number" min="0" max="50" value={avancePct} onChange={(e) => setAvancePct(e.target.value)} placeholder="15" />
         </div>
       </div>
+
+      {/* ── Paramètres financiers du marché (vides = défauts entreprise) ── */}
+      <div className="form-row">
+        <div className="form-group">
+          <label htmlFor="tva_rate">TVA (%)</label>
+          <input id="tva_rate" type="number" min="0" max="100" step="0.01" value={tvaRate} onChange={(e) => setTvaRate(e.target.value)} placeholder="18 (0 si exonéré)" />
+        </div>
+        <div className="form-group">
+          <label htmlFor="rg_pct">Retenue de garantie (%)</label>
+          <input id="rg_pct" type="number" min="0" max="20" step="0.5" value={rgPct} onChange={(e) => setRgPct(e.target.value)} placeholder="5" />
+        </div>
+        <div className="form-group">
+          <label htmlFor="delai_paiement">Délai de paiement MOA (jours)</label>
+          <input id="delai_paiement" type="number" min="0" max="365" value={delaiPaiement} onChange={(e) => setDelaiPaiement(e.target.value)} placeholder="60" />
+        </div>
+      </div>
+      <span className="form-hint">Laisser vide pour hériter des défauts de l'entreprise (Paramètres → Entreprise). Marchés financés bailleurs : TVA 0.</span>
 
       {/* ── Intervenants ── */}
       <div className="form-row">

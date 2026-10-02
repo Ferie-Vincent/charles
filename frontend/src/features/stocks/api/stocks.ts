@@ -8,6 +8,8 @@ export interface StockItem {
   unit: string;
   quantity: number;
   threshold: number;
+  /** Prix unitaire moyen pondéré (FCFA) — recalculé à chaque entrée valorisée */
+  unit_cost?: number;
   location?: string;
   notes?: string;
   is_low?: boolean;
@@ -19,6 +21,10 @@ export interface StockMovement {
   stock_item_id: number;
   type: 'entree' | 'sortie' | 'ajustement';
   quantity: number;
+  /** PU figé au moment du mouvement ; total = quantité × PU (sortie chantier = coût matériaux) */
+  unit_cost?: number | null;
+  total_cost?: number | null;
+  project_id?: number | null;
   reason: string;
   movement_date: string;
   notes?: string;

@@ -130,6 +130,17 @@ Avancement théorique (%) = Durée écoulée / Durée totale × 100
   → Négatif : chantier en retard
 ```
 
+**Deux sources d'avancement réel — une seule vérité (règle depuis oct. 2026) :**
+
+| Source        | Donnée                                        | Nature                   |
+| ------------- | --------------------------------------------- | ------------------------ |
+| **Déclaré**   | `daily_logs.progress_percent` (chef chantier) | Quotidien, subjectif     |
+| **Certifié**  | `situation_travaux.avancement_pct` validée MOE | Mensuel, contractuel     |
+
+Résolution (`ProjectProgressResolver`) : le **certifié prime** s'il date de moins de 60 jours, sinon le déclaré.
+Le Health Score, l'alerte « retard > 10 pts » et les snapshots IA lisent ce résolveur — l'indicateur n'est
+pas pilotable par la seule personne qu'il évalue. Les deux valeurs et leur écart sont toujours affichés.
+
 ---
 
 ## 4. Documents Contractuels et Techniques
@@ -271,6 +282,31 @@ Indice de performance coût (CPI) = Valeur gagnée / Coût réel
   → CPI > 1 : sous-consommation (à analyser)
 ```
 
+### 5.4 bis Paramètres financiers configurables
+
+| Paramètre              | Défaut entreprise | Surcharge chantier | Usage                                      |
+| ---------------------- | ----------------- | ------------------ | ------------------------------------------ |
+| `tva_rate`             | 18 %              | oui (0 si exonéré) | Situations, factures                       |
+| `retenue_garantie_pct` | 5 %               | oui (ex. 10 %)     | Situations, factures sous-traitant         |
+| `delai_paiement_jours` | 60 j              | oui                | Date d'encaissement estimée d'une créance  |
+
+Résolution : **chantier → entreprise → `config/btp.php`**. Un marché financé par un bailleur (TVA 0) ou une
+RG négociée ne nécessite plus de modification de code.
+
+### 5.4 ter Trésorerie entrante — créances MOA
+
+Une situation de travaux **≥ soumise et non payée** est une créance attendue :
+
+```
+Montant        = net_a_payer
+Date estimée   = (service_fait_at ?? validated_at ?? submitted_at) + delai_paiement_jours
+En retard      = date estimée < aujourd'hui
+```
+
+Elle apparaît dans la trésorerie prévisionnelle 90 j (`encaissement`) face aux décaissements. Les étapes
+côté MOA (attestation de **service fait**, **ordre de paiement**) sont tracées comme champs datés sur la
+situation — pas comme états bloquants — et affinent la date d'encaissement.
+
 ### 5.5 Particularités Côte d'Ivoire
 
 - **Monnaie** : FCFA (XOF) — parité fixe avec EUR (1 EUR = 655,957 FCFA)
@@ -408,6 +444,15 @@ Safety Score = max(0, 25 − incidents_critiques×15 − incidents_majeurs×5 �
 - **Ajustement** : inventaire, casse, vol
 
 **Alerte stock minimum :** si `quantite < min_quantite` → alerte générée automatiquement
+
+**Valorisation (PMP) :** chaque article porte un prix unitaire moyen pondéré, recalculé à chaque entrée
+valorisée (`PMP' = (stock × PMP + qté × PU) / (stock + qté)`). Une **sortie vers un chantier** est obligatoirement
+rattachée à un `project_id` (rôles terrain) et figée à `quantité × PMP` = coût matériaux consommé par ce chantier
+(`materiaux_stock_consommes`, informatif — non ajouté à l'engagé car les achats sont déjà dans les factures).
+
+**Rapprochement journal ↔ magasin :** par matériau, `materials_received` du journal (reçu sur site) est comparé
+aux sorties de stock imputées au chantier. Statuts : `ok` (écart ≤ 5 %), `ecart`, `journal_only` (achat direct ?),
+`stock_only` (sorti mais jamais déclaré reçu → coulage ?).
 
 **Matériaux courants CI :**
 Ciment, Fer à béton (6–32mm), Sable (fin/grossier), Gravier (4/8, 8/16), Parpaings, Briques, Bois (coffrage, charpente), Carrelage, Peinture, PVC, Câbles électriques, Tuyaux PVC/PER
@@ -619,10 +664,18 @@ safety_score     = max(0, 25 − nb_incidents × 5)
 8. **BDC validé = ne peut plus être modifié** — workflow irréversible (sauf annulation)
 9. **Incident critique → alerte immédiate** — notification push + WhatsApp chef de projet
 10. **Stock < min_quantite → alerte auto** — déclenchée à chaque mouvement de sortie
+11. **Écritures budgétaires automatiques idempotentes** — clé unique `(source_type, source_id, type)` sur
+    `budget_entries` ; l'engagement d'un BDC est **recalculé** (`total − factures validées/payées`), jamais
+    incrémenté/décrémenté. Rejouer un événement ne change rien.
+12. **Transitions d'état atomiques** — `UPDATE … WHERE status = état_attendu` ; 0 ligne modifiée → HTTP 409.
+    Un retry réseau ou un double clic ne peut ni payer deux fois ni émettre deux événements.
+13. **L'IA commente, elle ne décide pas** — tout montant affiché à côté d'un bouton d'approbation vient de
+    `ProjectFinancialMetricsService` en temps réel ; les snapshots IA (01h) sont horodatés et indicatifs.
 
 ### 14.2 Règles de workflow
 
-- Situation de travaux : **BROUILLON → SOUMISE → VALIDÉE MOE → PAYÉE** (irréversible)
+- Situation de travaux : **BROUILLON → REVUE CT → REVUE DT → SOUMISE → VALIDÉE MOE → PAYÉE** (+ CONTESTÉE → BROUILLON) ;
+  service fait / ordre de paiement MOA = champs datés, non bloquants
 - Facture fournisseur : **SOUMISE → VALIDÉE → PAYÉE** (comptable uniquement pour validation)
 - BDC : **EN ATTENTE → APPROUVÉ → REÇU** (réception avec BL + photos obligatoires)
 - Incident : **OUVERT → EN COURS → RÉSOLU** (résolution requiert action corrective)
@@ -642,4 +695,4 @@ safety_score     = max(0, 25 − nb_incidents × 5)
 ---
 
 _Document vivant — mis à jour à chaque évolution significative du produit._
-_Version 1.0 — Mai 2026 — Chantier Platform / Équipe Produit_
+_Version 1.1 — Octobre 2026 — Chantier Platform / Équipe Produit (révision round 1 party mode : finance idempotente, avancement certifié, paramètres par chantier, créances MOA, valorisation stock)_

@@ -39,8 +39,10 @@ class CheckAvancementRetard extends Command
 
             $avancementCible = round($elapsedDays / $totalDays * 100, 1);
 
-            // Utiliser l'avancement du dernier journal — PAS target_progress (saisi manuellement, potentiellement obsolète)
-            $avancementReel = (float) $project->dailyLogs()->latest('log_date')->value('progress_percent');
+            // Avancement résolu : situation certifiée récente prioritaire, sinon dernier journal
+            // (jamais target_progress — saisi manuellement, potentiellement obsolète)
+            $resolved       = app(\App\Services\ProjectProgressResolver::class)->resolve($project);
+            $avancementReel = (float) $resolved['value'];
 
             if ($avancementReel === 0.0 && $avancementCible === 0.0) {
                 continue;
@@ -52,7 +54,7 @@ class CheckAvancementRetard extends Command
                 continue;
             }
 
-            $this->line("  {$project->code} — cible {$avancementCible}% / réel (journal) {$avancementReel}% — écart {$ecart} pts");
+            $this->line("  {$project->code} — cible {$avancementCible}% / réel ({$resolved['source']}) {$avancementReel}% — écart {$ecart} pts");
             $alerted++;
 
             if ($this->option('dry-run')) {

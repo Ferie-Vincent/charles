@@ -15,6 +15,9 @@
 - Run tests at end of feature batch, not between each file
 
 ## Git commits
-Branch: fix/audit-7points (current)
-Main branch: main
+Branch: feature branches (fix/*, feat/*), merge into master
+Main branch: master
 Use conventional commits (fix/feat/refactor prefixes)
+
+## Commit attribution
+Never add `Co-Authored-By: Claude` (or any variant). Commits attributed to the user only.

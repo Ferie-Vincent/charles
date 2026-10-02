@@ -1,5 +1,12 @@
 import { useState, useEffect } from 'react';
-import { getMaterialReceipts, type MaterialReceiptsData } from '../api/get-material-receipts';
+import { getMaterialReceipts, type MaterialReceiptsData, type MaterialReconciliation } from '../api/get-material-receipts';
+
+const RECON_LABEL: Record<MaterialReconciliation['status'], { label: string; color: string; hint: string }> = {
+  ok:           { label: 'Cohérent',          color: '#10b981', hint: 'Écart ≤ 5 %' },
+  ecart:        { label: 'Écart',             color: '#ef4444', hint: 'Journal et magasin divergent — vérifier coulage ou saisie' },
+  journal_only: { label: 'Reçu hors magasin', color: '#f59e0b', hint: 'Déclaré reçu sur site sans sortie du stock central (achat direct ?)' },
+  stock_only:   { label: 'Sorti non déclaré', color: '#ef4444', hint: 'Sorti du magasin vers ce chantier mais jamais déclaré reçu dans le journal' },
+};
 
 const MATERIAL_ICONS: Record<string, string> = {
   'Ciment':    '🪨', 'Fer':      '🔩', 'Sable':    '🏖️',
@@ -19,7 +26,7 @@ export default function MaterialReceiptsPanel({ projectId }: Props) {
   }, [projectId]);
 
   if (loading) return <div className="mr-panel"><p className="mr-empty">Chargement…</p></div>;
-  if (!data || data.totals.length === 0) {
+  if (!data || (data.totals.length === 0 && (data.rapprochement ?? []).length === 0)) {
     return (
       <div className="mr-panel">
         <p className="mr-empty">Aucune réception enregistrée. Saisissez des matériaux dans le journal quotidien.</p>
@@ -28,9 +35,48 @@ export default function MaterialReceiptsPanel({ projectId }: Props) {
   }
 
   const visibleEntries = showAll ? data.entries : data.entries.slice(0, 10);
+  const rapprochement  = data.rapprochement ?? [];
+  const anomalies      = rapprochement.filter(r => r.status !== 'ok');
 
   return (
     <div className="mr-panel">
+      {/* Rapprochement journal ↔ stock central — « deux vérités du ciment » */}
+      {rapprochement.length > 0 && (
+        <div className="mr-recon">
+          <p className="mr-entries__title" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            Rapprochement journal / magasin
+            {anomalies.length > 0
+              ? <span className="badge badge--warning">{anomalies.length} anomalie{anomalies.length > 1 ? 's' : ''}</span>
+              : <span className="badge badge--success">OK</span>}
+          </p>
+          <table className="mr-table">
+            <thead>
+              <tr><th>Matériau</th><th>Journal (reçu)</th><th>Magasin (sorti)</th><th>Écart</th><th>Valeur sortie</th><th>Statut</th></tr>
+            </thead>
+            <tbody>
+              {rapprochement.map(r => {
+                const cfg = RECON_LABEL[r.status];
+                return (
+                  <tr key={r.name}>
+                    <td>{r.name}</td>
+                    <td className="mr-table__qty">{r.journal_qty.toLocaleString('fr-FR')} <span className="mr-table__unit">{r.unit}</span></td>
+                    <td className="mr-table__qty">{r.stock_qty.toLocaleString('fr-FR')} <span className="mr-table__unit">{r.unit}</span></td>
+                    <td className="mr-table__qty" style={{ color: r.ecart_qty === 0 ? 'inherit' : r.ecart_qty > 0 ? '#f59e0b' : '#ef4444' }}>
+                      {r.ecart_qty > 0 ? '+' : ''}{r.ecart_qty.toLocaleString('fr-FR')}
+                    </td>
+                    <td className="mr-table__qty">{r.stock_value > 0 ? `${Math.round(r.stock_value).toLocaleString('fr-FR')} FCFA` : '—'}</td>
+                    <td><span className="badge" style={{ color: cfg.color, borderColor: `${cfg.color}55`, background: `${cfg.color}12` }} title={cfg.hint}>{cfg.label}</span></td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+          <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: '6px 0 0' }}>
+            Jointure par nom de matériau. « Valeur sortie » = quantité sortie × PU moyen pondéré du magasin — coût matériaux réellement consommé par ce chantier.
+          </p>
+        </div>
+      )}
+
       {/* Grille des totaux */}
       <div className="mr-grid">
         {data.totals.map(t => {

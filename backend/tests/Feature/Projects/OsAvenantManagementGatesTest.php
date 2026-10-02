@@ -20,7 +20,7 @@ function makeUserWithRole(Company $company, string $roleName): User
     ]);
 }
 
-function makeProject(Company $company, float $montantMarche = 10_000_000): Project
+function makeOsProject(Company $company, float $montantMarche = 10_000_000): Project
 {
     return Project::factory()->create([
         'company_id'     => $company->id,
@@ -34,7 +34,7 @@ function makeProject(Company $company, float $montantMarche = 10_000_000): Proje
 it('allows direction to create OS demarrage', function () {
     $company = Company::factory()->create();
     $user    = makeUserWithRole($company, 'direction');
-    $project = makeProject($company);
+    $project = makeOsProject($company);
 
     $this->actingAs($user)
         ->postJson("/api/projects/{$project->id}/os", [
@@ -49,7 +49,7 @@ it('allows direction to create OS demarrage', function () {
 it('allows directeur-technique to create OS arret', function () {
     $company = Company::factory()->create();
     $user    = makeUserWithRole($company, 'directeur-technique');
-    $project = makeProject($company);
+    $project = makeOsProject($company);
 
     $this->actingAs($user)
         ->postJson("/api/projects/{$project->id}/os", [
@@ -64,7 +64,7 @@ it('allows directeur-technique to create OS arret', function () {
 it('forbids conducteur-travaux from creating OS demarrage', function () {
     $company = Company::factory()->create();
     $user    = makeUserWithRole($company, 'conducteur-travaux');
-    $project = makeProject($company);
+    $project = makeOsProject($company);
 
     $this->actingAs($user)
         ->postJson("/api/projects/{$project->id}/os", [
@@ -79,7 +79,7 @@ it('forbids conducteur-travaux from creating OS demarrage', function () {
 it('forbids conducteur-travaux from creating OS arret', function () {
     $company = Company::factory()->create();
     $user    = makeUserWithRole($company, 'conducteur-travaux');
-    $project = makeProject($company);
+    $project = makeOsProject($company);
 
     $this->actingAs($user)
         ->postJson("/api/projects/{$project->id}/os", [
@@ -94,7 +94,7 @@ it('forbids conducteur-travaux from creating OS arret', function () {
 it('forbids conducteur-travaux from creating OS reprise', function () {
     $company = Company::factory()->create();
     $user    = makeUserWithRole($company, 'conducteur-travaux');
-    $project = makeProject($company);
+    $project = makeOsProject($company);
 
     $this->actingAs($user)
         ->postJson("/api/projects/{$project->id}/os", [
@@ -109,7 +109,7 @@ it('forbids conducteur-travaux from creating OS reprise', function () {
 it('allows conducteur-travaux to create OS travaux_supplementaires', function () {
     $company = Company::factory()->create();
     $user    = makeUserWithRole($company, 'conducteur-travaux');
-    $project = makeProject($company);
+    $project = makeOsProject($company);
 
     $this->actingAs($user)
         ->postJson("/api/projects/{$project->id}/os", [
@@ -124,7 +124,7 @@ it('allows conducteur-travaux to create OS travaux_supplementaires', function ()
 it('allows conducteur-travaux to create OS autre', function () {
     $company = Company::factory()->create();
     $user    = makeUserWithRole($company, 'conducteur-travaux');
-    $project = makeProject($company);
+    $project = makeOsProject($company);
 
     $this->actingAs($user)
         ->postJson("/api/projects/{$project->id}/os", [
@@ -141,7 +141,7 @@ it('allows conducteur-travaux to create OS autre', function () {
 it('allows direction to sign a small avenant', function () {
     $company = Company::factory()->create();
     $user    = makeUserWithRole($company, 'direction');
-    $project = makeProject($company);
+    $project = makeOsProject($company);
     $avenant = Avenant::factory()->create([
         'project_id' => $project->id,
         'company_id' => $company->id,
@@ -159,7 +159,7 @@ it('allows direction to sign a small avenant', function () {
 it('allows directeur-technique to sign a large avenant', function () {
     $company = Company::factory()->create();
     $user    = makeUserWithRole($company, 'directeur-technique');
-    $project = makeProject($company);
+    $project = makeOsProject($company);
     $avenant = Avenant::factory()->create([
         'project_id' => $project->id,
         'company_id' => $company->id,
@@ -177,7 +177,7 @@ it('allows directeur-technique to sign a large avenant', function () {
 it('forbids conducteur-travaux from signing any avenant', function () {
     $company = Company::factory()->create();
     $user    = makeUserWithRole($company, 'conducteur-travaux');
-    $project = makeProject($company);
+    $project = makeOsProject($company);
     $avenant = Avenant::factory()->create([
         'project_id' => $project->id,
         'company_id' => $company->id,
@@ -195,7 +195,7 @@ it('forbids conducteur-travaux from signing any avenant', function () {
 it('allows conducteur-travaux to submit (but not sign) an avenant', function () {
     $company = Company::factory()->create();
     $user    = makeUserWithRole($company, 'conducteur-travaux');
-    $project = makeProject($company);
+    $project = makeOsProject($company);
     $avenant = Avenant::factory()->create([
         'project_id' => $project->id,
         'company_id' => $company->id,
@@ -213,7 +213,7 @@ it('allows conducteur-travaux to submit (but not sign) an avenant', function () 
 it('forbids metreur from signing any avenant', function () {
     $company = Company::factory()->create();
     $user    = makeUserWithRole($company, 'metreur-economiste');
-    $project = makeProject($company);
+    $project = makeOsProject($company);
     $avenant = Avenant::factory()->create([
         'project_id' => $project->id,
         'company_id' => $company->id,

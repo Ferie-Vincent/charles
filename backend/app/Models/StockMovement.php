@@ -9,12 +9,18 @@ class StockMovement extends Model
 {
     protected $fillable = [
         'stock_item_id', 'created_by', 'project_id', 'purchase_order_id',
-        'type', 'quantity', 'reason', 'movement_date', 'notes',
+        'type', 'quantity', 'unit_cost', 'total_cost', 'reason', 'movement_date', 'notes',
     ];
 
-    protected $casts = ['quantity' => 'float', 'movement_date' => 'date'];
+    protected $casts = [
+        'quantity'      => 'float',
+        'unit_cost'     => 'float',
+        'total_cost'    => 'float',
+        'movement_date' => 'date',
+    ];
 
     public function stockItem(): BelongsTo { return $this->belongsTo(StockItem::class); }
     public function creator(): BelongsTo   { return $this->belongsTo(User::class, 'created_by'); }
     public function project(): BelongsTo   { return $this->belongsTo(Project::class); }
+    public function purchaseOrder(): BelongsTo { return $this->belongsTo(PurchaseOrder::class); }
 }

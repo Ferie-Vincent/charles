@@ -36,8 +36,11 @@ class ProjectMetricsService
             : $project->dailyLogs()->get();
 
         $totalLogs      = $logs->count();
-        $latestProgress = (int) ($logs->sortByDesc('log_date')->first()?->progress_percent ?? 0);
         $incidentCount  = $logs->where('has_incident', true)->count();
+
+        // Avancement : certifié (situation validée MOE récente) prioritaire sur le déclaré (journal)
+        $progress       = app(ProjectProgressResolver::class)->resolve($project);
+        $latestProgress = (int) round($progress['value']);
 
         // --- Temporel ---
         $daysSinceStart = $project->start_date
@@ -84,6 +87,11 @@ class ProjectMetricsService
             'previsionnel'     => round($previsionnel, 2),
             'ecart'            => round($ecart, 2),
             'latest_progress'  => $latestProgress,
+            'progress_source'  => $progress['source'],      // certified | declared | none
+            'declared_progress'  => $progress['declared'],
+            'certified_progress' => $progress['certified'],
+            'certified_at'       => $progress['certified_at'],
+            'progress_gap'       => $progress['gap'],       // déclaré − certifié (positif = terrain optimiste)
             'target_progress'  => $target,
             'total_logs'       => $totalLogs,
             'incident_count'   => $incidentCount,
@@ -112,34 +120,12 @@ class ProjectMetricsService
      */
     private function computeBudgetScore(Project $project): array
     {
-        // Référence budgétaire : DQE validé prioritaire sur budget_amount du projet.
-        $dqeVersions = $project->relationLoaded('dqeVersions')
-            ? $project->dqeVersions
-            : $project->dqeVersions()->get();
+        // Source canonique unique (budget_ref, engagé, réalisé) — plus de recalcul local divergent.
+        $m = app(ProjectFinancialMetricsService::class)->compute($project);
 
-        $validatedDqe = $dqeVersions
-            ->where('status', 'validated')
-            ->sortByDesc('version_number')
-            ->first();
-
-        $budgetRef = $validatedDqe
-            ? (float) $validatedDqe->total_ht
-            : (float) ($project->budget_amount ?? 0);
-
-        $invoices = $project->relationLoaded('invoices')
-            ? $project->invoices
-            : $project->invoices()->get();
-
-        $budgetEntries = $project->relationLoaded('budgetEntries')
-            ? $project->budgetEntries
-            : $project->budgetEntries()->get();
-
-        // Réalisé = factures au statut payée uniquement (décaissé).
-        $realise = (float) $invoices->where('status', 'payee')->sum('amount_ht');
-
-        // Engagé = entrées BDC + factures validées (engagement ferme total, source canonique).
-        $engagement = (float) $budgetEntries->where('type', 'engagement')->sum('amount');
-        $engage     = $engagement + (float) $invoices->where('status', 'validee')->sum('amount_ht');
+        $budgetRef = $m['budget_ref'];
+        $realise   = $m['realise'];
+        $engage    = $m['engage'];
 
         // Aucune référence budgétaire → score neutre.
         if ($budgetRef <= 0) {

@@ -43,6 +43,7 @@ class StockController extends Controller
             'unit'      => 'required|string|max:30',
             'quantity'  => 'required|numeric|min:0',
             'threshold' => 'nullable|numeric|min:0',
+            'unit_cost' => 'nullable|numeric|min:0',   // PU moyen initial (FCFA) — valorisation du stock
             'location'  => 'nullable|string|max:255',
             'notes'     => 'nullable|string|max:1000',
         ]);
@@ -71,6 +72,7 @@ class StockController extends Controller
             'category'  => 'sometimes|required|in:' . implode(',', self::CATEGORIES),
             'unit'      => 'sometimes|required|string|max:30',
             'threshold' => 'nullable|numeric|min:0',
+            'unit_cost' => 'nullable|numeric|min:0',
             'location'  => 'nullable|string|max:255',
             'notes'     => 'nullable|string|max:1000',
         ]);
@@ -151,8 +153,15 @@ class StockController extends Controller
             'reason'        => 'required|string|max:255',
             'movement_date' => 'required|date',
             'project_id'    => ['nullable', \Illuminate\Validation\Rule::exists('projects', 'id')->where('company_id', $request->user()->company_id)],
+            'unit_cost'     => 'nullable|numeric|min:0',   // entrée : PU d'achat (met à jour le PMP) ; ignoré en sortie
             'notes'         => 'nullable|string|max:500',
         ]);
+
+        // Une sortie vers un chantier porte un coût : project_id obligatoire pour les rôles terrain
+        // (sinon la consommation matériaux n'est imputée à aucun chantier — « deux vérités du ciment »)
+        if ($data['type'] === 'sortie' && in_array($roleSlug, Roles::TERRAIN) && empty($data['project_id'])) {
+            abort(422, 'Une sortie de stock terrain doit être rattachée à un chantier.');
+        }
 
         if (in_array($roleSlug, Roles::TERRAIN) && $data['type'] !== 'sortie') {
             abort(403, 'Les rôles terrain ne peuvent enregistrer que des sorties de stock.');
@@ -177,6 +186,21 @@ class StockController extends Controller
                 $movementData['quantity'] = $data['quantity'] - $lockedItem->quantity;
             }
 
+            // Valorisation : entrée au PU saisi (→ nouveau PMP), sortie au PMP courant, ajustement non valorisé
+            $entryCost = $data['type'] === 'entree' ? ($data['unit_cost'] ?? null) : null;
+            $newPmp    = $data['type'] === 'entree'
+                ? $lockedItem->weightedUnitCostAfterEntry((float) $data['quantity'], $entryCost !== null ? (float) $entryCost : null)
+                : (float) $lockedItem->unit_cost;
+
+            $movementData['unit_cost'] = match ($data['type']) {
+                'entree' => $entryCost !== null ? round((float) $entryCost, 2) : null,
+                'sortie' => (float) $lockedItem->unit_cost > 0 ? (float) $lockedItem->unit_cost : null,
+                default  => null,
+            };
+            $movementData['total_cost'] = $movementData['unit_cost'] !== null
+                ? round($movementData['unit_cost'] * (float) $data['quantity'], 2)
+                : null;
+
             $movement = $lockedItem->movements()->create([
                 ...$movementData,
                 'created_by' => $request->user()->id,
@@ -185,6 +209,7 @@ class StockController extends Controller
             if ($data['type'] === 'ajustement') {
                 $lockedItem->update(['quantity' => $data['quantity']]);
             } elseif ($data['type'] === 'entree') {
+                $lockedItem->update(['unit_cost' => $newPmp]);
                 $lockedItem->increment('quantity', $data['quantity']);
             } else {
                 $lockedItem->decrement('quantity', $data['quantity']);
