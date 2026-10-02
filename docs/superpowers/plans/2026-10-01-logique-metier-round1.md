@@ -2,6 +2,7 @@
 
 > Source : table de synthèse du round 1 (Mary / Winston / John), 2026-10-01.
 > Branche : `fix/logique-metier-round1`. Tests : Pest sur MySQL MAMP (port 8889).
+> **Statut 2026-10-02 : lots A → G livrés, 275/275 tests backend, 25/25 frontend, build OK.**
 
 ## Constat après lecture du code (écarts avec les affirmations des agents)
 
@@ -32,44 +33,44 @@
 ## Lots
 
 ### Lot A — Intégrité finance
-- [ ] Migration `budget_entries` : `source_type`, `source_id`, unique `(source_type, source_id, type)` + backfill
-- [ ] `BudgetEntry::syncBdcEngagement()` ; listeners BDC/facture réécrits en upsert convergent
-- [ ] `CreateBudgetPaymentOnInvoicePaid`, `CreatePreEngagementOnDemandeBesoinApproved`, `DemandeBesoinController::record`, `SituationTravauxController::pay` → upsert par source
-- [ ] `App\Support\Transition` + `StateConflictException` (409) ; appliqué à `WorkflowService`, `InvoiceController::pay`, `PurchaseOrderController` (approve/reject/submit/resubmit/cancel/markReceived), `SituationTravauxController` (9 transitions), `DqeVersionController::transition`
-- [ ] `ProjectMetricsService` délègue à `ProjectFinancialMetricsService` ; `BuildProjectSnapshots` utilise les deux services
-- [ ] Commande `budget:reconcile` (recalcule les engagements BDC, affiche les dérives)
-- [ ] Tests : double approve → 409 et une seule entry ; double pay → 409 ; clear/restore convergent ; snapshots = service canonique
+- [x] Migration `budget_entries` : `source_type`, `source_id`, unique `(source_type, source_id, type)` + backfill
+- [x] `BudgetEntry::syncBdcEngagement()` ; listeners BDC/facture réécrits en upsert convergent
+- [x] `CreateBudgetPaymentOnInvoicePaid`, `CreatePreEngagementOnDemandeBesoinApproved`, `DemandeBesoinController::record`, `SituationTravauxController::pay` → upsert par source
+- [x] `App\Support\Transition` + `StateConflictException` (409) ; appliqué à `WorkflowService`, `InvoiceController::pay`, `PurchaseOrderController` (approve/reject/submit/resubmit/cancel/markReceived), `SituationTravauxController` (9 transitions), `DqeVersionController::transition`
+- [x] `ProjectMetricsService` délègue à `ProjectFinancialMetricsService` ; `BuildProjectSnapshots` utilise les deux services
+- [x] Commande `budget:reconcile` (recalcule les engagements BDC, affiche les dérives)
+- [x] Tests : double approve → 409 et une seule entry ; double pay → 409 ; clear/restore convergent ; snapshots = service canonique
 
 ### Lot B — Paramètres financiers + trésorerie entrante
-- [ ] Migrations `companies` / `projects` (D4) ; accessors `effective_*` sur `Project`
-- [ ] `SituationTravauxController` (store, preview, list) et `InvoiceController` (store, update) utilisent les taux effectifs
-- [ ] `UpdateProjectRequest` / `StoreProjectRequest` / `ProfileController::updateCompany` acceptent les nouveaux champs
-- [ ] `BudgetController::index` : `encaissements_prevus`, `creances`, bucket `encaissement`, `tresorerie_nette`
-- [ ] Frontend : `BudgetPanel` (barre encaissements + KPI créances), `ProjectForm` (3 champs), `SettingsPage` (défauts company)
-- [ ] Tests : taux projet > company > config ; créance attendue datée ; situation à 10 % RG
+- [x] Migrations `companies` / `projects` (D4) ; accessors `effective_*` sur `Project`
+- [x] `SituationTravauxController` (store, preview, list) et `InvoiceController` (store, update) utilisent les taux effectifs
+- [x] `UpdateProjectRequest` / `StoreProjectRequest` / `ProfileController::updateCompany` acceptent les nouveaux champs
+- [x] `BudgetController::index` : `encaissements_prevus`, `creances`, bucket `encaissement`, `tresorerie_nette`
+- [x] Frontend : `BudgetPanel` (barre encaissements + KPI créances), `ProjectForm` (3 champs), `SettingsPage` (défauts company)
+- [x] Tests : taux projet > company > config ; créance attendue datée ; situation à 10 % RG
 
 ### Lot C — Avancement unique
-- [ ] `App\Services\ProjectProgressResolver`
-- [ ] `ProjectMetricsService` + `CheckAvancementRetard` + `BuildProjectSnapshots` l'utilisent ; `progress_source` exposé
-- [ ] Tests : situation validée récente prime ; journal sinon
+- [x] `App\Services\ProjectProgressResolver`
+- [x] `ProjectMetricsService` + `CheckAvancementRetard` + `BuildProjectSnapshots` l'utilisent ; `progress_source` exposé
+- [x] Tests : situation validée récente prime ; journal sinon
 
 ### Lot D — Stock ↔ projet
-- [ ] Migrations `stock_items.unit_cost`, `stock_movements.unit_cost/total_cost`
-- [ ] Mise à jour PU moyen pondéré à la réception BDC ; valorisation des sorties
-- [ ] `ProjectFinancialMetricsService` : `materiaux_stock_consommes` ; `MaterialReceiptController` : rapprochement
-- [ ] Frontend : affichage PU et écart dans `StocksPage` / réception matériaux
-- [ ] Tests : PU pondéré ; sortie valorisée rattachée au projet
+- [x] Migrations `stock_items.unit_cost`, `stock_movements.unit_cost/total_cost`
+- [x] Mise à jour PU moyen pondéré à la réception BDC ; valorisation des sorties
+- [x] `ProjectFinancialMetricsService` : `materiaux_stock_consommes` ; `MaterialReceiptController` : rapprochement
+- [x] Frontend : affichage PU et écart dans `StocksPage` / réception matériaux
+- [x] Tests : PU pondéré ; sortie valorisée rattachée au projet
 
 ### Lot E — IA
-- [ ] Prompt briefing : garde-fou ; `data_as_of` ; UI « indicatif »
+- [x] Prompt briefing : garde-fou ; `data_as_of` ; UI « indicatif »
 
 ### Lot F — Acteurs externes
-- [ ] Migration `situation_travaux.service_fait_at`, `ordre_paiement_ref`
-- [ ] Endpoint service-fait + frontend (bouton sur situation `validee_moe`)
-- [ ] RG par défaut facture sous-traitant
-- [ ] Tests
+- [x] Migration `situation_travaux.service_fait_at`, `ordre_paiement_ref`
+- [x] Endpoint service-fait + frontend (bouton sur situation `validee_moe`)
+- [x] RG par défaut facture sous-traitant
+- [x] Tests
 
 ### Lot G — Docs
-- [ ] `docs/logique-metier.md` : §5 (créances, paramètres), §3.3 (avancement certifié vs déclaré), §7.3 (valorisation), §14 (idempotence)
-- [ ] `docs/decisions-produit-2026-10-01.md`
-- [ ] `CLAUDE.md` : Laravel 13, 8 rôles, test DB port 8889
+- [x] `docs/logique-metier.md` : §5 (créances, paramètres), §3.3 (avancement certifié vs déclaré), §7.3 (valorisation), §14 (idempotence)
+- [x] `docs/decisions-produit-2026-10-01.md`
+- [x] `CLAUDE.md` : Laravel 13, 8 rôles, test DB port 8889
