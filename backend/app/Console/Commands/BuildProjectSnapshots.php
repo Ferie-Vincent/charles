@@ -98,7 +98,8 @@ class BuildProjectSnapshots extends Command
         $bdcPending = PurchaseOrder::where('project_id', $pid)->where('status', 'pending')->count();
 
         // Avancement & health score (depuis le dernier journal)
-        $progress = $lastLog?->progress_percent ?? 0;
+        // Même résolution que le Health Score (certifié > déclaré)
+        $progress = (int) round(app(\App\Services\ProjectProgressResolver::class)->resolve($project)['value']);
         $daysTotal = $project->start_date && $project->end_date
             ? max(1, Carbon::parse($project->start_date)->diffInDays(Carbon::parse($project->end_date)))
             : null;

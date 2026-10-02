@@ -36,8 +36,11 @@ class ProjectMetricsService
             : $project->dailyLogs()->get();
 
         $totalLogs      = $logs->count();
-        $latestProgress = (int) ($logs->sortByDesc('log_date')->first()?->progress_percent ?? 0);
         $incidentCount  = $logs->where('has_incident', true)->count();
+
+        // Avancement : certifié (situation validée MOE récente) prioritaire sur le déclaré (journal)
+        $progress       = app(ProjectProgressResolver::class)->resolve($project);
+        $latestProgress = (int) round($progress['value']);
 
         // --- Temporel ---
         $daysSinceStart = $project->start_date
@@ -84,6 +87,11 @@ class ProjectMetricsService
             'previsionnel'     => round($previsionnel, 2),
             'ecart'            => round($ecart, 2),
             'latest_progress'  => $latestProgress,
+            'progress_source'  => $progress['source'],      // certified | declared | none
+            'declared_progress'  => $progress['declared'],
+            'certified_progress' => $progress['certified'],
+            'certified_at'       => $progress['certified_at'],
+            'progress_gap'       => $progress['gap'],       // déclaré − certifié (positif = terrain optimiste)
             'target_progress'  => $target,
             'total_logs'       => $totalLogs,
             'incident_count'   => $incidentCount,
